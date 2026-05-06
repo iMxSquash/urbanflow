@@ -1,0 +1,97 @@
+{
+  "journeys": [
+    {
+      "id": "sunny-1",
+      "label": "Tramway + Marche",
+      "segments": [
+        {
+          "mode": "walk",
+          "from": { "lat": 47.2134, "lng": -1.5541 },
+          "to": { "lat": 47.2148, "lng": -1.5538 },
+          "distanceKm": 0.15,
+          "durationMin": 2,
+          "co2g": 0
+        },
+        {
+          "mode": "tramway",
+          "from": { "lat": 47.2148, "lng": -1.5538 },
+          "to": { "lat": 47.2489, "lng": -1.5497 },
+          "distanceKm": 3.8,
+          "durationMin": 14,
+          "co2g": 15,
+          "lineRef": "T2",
+          "lineName": "Tramway 2 — Orvault Grand Val"
+        },
+        {
+          "mode": "walk",
+          "from": { "lat": 47.2489, "lng": -1.5497 },
+          "to": { "lat": 47.2536, "lng": -1.5502 },
+          "distanceKm": 0.5,
+          "durationMin": 7,
+          "co2g": 0
+        }
+      ],
+      "totalDurationMin": 23,
+      "totalDistanceKm": 4.45,
+      "totalCo2g": 15,
+      "co2SavingG": 1112,
+      "score": 91
+    },
+    {
+      "id": "sunny-2",
+      "label": "Vélo Bicloo",
+      "segments": [
+        {
+          "mode": "bike",
+          "from": { "lat": 47.2134, "lng": -1.5541 },
+          "to": { "lat": 47.2536, "lng": -1.5502 },
+          "distanceKm": 4.8,
+          "durationMin": 20,
+          "co2g": 0
+        }
+      ],
+      "totalDurationMin": 20,
+      "totalDistanceKm": 4.8,
+      "totalCo2g": 0,
+      "co2SavingG": 1214,
+      "score": 97
+    },
+    {
+      "id": "sunny-3",
+      "label": "Bus direct",
+      "segments": [
+        {
+          "mode": "walk",
+          "from": { "lat": 47.2134, "lng": -1.5541 },
+          "to": { "lat": 47.2141, "lng": -1.5529 },
+          "distanceKm": 0.1,
+          "durationMin": 2,
+          "co2g": 0
+        },
+        {
+          "mode": "bus",
+          "from": { "lat": 47.2141, "lng": -1.5529 },
+          "to": { "lat": 47.2501, "lng": -1.5498 },
+          "distanceKm": 4.2,
+          "durationMin": 22,
+          "co2g": 458,
+          "lineRef": "C1",
+          "lineName": "Chronobus C1"
+        },
+        {
+          "mode": "walk",
+          "from": { "lat": 47.2501, "lng": -1.5498 },
+          "to": { "lat": 47.2536, "lng": -1.5502 },
+          "distanceKm": 0.4,
+          "durationMin": 5,
+          "co2g": 0
+        }
+      ],
+      "totalDurationMin": 29,
+      "totalDistanceKm": 4.7,
+      "totalCo2g": 458,
+      "co2SavingG": 753,
+      "score": 72
+    }
+  ]
+}

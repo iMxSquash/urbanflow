@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "composite": true,
+    "paths": {
+      "@shared/*": ["./src/shared/*"],
+      "@client/*": ["./src/client/*"]
+    }
+  },
+  "include": ["src/client", "src/shared"],
+  "exclude": ["src/server"]
+}

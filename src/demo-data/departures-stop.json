@@ -1,0 +1,41 @@
+{
+  "stopRef": "NAOB:StopPoint:Commerce_T2_Nord",
+  "stopName": "Commerce",
+  "departures": [
+    {
+      "lineRef": "T2",
+      "lineName": "Tramway 2",
+      "destination": "Orvault Grand Val",
+      "expectedDeparture": "2026-05-06T10:04:00Z",
+      "realtimeAvailable": true
+    },
+    {
+      "lineRef": "T2",
+      "lineName": "Tramway 2",
+      "destination": "Orvault Grand Val",
+      "expectedDeparture": "2026-05-06T10:12:00Z",
+      "realtimeAvailable": true
+    },
+    {
+      "lineRef": "T2",
+      "lineName": "Tramway 2",
+      "destination": "Orvault Grand Val",
+      "expectedDeparture": "2026-05-06T10:20:00Z",
+      "realtimeAvailable": false
+    },
+    {
+      "lineRef": "C1",
+      "lineName": "Chronobus C1",
+      "destination": "Beaujoire",
+      "expectedDeparture": "2026-05-06T10:06:00Z",
+      "realtimeAvailable": true
+    },
+    {
+      "lineRef": "C1",
+      "lineName": "Chronobus C1",
+      "destination": "Beaujoire",
+      "expectedDeparture": "2026-05-06T10:16:00Z",
+      "realtimeAvailable": true
+    }
+  ]
+}

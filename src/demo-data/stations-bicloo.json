@@ -1,0 +1,44 @@
+{
+  "stations": [
+    {
+      "id": "bicloo-001",
+      "name": "Commerce",
+      "coordinates": { "lat": 47.2134, "lng": -1.5541 },
+      "availableBikes": 8,
+      "availableDocks": 4,
+      "totalDocks": 12
+    },
+    {
+      "id": "bicloo-002",
+      "name": "Graslin",
+      "coordinates": { "lat": 47.2118, "lng": -1.5592 },
+      "availableBikes": 3,
+      "availableDocks": 9,
+      "totalDocks": 12
+    },
+    {
+      "id": "bicloo-003",
+      "name": "Médiathèque",
+      "coordinates": { "lat": 47.2167, "lng": -1.5503 },
+      "availableBikes": 11,
+      "availableDocks": 1,
+      "totalDocks": 12
+    },
+    {
+      "id": "bicloo-004",
+      "name": "Pont Haudaudine",
+      "coordinates": { "lat": 47.2091, "lng": -1.5498 },
+      "availableBikes": 6,
+      "availableDocks": 6,
+      "totalDocks": 12
+    },
+    {
+      "id": "bicloo-005",
+      "name": "Duchesse Anne",
+      "coordinates": { "lat": 47.2157, "lng": -1.5447 },
+      "availableBikes": 2,
+      "availableDocks": 10,
+      "totalDocks": 12
+    }
+  ]
+}

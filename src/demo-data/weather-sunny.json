@@ -1,0 +1,10 @@
+{
+  "city": "Nantes",
+  "condition": "clear",
+  "temperature": 22,
+  "humidity": 45,
+  "windSpeed": 12,
+  "description": "Ciel dégagé",
+  "icon": "01d",
+  "timestamp": "2026-05-06T10:00:00Z"
+}
