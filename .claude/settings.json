@@ -1,0 +1,190 @@
+{
+    "$schema": "https://json.schemastore.org/claude-code-settings.json",
+    "permissions": {
+        "deny": [
+            "Read(./.env)",
+            "Read(./.env.*)",
+            "Read(./.env.local)",
+            "Read(./.env.production)",
+            "Read(./secrets/**)",
+            "Read(./dist/**)",
+            "Read(./build/**)",
+            "Read(./.next/**)",
+            "Edit(./node_modules/**)",
+            "Read(./.git/config)",
+            "Bash(rm -rf /)",
+            "Bash(DROP TABLE *)",
+            "Bash(truncate *)"
+        ],
+        "ask": [
+            "Bash(psql $DATABASE_URL *)",
+            "Bash(git push *)",
+            "Bash(npm install *)",
+            "Bash(npm i *)"
+        ],
+            "allow": [
+            "Read(./**)",
+            "Write(./src/**)",
+            "Write(./.claude/**)",
+            "Write(./public/**)",
+            "Bash(git status)",
+            "Bash(git diff *)",
+            "Bash(git log *)",
+            "Bash(git add *)",
+            "Bash(git commit *)",
+            "Bash(git checkout *)",
+            "Bash(git branch *)",
+            "Bash(git stash *)",
+            "Bash(git pull *)",
+            "Bash(npm run *)",
+            "Bash(npm test)",
+            "Bash(npm ci)",
+            "Bash(npx tsc *)",
+            "Bash(npx eslint *)",
+            "Bash(npx prettier *)",
+            "Bash(npx vitest *)",
+            "Bash(npx vite *)",
+            "Bash(node src/**)",
+            "Bash(node scripts/**)",
+            "Bash(psql postgresql://localhost*)",
+            "Bash(ls *)",
+            "Bash(cat *)",
+            "Bash(echo *)",
+            "Bash(mkdir *)",
+            "Bash(cp *)",
+            "Bash(mv *)",
+            "Bash(touch *)",
+            "Bash(which *)",
+            "Bash(curl -s https://api.transitous.org*)",
+            "Bash(curl -s https://basemaps.cartocdn.com*)"
+        ]
+    },
+    "hooks": {
+        "PostToolUse": [
+            {
+                "matcher": "Write|Edit|MultiEdit",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "if [[ \"$CLAUDE_TOOL_INPUT_FILE_PATH\" =~ \\.(ts|tsx|js|jsx|json|css|md)$ ]]; then npx prettier --write \"$CLAUDE_TOOL_INPUT_FILE_PATH\" 2>/dev/null; fi",
+                        "async": true
+                    }
+                ]
+            },
+            {
+                "matcher": "Write|Edit|MultiEdit",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "if [[ \"$CLAUDE_TOOL_INPUT_FILE_PATH\" =~ \\.(ts|tsx)$ ]]; then npx eslint --fix \"$CLAUDE_TOOL_INPUT_FILE_PATH\" --max-warnings 0 2>/dev/null || true; fi",
+                        "async": true
+                    }
+                ]
+            },
+            {
+                "matcher": "Write|Edit",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "if [[ \"$CLAUDE_TOOL_INPUT_FILE_PATH\" =~ src/client/components.*\\.tsx$ ]] || [[ \"$CLAUDE_TOOL_INPUT_FILE_PATH\" =~ src/client/pages.*\\.tsx$ ]]; then echo \"♿  Rappel WCAG : vérifier alt, aria-label, contrastes, navigation clavier → /check-a11y $CLAUDE_TOOL_INPUT_FILE_PATH\"; fi",
+                        "async": true
+                    }
+                ]
+            },
+            {
+                "matcher": "Write|Edit",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "if [[ \"$CLAUDE_TOOL_INPUT_FILE_PATH\" =~ src/server/modules.*\\.(ts)$ ]]; then echo \"🔒 Rappel OWASP : vérifier validation Zod, requêtes SQL paramétrées, auth guard → /check-security $CLAUDE_TOOL_INPUT_FILE_PATH\"; fi",
+                        "async": true
+                    }
+                ]
+            },
+            {
+                "matcher": "Write|Edit|MultiEdit",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "if grep -qE '(sk-[a-zA-Z0-9]{20,}|password\\s*=\\s*[\"\\x27][^\"\\x27]{3,}|secret\\s*=\\s*[\"\\x27][^\"\\x27]{3,}|api_key\\s*=\\s*[\"\\x27])' \"$CLAUDE_TOOL_INPUT_FILE_PATH\" 2>/dev/null; then echo \"🚨 ALERTE : secret potentiel détecté dans $CLAUDE_TOOL_INPUT_FILE_PATH. Utiliser les variables d'environnement.\"; exit 1; fi"
+                    }
+                ]
+            }
+        ],
+        "PreToolUse": [
+            {
+                "matcher": "Bash",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "if echo \"$CLAUDE_TOOL_INPUT_COMMAND\" | grep -qE 'cat .env|less .env|more .env|head .env|tail .env'; then echo \"🚫 Lecture directe du .env bloquée. Utiliser process.env dans le code.\"; exit 1; fi"
+                    }
+                ]
+            },
+            {
+                "matcher": "Bash(git commit*)",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "npm run typecheck 2>&1 && npx vitest run --silent 2>&1 || (echo \"❌ Tests ou types en erreur. Corriger avant de committer.\"; exit 1)"
+                    }
+                ]
+            }
+        ],
+        "Stop": [
+            {
+                "matcher": ".*",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "if [ -f tsconfig.json ]; then npx tsc --noEmit 2>&1 | head -20 || echo \"⚠️  Erreurs TypeScript détectées. Vérifier avant de continuer.\"; fi",
+                        "async": true
+                    }
+                ]
+            }
+        ]
+    },
+    "mcpServers": {
+        "postgres": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-postgres",
+                "postgresql://localhost:5432/urbanflow_dev"
+            ],
+            "env": {}
+        },
+        "github": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-github"
+            ],
+            "env": {
+                "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+            }
+        },
+        "playwright": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@anthropic-ai/mcp-playwright"
+            ],
+            "env": {}
+        }
+    },
+    "env": {
+        "NANTES_LAT": "47.218",
+        "NANTES_LNG": "-1.553",
+        "NANTES_ZOOM": "14",
+        "TRANSITOUS_URL": "https://api.transitous.org/api/",
+        "SIRI_LITE_BASE": "https://transport.data.gouv.fr",
+        "CARTO_TILES": "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+        "TRANSPORT_PROVIDER": "transitous",
+        "DEMO_MODE": "false",
+        "PORT": "3000",
+        "VITE_PORT": "5173",
+        "NODE_ENV": "development",
+        "TRANSITOUS_USER_AGENT": "UrbanFlow-SmartRoute/1.0 (academic project CDSD RNCP36146)"
+    }
+}
