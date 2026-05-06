@@ -1,3 +1,268 @@
+/*
+ * globals.css — UrbanFlow SmartRoute
+ * Variables CSS + reset global + styles de base
+ * À importer dans src/client/main.tsx
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ─────────────────────────────────────────────
+ * VARIABLES CSS — Design tokens en natif
+ * Utilisables dans Leaflet et les composants
+ * non-Tailwind (ex: popups de carte)
+ * ─────────────────────────────────────────────*/
+:root {
+    /* Couleurs primaires */
+    --color-eco: #16a34a;
+    --color-eco-light: #f0fdf4;
+    --color-eco-dark: #15803d;
+    --color-transit: #2563eb;
+    --color-transit-light: #eff6ff;
+    --color-bus: #d97706;
+    --color-bus-light: #fffbeb;
+
+    /* Modes de transport */
+    --color-mode-walk: #94a3b8;
+    --color-mode-bike: #16a34a;
+    --color-mode-tram: #2563eb;
+    --color-mode-bus: #d97706;
+    --color-mode-navibus: #0891b2;
+    --color-mode-car: #dc2626;
+
+    /* Surfaces */
+    --color-bg: #f8fafc;
+    --color-surface: #ffffff;
+    --color-surface-muted: #f1f5f9;
+    --color-border: #e2e8f0;
+    --color-border-strong: #cbd5e1;
+
+    /* Textes */
+    --color-text: #0f172a;
+    --color-text-secondary: #475569;
+    --color-text-muted: #94a3b8;
+
+    /* Typographie */
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+    /* Espacement */
+    --radius-card: 12px;
+    --radius-button: 8px;
+    --radius-badge: 20px;
+    --radius-input: 8px;
+    --radius-map: 16px;
+
+    /* Animations */
+    --duration-fast: 150ms;
+    --duration-normal: 200ms;
+    --duration-slow: 300ms;
+    --easing-ui: cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Layout */
+    --navbar-height: 64px;
+    --bottomnav-height: 72px;
+}
+
+/* ─────────────────────────────────────────────
+ * RESET & BASE
+ * ─────────────────────────────────────────────*/
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    html {
+        /* Évite le zoom automatique sur iOS sur les inputs */
+        font-size: 16px;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+    }
+
+    body {
+        @apply bg-slate-50 text-slate-900 font-sans antialiased;
+        background-color: var(--color-bg);
+        font-family: var(--font-sans);
+    }
+
+    /* Focus visible accessible sur tous les éléments interactifs */
+    :focus-visible {
+        @apply outline-none ring-2 ring-eco-600 ring-offset-2;
+    }
+
+    /* Respect de prefers-reduced-motion — WCAG 2.3.3 */
+    @media (prefers-reduced-motion: reduce) {
+
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+
+    /* Zones tactiles minimum WCAG 2.5.5 (48px) */
+    button,
+    a,
+    [role="button"] {
+        min-height: 48px;
+        min-width: 48px;
+        @apply flex items-center;
+    }
+
+    /* Titres */
+    h1 {
+        @apply text-h1 text-slate-900;
+    }
+
+    h2 {
+        @apply text-h2 text-slate-900;
+    }
+
+    h3 {
+        @apply text-h3 text-slate-800;
+    }
+}
+
+/* ─────────────────────────────────────────────
+ * COMPOSANTS UTILITAIRES
+ * ─────────────────────────────────────────────*/
+@layer components {
+
+    /* ── Carte / Panel ── */
+    .card {
+        @apply bg-white rounded-card shadow-card border border-slate-100;
+    }
+
+    .card-hover {
+        @apply card transition-shadow duration-fast hover:shadow-card-md;
+    }
+
+    /* ── Boutons ── */
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-button font-medium text-body-sm transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+        min-height: 48px;
+    }
+
+    .btn-primary {
+        @apply btn bg-eco-600 text-white hover:bg-eco-700 active:bg-eco-800 focus-visible:ring-eco-600;
+    }
+
+    .btn-secondary {
+        @apply btn bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 active:bg-slate-100 focus-visible:ring-slate-400;
+    }
+
+    .btn-ghost {
+        @apply btn text-slate-600 hover:bg-slate-100 active:bg-slate-200 focus-visible:ring-slate-400;
+    }
+
+    .btn-eco {
+        @apply btn bg-eco-50 text-eco-700 border border-eco-200 hover:bg-eco-100 active:bg-eco-200 focus-visible:ring-eco-600;
+    }
+
+    /* ── Inputs ── */
+    .input {
+        @apply w-full px-4 py-3 rounded-input bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 text-body transition-colors duration-fast focus:outline-none focus:ring-2 focus:ring-eco-600 focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed;
+        min-height: 48px;
+    }
+
+    /* ── Labels ── */
+    .label {
+        @apply block text-body-sm font-medium text-slate-700 mb-1.5;
+    }
+
+    /* ── Badges de mode de transport ── */
+    .mode-badge {
+        @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-caption font-medium;
+        min-height: 24px;
+    }
+
+    .mode-badge-walk {
+        @apply bg-slate-100 text-slate-600;
+    }
+
+    .mode-badge-bike {
+        @apply bg-eco-50 text-eco-700;
+    }
+
+    .mode-badge-tram {
+        @apply bg-transit-50 text-transit-700;
+    }
+
+    .mode-badge-bus {
+        @apply bg-amber-50 text-amber-700;
+    }
+
+    .mode-badge-navibus {
+        @apply bg-cyan-50 text-cyan-700;
+    }
+
+    /* ── Score CO2 ── */
+    .co2-positive {
+        @apply text-eco-700 bg-eco-50 rounded-full px-2 py-0.5;
+    }
+
+    .co2-negative {
+        @apply text-red-600 bg-red-50 rounded-full px-2 py-0.5;
+    }
+
+    .co2-neutral {
+        @apply text-slate-600 bg-slate-100 rounded-full px-2 py-0.5;
+    }
+
+    /* ── Toast notifications ── */
+    .toast {
+        @apply fixed bottom-20 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-body-sm font-medium px-4 py-3 rounded-card shadow-float animate-slide-up z-toast;
+    }
+
+    .toast-success {
+        @apply toast bg-eco-700;
+    }
+
+    .toast-error {
+        @apply toast bg-red-600;
+    }
+
+    /* ── Skeleton loading ── */
+    .skeleton {
+        @apply bg-slate-200 rounded animate-pulse;
+    }
+}
+
+/* ─────────────────────────────────────────────
+ * OVERRIDES LEAFLET
+ * Les popups et contrôles Leaflet utilisent
+ * nos variables CSS pour rester cohérents.
+ * ─────────────────────────────────────────────*/
+.leaflet-popup-content-wrapper {
+    border-radius: var(--radius-card) !important;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.08) !important;
+    font-family: var(--font-sans) !important;
+}
+
+.leaflet-popup-content {
+    margin: 12px 16px !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    color: var(--color-text) !important;
+}
+
+.leaflet-control-zoom {
+    border-radius: var(--radius-button) !important;
+    overflow: hidden;
+    box-shadow: var(--shadow-card) !important;
+}
+
+.leaflet-control-zoom a {
+    width: 36px !important;
+    height: 36px !important;
+    line-height: 36px !important;
+    color: var(--color-text-secondary) !important;
+}
+
+.leaflet-control-zoom a:hover {
+    background-color: var(--color-surface-muted) !important;
+    color: var(--color-text) !important;
+}
