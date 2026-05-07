@@ -1,129 +1,265 @@
 /*
  * globals.css — UrbanFlow SmartRoute
- * Variables CSS + reset global + styles de base
+ * Tailwind v4 CSS-first configuration
  * À importer dans src/client/main.tsx
  */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  /* ─── Couleurs — Éco vert ─────────────────── */
+  --color-eco-50:  #f0fdf4;
+  --color-eco-100: #dcfce7;
+  --color-eco-200: #bbf7d0;
+  --color-eco-300: #86efac;
+  --color-eco-400: #4ade80;
+  --color-eco-500: #22c55e;
+  --color-eco-600: #16a34a;
+  --color-eco-700: #15803d;
+  --color-eco-800: #166534;
+  --color-eco-900: #14532d;
+  --color-eco-950: #052e16;
+
+  /* ─── Couleurs — Bleu transit ────────────── */
+  --color-transit-50:  #eff6ff;
+  --color-transit-100: #dbeafe;
+  --color-transit-200: #bfdbfe;
+  --color-transit-300: #93c5fd;
+  --color-transit-400: #60a5fa;
+  --color-transit-500: #3b82f6;
+  --color-transit-600: #2563eb;
+  --color-transit-700: #1d4ed8;
+  --color-transit-800: #1e40af;
+  --color-transit-900: #1e3a8a;
+  --color-transit-950: #172554;
+
+  /* ─── Couleurs — Ambre bus ───────────────── */
+  --color-bus-400: #fbbf24;
+  --color-bus-500: #f59e0b;
+  --color-bus-600: #d97706;
+  --color-bus-700: #b45309;
+
+  /* ─── Couleurs — Modes de transport ─────── */
+  --color-mode-walk:    #94a3b8;
+  --color-mode-bike:    #16a34a;
+  --color-mode-tram:    #2563eb;
+  --color-mode-bus:     #d97706;
+  --color-mode-navibus: #0891b2;
+  --color-mode-car:     #dc2626;
+
+  /* ─── Couleurs — Surfaces ────────────────── */
+  --color-surface:      #ffffff;
+  --color-surface-muted: #f1f5f9;
+  --color-surface-card: #ffffff;
+
+  /* ─── Couleur — Bordure (corrige border-border) ─ */
+  --color-border: #e2e8f0;
+  --color-border-strong: #cbd5e1;
+
+  /* ─── Typographie ────────────────────────── */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  --text-display:  2.25rem;
+  --text-h1:       1.875rem;
+  --text-h2:       1.5rem;
+  --text-h3:       1.25rem;
+  --text-body-lg:  1.125rem;
+  --text-body:     1rem;
+  --text-body-sm:  0.875rem;
+  --text-caption:  0.75rem;
+
+  /* ─── Espacements custom ─────────────────── */
+  --spacing-13:    3.25rem;
+  --spacing-15:    3.75rem;
+  --spacing-18:    4.5rem;
+  --spacing-22:    5.5rem;
+  --spacing-touch: 3rem;
+
+  /* ─── Breakpoints custom ─────────────────── */
+  --breakpoint-xs:  375px;
+  --breakpoint-map: 900px;
+
+  /* ─── Rayons de bordure ──────────────────── */
+  --radius-card:   12px;
+  --radius-badge:  20px;
+  --radius-button: 8px;
+  --radius-input:  8px;
+  --radius-map:    16px;
+
+  /* ─── Ombres ─────────────────────────────── */
+  --shadow-card:     0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  --shadow-card-md:  0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06);
+  --shadow-card-lg:  0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+  --shadow-float:    0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.08);
+  --shadow-inner-sm: inset 0 1px 2px 0 rgb(0 0 0 / 0.05);
+
+  /* ─── Easing ─────────────────────────────── */
+  --ease-ui: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ─── Animations ─────────────────────────── */
+  --animate-fade-in:      fade-in 150ms ease-out;
+  --animate-slide-up:     slide-up 200ms ease-out;
+  --animate-badge-unlock: badge-unlock 300ms ease-out;
+  --animate-count-up:     count-up 200ms ease-out;
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes badge-unlock {
+    0%   { opacity: 0; transform: scale(0.92); }
+    60%  { transform: scale(1.03); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes count-up {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── Hauteurs nommées ───────────────────── */
+  --height-map-mobile:    50vh;
+  --height-map-desktop:   65vh;
+  --height-journey-card:  5rem;
+  --height-navbar:        4rem;
+  --height-bottomnav:     4.5rem;
+
+  /* ─── Z-index ────────────────────────────── */
+  --z-map:     0;
+  --z-overlay: 10;
+  --z-drawer:  20;
+  --z-navbar:  30;
+  --z-modal:   40;
+  --z-toast:   50;
+}
 
 /* ─────────────────────────────────────────────
- * VARIABLES CSS — Design tokens en natif
- * Utilisables dans Leaflet et les composants
- * non-Tailwind (ex: popups de carte)
+ * UTILITIES CUSTOM
+ * @utility est requis en v4 pour les classes
+ * utilisables avec @apply dans @layer components
+ * ─────────────────────────────────────────────*/
+@utility duration-fast {
+  transition-duration: 150ms;
+}
+@utility duration-normal {
+  transition-duration: 200ms;
+}
+@utility duration-slow {
+  transition-duration: 300ms;
+}
+
+/* z-index nommés — --z-* dans @theme ne génère pas de classes @apply-compatibles */
+@utility z-map     { z-index: 0; }
+@utility z-overlay { z-index: 10; }
+@utility z-drawer  { z-index: 20; }
+@utility z-navbar  { z-index: 30; }
+@utility z-modal   { z-index: 40; }
+@utility z-toast   { z-index: 50; }
+
+/* ─────────────────────────────────────────────
+ * VARIABLES CSS — Utilisables dans Leaflet et
+ * composants non-Tailwind (ex: popups de carte)
  * ─────────────────────────────────────────────*/
 :root {
-    /* Couleurs primaires */
-    --color-eco: #16a34a;
-    --color-eco-light: #f0fdf4;
-    --color-eco-dark: #15803d;
-    --color-transit: #2563eb;
-    --color-transit-light: #eff6ff;
-    --color-bus: #d97706;
-    --color-bus-light: #fffbeb;
+  /* Modes de transport */
+  --color-mode-walk:    #94a3b8;
+  --color-mode-bike:    #16a34a;
+  --color-mode-tram:    #2563eb;
+  --color-mode-bus:     #d97706;
+  --color-mode-navibus: #0891b2;
+  --color-mode-car:     #dc2626;
 
-    /* Modes de transport */
-    --color-mode-walk: #94a3b8;
-    --color-mode-bike: #16a34a;
-    --color-mode-tram: #2563eb;
-    --color-mode-bus: #d97706;
-    --color-mode-navibus: #0891b2;
-    --color-mode-car: #dc2626;
+  /* Surfaces */
+  --color-bg:           #f8fafc;
+  --color-surface:      #ffffff;
+  --color-surface-muted: #f1f5f9;
+  --color-border:       #e2e8f0;
+  --color-border-strong: #cbd5e1;
 
-    /* Surfaces */
-    --color-bg: #f8fafc;
-    --color-surface: #ffffff;
-    --color-surface-muted: #f1f5f9;
-    --color-border: #e2e8f0;
-    --color-border-strong: #cbd5e1;
+  /* Textes */
+  --color-text:           #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted:     #94a3b8;
 
-    /* Textes */
-    --color-text: #0f172a;
-    --color-text-secondary: #475569;
-    --color-text-muted: #94a3b8;
+  /* Typographie */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 
-    /* Typographie */
-    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  /* Animations */
+  --duration-fast:   150ms;
+  --duration-normal: 200ms;
+  --duration-slow:   300ms;
+  --easing-ui:       cubic-bezier(0.4, 0, 0.2, 1);
 
-    /* Espacement */
-    --radius-card: 12px;
-    --radius-button: 8px;
-    --radius-badge: 20px;
-    --radius-input: 8px;
-    --radius-map: 16px;
-
-    /* Animations */
-    --duration-fast: 150ms;
-    --duration-normal: 200ms;
-    --duration-slow: 300ms;
-    --easing-ui: cubic-bezier(0.4, 0, 0.2, 1);
-
-    /* Layout */
-    --navbar-height: 64px;
-    --bottomnav-height: 72px;
+  /* Layout */
+  --navbar-height:    64px;
+  --bottomnav-height: 72px;
 }
 
 /* ─────────────────────────────────────────────
  * RESET & BASE
  * ─────────────────────────────────────────────*/
 @layer base {
-    * {
-        @apply border-border;
-    }
+  * {
+    @apply border-border;
+  }
 
-    html {
-        /* Évite le zoom automatique sur iOS sur les inputs */
-        font-size: 16px;
-        -webkit-text-size-adjust: 100%;
-        text-size-adjust: 100%;
-    }
+  html {
+    /* Évite le zoom automatique sur iOS sur les inputs */
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
 
-    body {
-        @apply bg-slate-50 text-slate-900 font-sans antialiased;
-        background-color: var(--color-bg);
-        font-family: var(--font-sans);
-    }
+  body {
+    @apply bg-slate-50 text-slate-900 font-sans antialiased;
+    background-color: var(--color-bg);
+    font-family: var(--font-sans);
+  }
 
-    /* Focus visible accessible sur tous les éléments interactifs */
-    :focus-visible {
-        @apply outline-none ring-2 ring-eco-600 ring-offset-2;
-    }
+  /* Focus visible accessible sur tous les éléments interactifs */
+  :focus-visible {
+    @apply outline-none ring-2 ring-eco-600 ring-offset-2;
+  }
 
-    /* Respect de prefers-reduced-motion — WCAG 2.3.3 */
-    @media (prefers-reduced-motion: reduce) {
-
-        *,
-        *::before,
-        *::after {
-            animation-duration: 0.01ms !important;
-            animation-iteration-count: 1 !important;
-            transition-duration: 0.01ms !important;
-        }
+  /* Respect de prefers-reduced-motion — WCAG 2.3.3 */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
     }
+  }
 
-    /* Zones tactiles minimum WCAG 2.5.5 (48px) */
-    button,
-    a,
-    [role="button"] {
-        min-height: 48px;
-        min-width: 48px;
-        @apply flex items-center;
-    }
+  /* Zones tactiles minimum WCAG 2.5.5 (48px) */
+  button,
+  a,
+  [role="button"] {
+    min-height: 48px;
+    min-width: 48px;
+    @apply flex items-center;
+  }
 
-    /* Titres */
-    h1 {
-        @apply text-h1 text-slate-900;
-    }
+  /* Titres */
+  h1 {
+    @apply text-h1 font-bold text-slate-900;
+  }
 
-    h2 {
-        @apply text-h2 text-slate-900;
-    }
+  h2 {
+    @apply text-h2 font-semibold text-slate-900;
+  }
 
-    h3 {
-        @apply text-h3 text-slate-800;
-    }
+  h3 {
+    @apply text-h3 font-semibold text-slate-800;
+  }
 }
 
 /* ─────────────────────────────────────────────
@@ -131,104 +267,109 @@
  * ─────────────────────────────────────────────*/
 @layer components {
 
-    /* ── Carte / Panel ── */
-    .card {
-        @apply bg-white rounded-card shadow-card border border-slate-100;
-    }
+  /* ── Carte / Panel ── */
+  .card {
+    @apply bg-white rounded-card shadow-card border border-slate-100;
+  }
 
-    .card-hover {
-        @apply card transition-shadow duration-fast hover:shadow-card-md;
-    }
+  .card-hover {
+    @apply bg-white rounded-card shadow-card border border-slate-100 transition-shadow duration-fast hover:shadow-card-md;
+  }
 
-    /* ── Boutons ── */
-    .btn {
-        @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-button font-medium text-body-sm transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
-        min-height: 48px;
-    }
+  /* ── Boutons ── */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-button font-medium text-body-sm transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    min-height: 48px;
+  }
 
-    .btn-primary {
-        @apply btn bg-eco-600 text-white hover:bg-eco-700 active:bg-eco-800 focus-visible:ring-eco-600;
-    }
+  /* En v4, @apply ne peut pas référencer des classes @layer components — on inline les styles */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-button font-medium text-body-sm transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-eco-600 text-white hover:bg-eco-700 active:bg-eco-800 focus-visible:ring-eco-600;
+    min-height: 48px;
+  }
 
-    .btn-secondary {
-        @apply btn bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 active:bg-slate-100 focus-visible:ring-slate-400;
-    }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-button font-medium text-body-sm transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 active:bg-slate-100 focus-visible:ring-slate-400;
+    min-height: 48px;
+  }
 
-    .btn-ghost {
-        @apply btn text-slate-600 hover:bg-slate-100 active:bg-slate-200 focus-visible:ring-slate-400;
-    }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-button font-medium text-body-sm transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600 hover:bg-slate-100 active:bg-slate-200 focus-visible:ring-slate-400;
+    min-height: 48px;
+  }
 
-    .btn-eco {
-        @apply btn bg-eco-50 text-eco-700 border border-eco-200 hover:bg-eco-100 active:bg-eco-200 focus-visible:ring-eco-600;
-    }
+  .btn-eco {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-button font-medium text-body-sm transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-eco-50 text-eco-700 border border-eco-200 hover:bg-eco-100 active:bg-eco-200 focus-visible:ring-eco-600;
+    min-height: 48px;
+  }
 
-    /* ── Inputs ── */
-    .input {
-        @apply w-full px-4 py-3 rounded-input bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 text-body transition-colors duration-fast focus:outline-none focus:ring-2 focus:ring-eco-600 focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed;
-        min-height: 48px;
-    }
+  /* ── Inputs ── */
+  .input {
+    @apply w-full px-4 py-3 rounded-input bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 text-body transition-colors duration-fast focus:outline-none focus:ring-2 focus:ring-eco-600 focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed;
+    min-height: 48px;
+  }
 
-    /* ── Labels ── */
-    .label {
-        @apply block text-body-sm font-medium text-slate-700 mb-1.5;
-    }
+  /* ── Labels ── */
+  .label {
+    @apply block text-body-sm font-medium text-slate-700 mb-1.5;
+  }
 
-    /* ── Badges de mode de transport ── */
-    .mode-badge {
-        @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-caption font-medium;
-        min-height: 24px;
-    }
+  /* ── Badges de mode de transport ── */
+  .mode-badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-caption font-medium;
+    min-height: 24px;
+  }
 
-    .mode-badge-walk {
-        @apply bg-slate-100 text-slate-600;
-    }
+  .mode-badge-walk {
+    @apply bg-slate-100 text-slate-600;
+  }
 
-    .mode-badge-bike {
-        @apply bg-eco-50 text-eco-700;
-    }
+  .mode-badge-bike {
+    @apply bg-eco-50 text-eco-700;
+  }
 
-    .mode-badge-tram {
-        @apply bg-transit-50 text-transit-700;
-    }
+  .mode-badge-tram {
+    @apply bg-transit-50 text-transit-700;
+  }
 
-    .mode-badge-bus {
-        @apply bg-amber-50 text-amber-700;
-    }
+  .mode-badge-bus {
+    @apply bg-amber-50 text-amber-700;
+  }
 
-    .mode-badge-navibus {
-        @apply bg-cyan-50 text-cyan-700;
-    }
+  .mode-badge-navibus {
+    @apply bg-cyan-50 text-cyan-700;
+  }
 
-    /* ── Score CO2 ── */
-    .co2-positive {
-        @apply text-eco-700 bg-eco-50 rounded-full px-2 py-0.5;
-    }
+  /* ── Score CO2 ── */
+  .co2-positive {
+    @apply text-eco-700 bg-eco-50 rounded-full px-2 py-0.5;
+  }
 
-    .co2-negative {
-        @apply text-red-600 bg-red-50 rounded-full px-2 py-0.5;
-    }
+  .co2-negative {
+    @apply text-red-600 bg-red-50 rounded-full px-2 py-0.5;
+  }
 
-    .co2-neutral {
-        @apply text-slate-600 bg-slate-100 rounded-full px-2 py-0.5;
-    }
+  .co2-neutral {
+    @apply text-slate-600 bg-slate-100 rounded-full px-2 py-0.5;
+  }
 
-    /* ── Toast notifications ── */
-    .toast {
-        @apply fixed bottom-20 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-body-sm font-medium px-4 py-3 rounded-card shadow-float animate-slide-up z-toast;
-    }
+  /* ── Toast notifications ── */
+  .toast {
+    @apply fixed bottom-20 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-body-sm font-medium px-4 py-3 rounded-card shadow-float animate-slide-up z-toast;
+  }
 
-    .toast-success {
-        @apply toast bg-eco-700;
-    }
+  .toast-success {
+    @apply fixed bottom-20 left-1/2 -translate-x-1/2 bg-eco-700 text-white text-body-sm font-medium px-4 py-3 rounded-card shadow-float animate-slide-up z-toast;
+  }
 
-    .toast-error {
-        @apply toast bg-red-600;
-    }
+  .toast-error {
+    @apply fixed bottom-20 left-1/2 -translate-x-1/2 bg-red-600 text-white text-body-sm font-medium px-4 py-3 rounded-card shadow-float animate-slide-up z-toast;
+  }
 
-    /* ── Skeleton loading ── */
-    .skeleton {
-        @apply bg-slate-200 rounded animate-pulse;
-    }
+  /* ── Skeleton loading ── */
+  .skeleton {
+    @apply bg-slate-200 rounded animate-pulse;
+  }
 }
 
 /* ─────────────────────────────────────────────
@@ -237,32 +378,32 @@
  * nos variables CSS pour rester cohérents.
  * ─────────────────────────────────────────────*/
 .leaflet-popup-content-wrapper {
-    border-radius: var(--radius-card) !important;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.08) !important;
-    font-family: var(--font-sans) !important;
+  border-radius: var(--radius-card) !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.08) !important;
+  font-family: var(--font-sans) !important;
 }
 
 .leaflet-popup-content {
-    margin: 12px 16px !important;
-    font-size: 14px !important;
-    line-height: 1.5 !important;
-    color: var(--color-text) !important;
+  margin: 12px 16px !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  color: var(--color-text) !important;
 }
 
 .leaflet-control-zoom {
-    border-radius: var(--radius-button) !important;
-    overflow: hidden;
-    box-shadow: var(--shadow-card) !important;
+  border-radius: var(--radius-button) !important;
+  overflow: hidden;
+  box-shadow: var(--shadow-card) !important;
 }
 
 .leaflet-control-zoom a {
-    width: 36px !important;
-    height: 36px !important;
-    line-height: 36px !important;
-    color: var(--color-text-secondary) !important;
+  width: 36px !important;
+  height: 36px !important;
+  line-height: 36px !important;
+  color: var(--color-text-secondary) !important;
 }
 
 .leaflet-control-zoom a:hover {
-    background-color: var(--color-surface-muted) !important;
-    color: var(--color-text) !important;
+  background-color: var(--color-surface-muted) !important;
+  color: var(--color-text) !important;
 }
