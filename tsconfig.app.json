@@ -5,6 +5,7 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",
     "composite": true,
+    "outDir": "./dist/types",
     "paths": {
       "@shared/*": ["./src/shared/*"],
       "@client/*": ["./src/client/*"]
