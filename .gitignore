@@ -64,8 +64,9 @@ Thumbs.db
 desktop.ini
 
 # Éditeurs
-.vscode/
+.vscode/*
 !.vscode/extensions.json
+!.vscode/settings.json
 .idea/
 *.suo
 *.ntvs*
