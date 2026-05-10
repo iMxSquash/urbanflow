@@ -16,7 +16,9 @@ async function ensureMigrationsTable(client: pg.PoolClient): Promise<void> {
 }
 
 async function getAppliedMigrations(client: pg.PoolClient): Promise<Set<string>> {
-  const result = await client.query<{ filename: string }>('SELECT filename FROM schema_migrations ORDER BY filename')
+  const result = await client.query<{ filename: string }>(
+    'SELECT filename FROM schema_migrations ORDER BY filename'
+  )
   return new Set(result.rows.map((r) => r.filename))
 }
 
@@ -27,9 +29,7 @@ export async function runMigrations(): Promise<void> {
     await ensureMigrationsTable(client)
     const applied = await getAppliedMigrations(client)
 
-    const files = (await readdir(MIGRATIONS_DIR))
-      .filter((f) => f.endsWith('.sql'))
-      .sort()
+    const files = (await readdir(MIGRATIONS_DIR)).filter((f) => f.endsWith('.sql')).sort()
 
     const pending = files.filter((f) => !applied.has(f))
 
@@ -49,7 +49,9 @@ export async function runMigrations(): Promise<void> {
         console.log(`[migrate] ✓ ${filename}`)
       } catch (err) {
         await client.query('ROLLBACK')
-        throw new Error(`[migrate] Échec sur ${filename}: ${(err as Error).message}`, { cause: err })
+        throw new Error(`[migrate] Échec sur ${filename}: ${(err as Error).message}`, {
+          cause: err,
+        })
       }
     }
 
