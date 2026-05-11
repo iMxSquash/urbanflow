@@ -150,7 +150,7 @@ router.post('/refresh', authRateLimit, authController.refresh)
  *     summary: Déconnexion — révocation du refresh token et suppression du cookie
  *     tags: [Auth]
  *     security:
- *       - bearerAuth: []
+ *       - cookieAuth: []
  *     responses:
  *       204:
  *         description: Déconnexion réussie
