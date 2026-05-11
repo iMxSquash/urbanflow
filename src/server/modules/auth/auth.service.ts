@@ -38,18 +38,19 @@ export async function registerUser(
   email: string,
   password: string,
 ): Promise<{ accessToken: string; refreshToken: string }> {
-  const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email])
-  if (existing.rows.length > 0) {
-    throw new Error('EMAIL_EXISTS')
-  }
-
   const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS)
-  const result = await pool.query(
-    'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email',
-    [email, passwordHash],
-  )
 
-  const user = result.rows[0] as { id: string; email: string }
+  let user: { id: string; email: string }
+  try {
+    const result = await pool.query(
+      'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email',
+      [email, passwordHash],
+    )
+    user = result.rows[0] as { id: string; email: string }
+  } catch (err) {
+    if ((err as { code?: string }).code === '23505') throw new Error('EMAIL_EXISTS', { cause: err })
+    throw err
+  }
   const payload: AuthTokenPayload = { sub: user.id, email: user.email }
   const jti = randomUUID()
 
