@@ -1,4 +1,13 @@
 import 'dotenv/config'
+
+const REQUIRED_ENV = ['JWT_SECRET', 'JWT_REFRESH_SECRET'] as const
+for (const key of REQUIRED_ENV) {
+  if (!process.env[key]) {
+    console.error(`[server] Variable d'environnement manquante : ${key}`)
+    process.exit(1)
+  }
+}
+
 import express from 'express'
 import helmet from 'helmet'
 import cors from 'cors'
