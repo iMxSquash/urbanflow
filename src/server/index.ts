@@ -11,6 +11,7 @@ for (const key of REQUIRED_ENV) {
 import express from 'express'
 import helmet from 'helmet'
 import cors from 'cors'
+import rateLimit from 'express-rate-limit'
 import cookieParser from 'cookie-parser'
 import swaggerUi from 'swagger-ui-express'
 import { runMigrations } from './db/migrate.js'
@@ -20,12 +21,21 @@ import authRouter from './modules/auth/index.js'
 const app = express()
 const PORT = process.env.PORT ?? 3000
 
+const globalRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 100,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { error: 'Trop de requêtes, réessayez plus tard' },
+})
+
 app.use(helmet())
 app.use(cors({ origin: process.env.CORS_ORIGIN, credentials: true }))
+app.use(globalRateLimit)
 app.use(express.json())
 app.use(cookieParser())
 
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV === 'development') {
   app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 }
 app.use('/api/auth', authRouter)

@@ -155,6 +155,6 @@ router.post('/refresh', authRateLimit, authController.refresh)
  *       204:
  *         description: Déconnexion réussie
  */
-router.post('/logout', authController.logout)
+router.post('/logout', authRateLimit, authController.logout)
 
 export default router
