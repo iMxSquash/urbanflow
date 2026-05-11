@@ -97,12 +97,9 @@ export default function RegisterPage() {
 
         <div className="card p-6 md:p-8">
           {/* Zone d'erreur API — toujours dans le DOM pour que aria-live fonctionne */}
-          <div aria-live="polite" aria-atomic="true" className="mb-2">
+          <div role="alert" aria-atomic="true" className="mb-2">
             {apiError && (
-              <div
-                role="alert"
-                className="bg-red-50 border border-red-200 rounded-input px-4 py-3 mb-4 text-red-700 text-body-sm"
-              >
+              <div className="bg-red-50 border border-red-200 rounded-input px-4 py-3 mb-4 text-red-700 text-body-sm">
                 {apiError}
               </div>
             )}
