@@ -41,24 +41,46 @@ beforeEach(() => {
 describe('registerUser', () => {
   it('crée un utilisateur et retourne access + refresh token', async () => {
     mockQuery
-      .mockResolvedValueOnce({ rows: [] })                                          // email check
-      .mockResolvedValueOnce({ rows: [{ id: USER_ID, email: USER_EMAIL }] })        // INSERT user
-      .mockResolvedValueOnce({ rows: [] })                                          // INSERT refresh_token
+      .mockResolvedValueOnce({ rows: [{ id: USER_ID, email: USER_EMAIL }] })  // INSERT user
+      .mockResolvedValueOnce({ rows: [] })                                     // INSERT refresh_token
     mockHash.mockResolvedValue(HASHED)
 
     const result = await registerUser(USER_EMAIL, PASSWORD)
 
     expect(result.accessToken).toBeTypeOf('string')
     expect(result.refreshToken).toBeTypeOf('string')
-    expect(mockQuery).toHaveBeenCalledTimes(3)
+    expect(mockQuery).toHaveBeenCalledTimes(2)
     expect(mockHash).toHaveBeenCalledWith(PASSWORD, 10)
   })
 
   it("lance EMAIL_EXISTS si l'email est déjà pris", async () => {
-    mockQuery.mockResolvedValueOnce({ rows: [{ id: USER_ID }] })
+    mockHash.mockResolvedValue(HASHED)
+    const pgError = Object.assign(new Error('unique violation'), { code: '23505' })
+    mockQuery.mockRejectedValueOnce(pgError)
 
     await expect(registerUser(USER_EMAIL, PASSWORD)).rejects.toThrow('EMAIL_EXISTS')
     expect(mockQuery).toHaveBeenCalledTimes(1)
+  })
+
+  it('race condition — deux inscriptions concurrentes avec le même email : une seule réussit', async () => {
+    mockHash.mockResolvedValue(HASHED)
+    const pgError = Object.assign(new Error('unique violation'), { code: '23505' })
+    mockQuery
+      .mockResolvedValueOnce({ rows: [{ id: USER_ID, email: USER_EMAIL }] }) // INSERT call 1 → succès
+      .mockRejectedValueOnce(pgError)                                         // INSERT call 2 → 23505
+      .mockResolvedValueOnce({ rows: [] })                                    // storeRefreshToken call 1
+
+    const results = await Promise.allSettled([
+      registerUser(USER_EMAIL, PASSWORD),
+      registerUser(USER_EMAIL, PASSWORD),
+    ])
+
+    const fulfilled = results.filter((r) => r.status === 'fulfilled')
+    const rejected = results.filter((r) => r.status === 'rejected')
+
+    expect(fulfilled).toHaveLength(1)
+    expect(rejected).toHaveLength(1)
+    expect((rejected[0] as PromiseRejectedResult).reason.message).toBe('EMAIL_EXISTS')
   })
 })
 
