@@ -21,7 +21,7 @@ import authRouter from './modules/auth/index.js'
 const app = express()
 const PORT = process.env.PORT ?? 3000
 
-app.set('trust proxy', 1)
+app.set('trust proxy', 2)
 
 const globalRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -42,7 +42,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 app.use('/api/auth', authRouter)
 
-app.get('/health', (_req, res) => {
+app.get(['/health', '/api/health'], (_req, res) => {
   res.json({ status: 'ok' })
 })
 
