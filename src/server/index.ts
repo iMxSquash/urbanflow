@@ -21,6 +21,8 @@ import authRouter from './modules/auth/index.js'
 const app = express()
 const PORT = process.env.PORT ?? 3000
 
+app.set('trust proxy', 1)
+
 const globalRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 100,
