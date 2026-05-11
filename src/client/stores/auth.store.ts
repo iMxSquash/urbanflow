@@ -19,7 +19,9 @@ interface AuthState {
 function parseJwtPayload(token: string): AuthUser | null {
   try {
     const raw = token.split('.')[1]
-    const decoded: unknown = JSON.parse(atob(raw.replace(/-/g, '+').replace(/_/g, '/')))
+    const base64 = raw.replace(/-/g, '+').replace(/_/g, '/')
+    const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4)
+    const decoded: unknown = JSON.parse(atob(padded))
     if (
       decoded !== null &&
       typeof decoded === 'object' &&
