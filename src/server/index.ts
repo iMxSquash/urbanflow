@@ -16,7 +16,9 @@ app.use(cors({ origin: process.env.CORS_ORIGIN, credentials: true }))
 app.use(express.json())
 app.use(cookieParser())
 
-app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
+}
 app.use('/api/auth', authRouter)
 
 app.get('/health', (_req, res) => {

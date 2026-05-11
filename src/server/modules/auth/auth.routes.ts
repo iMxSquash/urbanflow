@@ -141,7 +141,7 @@ router.post('/login', authRateLimit, validate(loginSchema), authController.login
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/refresh', authController.refresh)
+router.post('/refresh', authRateLimit, authController.refresh)
 
 /**
  * @swagger

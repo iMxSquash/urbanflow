@@ -9,6 +9,14 @@ const ACCESS_EXPIRY = '15m'
 const REFRESH_EXPIRY = '7d'
 const REFRESH_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000
 
+// Hash factice pré-calculé pour égaliser le timing sur loginUser
+// même quand l'email n'existe pas (défense contre l'énumération de comptes).
+let _dummyHash: string | undefined
+async function getDummyHash(): Promise<string> {
+  if (!_dummyHash) _dummyHash = await bcrypt.hash('_dummy_', BCRYPT_ROUNDS)
+  return _dummyHash
+}
+
 function signAccessToken(payload: AuthTokenPayload): string {
   return jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: ACCESS_EXPIRY })
 }
@@ -59,13 +67,13 @@ export async function loginUser(
   password: string,
 ): Promise<{ accessToken: string; refreshToken: string }> {
   const result = await pool.query('SELECT id, email, password_hash FROM users WHERE email = $1', [email])
-  if (result.rows.length === 0) {
-    throw new Error('INVALID_CREDENTIALS')
-  }
+  const user = result.rows[0] as { id: string; email: string; password_hash: string } | undefined
 
-  const user = result.rows[0] as { id: string; email: string; password_hash: string }
-  const valid = await bcrypt.compare(password, user.password_hash)
-  if (!valid) {
+  // bcrypt.compare s'exécute toujours pour égaliser le timing (anti-énumération).
+  const hashToCompare = user?.password_hash ?? (await getDummyHash())
+  const valid = await bcrypt.compare(password, hashToCompare)
+
+  if (!user || !valid) {
     throw new Error('INVALID_CREDENTIALS')
   }
 
@@ -113,10 +121,12 @@ export async function refreshTokens(
 }
 
 export async function logoutUser(incomingToken: string): Promise<void> {
+  let payload: RefreshTokenPayload
   try {
-    const payload = jwt.verify(incomingToken, process.env.JWT_REFRESH_SECRET!) as RefreshTokenPayload
-    await pool.query('DELETE FROM refresh_tokens WHERE id = $1', [payload.jti])
+    payload = jwt.verify(incomingToken, process.env.JWT_REFRESH_SECRET!) as RefreshTokenPayload
   } catch {
-    // Token invalid — nothing to revoke
+    return // Token invalide ou expiré — rien à révoquer
   }
+  // Les erreurs DB propagent ici pour que le controller retourne 500.
+  await pool.query('DELETE FROM refresh_tokens WHERE id = $1', [payload.jti])
 }
