@@ -1,7 +1,24 @@
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import ProtectedRoute from './components/ProtectedRoute'
+import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
+
 export default function App() {
   return (
-    <div className="min-h-screen bg-eco-50 flex items-center justify-center">
-      <h1 className="text-2xl font-semibold text-eco-700">UrbanFlow SmartRoute</h1>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        {/* Routes publiques */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+
+        {/* Routes protégées — redirige vers /login si non authentifié */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/" element={<div>App (à venir)</div>} />
+        </Route>
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
