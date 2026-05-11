@@ -1,5 +1,5 @@
 import { useAuthStore } from '../stores/auth.store'
-import { refreshToken } from './auth.service'
+import { refreshToken } from '../services/auth.service'
 
 // Déduplication : si plusieurs requêtes reçoivent un 401 simultanément,
 // une seule tentative de refresh est effectuée — les autres attendent.
