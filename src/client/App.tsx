@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import LogoutButton from './components/LogoutButton'
 import ProtectedRoute from './components/ProtectedRoute'
 import { useAuthInit } from './hooks/useAuthInit'
 import LoginPage from './pages/LoginPage'
@@ -27,7 +28,12 @@ function AppRoutes() {
 
       {/* Routes protégées — redirige vers /login si non authentifié */}
       <Route element={<ProtectedRoute />}>
-        <Route path="/" element={<div>App (à venir)</div>} />
+        <Route path="/" element={
+            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4">
+              <p className="text-slate-700">App (à venir)</p>
+              <LogoutButton />
+            </div>
+          } />
       </Route>
 
       {/* Fallback */}

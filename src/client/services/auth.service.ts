@@ -35,6 +35,13 @@ export async function refreshToken(signal?: AbortSignal): Promise<AuthTokenRespo
   return res.json() as Promise<AuthTokenResponse>
 }
 
+export async function logout(): Promise<void> {
+  await fetch('/api/auth/logout', {
+    method: 'POST',
+    credentials: 'include',
+  })
+}
+
 export async function login(payload: RegisterPayload): Promise<AuthTokenResponse> {
   const res = await fetch('/api/auth/login', {
     method: 'POST',
