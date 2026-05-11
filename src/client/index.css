@@ -284,7 +284,7 @@
 
   /* En v4, @apply ne peut pas référencer des classes @layer components — on inline les styles */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-button font-medium text-body-sm transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-eco-600 text-white hover:bg-eco-700 active:bg-eco-800 focus-visible:ring-eco-600;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-button font-medium text-body-sm transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-eco-700 text-white hover:bg-eco-800 active:bg-eco-900 focus-visible:ring-eco-600;
     min-height: 48px;
   }
 
