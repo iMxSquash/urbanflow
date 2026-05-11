@@ -264,6 +264,13 @@ Pondérations ajustées par :
 - Commits conventionnels : `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`
 - PR obligatoire vers main (même en solo, pour l'historique)
 
+## Philosophie de résolution de problèmes
+
+Quand un comportement inattendu se produit (double appel, effet de bord, race condition...) :
+- **Ne jamais contourner** avec un flag, un guard ou un hack (ex: variable module-level pour bloquer un double appel)
+- **Chercher la cause racine** et la corriger proprement (ex: AbortController + cleanup dans useEffect)
+- Un contournement masque le problème et crée de la dette technique
+
 ## Ce qu'il ne faut PAS faire
 
 - PAS de microservices
