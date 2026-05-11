@@ -25,6 +25,16 @@ export async function register(payload: RegisterPayload): Promise<AuthTokenRespo
   return data as AuthTokenResponse
 }
 
+export async function refreshToken(signal?: AbortSignal): Promise<AuthTokenResponse | null> {
+  const res = await fetch('/api/auth/refresh', {
+    method: 'POST',
+    credentials: 'include',
+    signal,
+  })
+  if (!res.ok) return null
+  return res.json() as Promise<AuthTokenResponse>
+}
+
 export async function login(payload: RegisterPayload): Promise<AuthTokenResponse> {
   const res = await fetch('/api/auth/login', {
     method: 'POST',
