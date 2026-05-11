@@ -1,7 +1,59 @@
+import { lazy, Suspense } from 'react'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import LogoutButton from './components/LogoutButton'
+import ProtectedRoute from './components/ProtectedRoute'
+import { useAuthInit } from './hooks/useAuthInit'
+
+const LoginPage = lazy(() => import('./pages/LoginPage'))
+const RegisterPage = lazy(() => import('./pages/RegisterPage'))
+
+function PageSpinner() {
+  return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div
+        role="status"
+        aria-label="Chargement de la page"
+        className="w-8 h-8 border-4 border-eco-200 border-t-eco-700 rounded-full animate-spin"
+      />
+    </div>
+  )
+}
+
+function AppRoutes() {
+  const isInitialized = useAuthInit()
+
+  if (!isInitialized) {
+    return <PageSpinner />
+  }
+
+  return (
+    <Suspense fallback={<PageSpinner />}>
+      <Routes>
+        {/* Routes publiques */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+
+        {/* Routes protégées — redirige vers /login si non authentifié */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/" element={
+            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4">
+              <p className="text-slate-700">App (à venir)</p>
+              <LogoutButton />
+            </div>
+          } />
+        </Route>
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
+  )
+}
+
 export default function App() {
   return (
-    <div className="min-h-screen bg-eco-50 flex items-center justify-center">
-      <h1 className="text-2xl font-semibold text-eco-700">UrbanFlow SmartRoute</h1>
-    </div>
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
   )
 }
