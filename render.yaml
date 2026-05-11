@@ -19,7 +19,7 @@ services:
       - key: JWT_REFRESH_SECRET
         generateValue: true
       - key: CORS_ORIGIN
-        value: https://REMPLACER_PAR_URL_VERCEL.vercel.app
+        value: https://urbanflow-nu.vercel.app
       - key: TRANSPORT_PROVIDER
         value: demo
       - key: DEMO_MODE
