@@ -3,13 +3,14 @@ import * as authService from './auth.service.js'
 
 const REFRESH_COOKIE = 'refresh_token'
 
-const cookieOptions = {
+const cookieBase = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
   sameSite: 'strict' as const,
-  maxAge: 7 * 24 * 60 * 60 * 1000,
   path: '/',
 }
+
+const cookieOptions = { ...cookieBase, maxAge: 7 * 24 * 60 * 60 * 1000 }
 
 export async function register(req: Request, res: Response): Promise<void> {
   try {
@@ -61,6 +62,6 @@ export async function logout(req: Request, res: Response): Promise<void> {
   if (incomingToken) {
     await authService.logoutUser(incomingToken)
   }
-  res.clearCookie(REFRESH_COOKIE, { path: '/' })
+  res.clearCookie(REFRESH_COOKIE, cookieBase)
   res.status(204).send()
 }
