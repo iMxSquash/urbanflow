@@ -42,7 +42,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 app.use('/api/auth', authRouter)
 
-app.get('/health', (_req, res) => {
+app.get(['/health', '/api/health'], (_req, res) => {
   res.json({ status: 'ok' })
 })
 
