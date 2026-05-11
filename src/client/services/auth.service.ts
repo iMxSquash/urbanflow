@@ -3,6 +3,11 @@ interface RegisterPayload {
   password: string
 }
 
+interface LoginPayload {
+  email: string
+  password: string
+}
+
 interface AuthTokenResponse {
   accessToken: string
 }
@@ -42,7 +47,7 @@ export async function logout(): Promise<void> {
   })
 }
 
-export async function login(payload: RegisterPayload): Promise<AuthTokenResponse> {
+export async function login(payload: LoginPayload): Promise<AuthTokenResponse> {
   const res = await fetch('/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
