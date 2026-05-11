@@ -12,7 +12,7 @@
     "dev:client": "vite",
     "dev:server": "tsx watch src/server/index.ts",
     "build": "tsc -b tsconfig.app.json && vite build",
-    "build:server": "tsc -p tsconfig.server.json && node --input-type=module -e \"import{cpSync}from'fs';cpSync('src/server/db/migrations','dist/server/db/migrations',{recursive:true})\"",
+    "build:server": "tsc -p tsconfig.server.json && node scripts/copy-migrations.mjs",
     "start": "node dist/server/index.js",
     "lint": "eslint .",
     "format": "prettier --write \"src/**/*.{ts,tsx,json}\"",
