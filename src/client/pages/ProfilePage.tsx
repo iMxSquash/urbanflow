@@ -68,6 +68,14 @@ const MODE_OPTIONS: Array<{
     selectedText: 'text-eco-700',
   },
   {
+    value: 'scooter',
+    label: 'Trottinette',
+    icon: '🛴',
+    selectedBg: 'bg-sky-50',
+    selectedBorder: 'border-sky-600',
+    selectedText: 'text-sky-700',
+  },
+  {
     value: 'tramway',
     label: 'Tramway',
     icon: '🚋',
