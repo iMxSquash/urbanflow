@@ -139,7 +139,7 @@ function ProfileForm({ profile }: { profile: MobilityProfile }) {
   const [form, setForm] = useState<FormState>({
     preference: profile.preference,
     modes: profile.preferredModes,
-    maxWalkMinutes: profile.maxWalkMinutes,
+    maxWalkMinutes: Math.max(5, profile.maxWalkMinutes),
     pmrAccessibility: profile.pmrAccessibility,
   })
 

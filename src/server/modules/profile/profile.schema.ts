@@ -8,7 +8,7 @@ export const updateProfileSchema = z.object({
   maxWalkMinutes: z
     .number()
     .int({ message: 'Nombre entier requis' })
-    .min(1, { message: 'Minimum 1 minute' })
+    .min(5, { message: 'Minimum 5 minutes' })
     .max(60, { message: 'Maximum 60 minutes' }),
   preference: z.enum(USER_PREFERENCES),
   pmrAccessibility: z.boolean(),

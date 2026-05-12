@@ -31,8 +31,12 @@ describe('updateProfileSchema', () => {
     expect(result.success).toBe(false)
   })
 
-  it('rejette maxWalkMinutes à 0', () => {
-    expect(updateProfileSchema.safeParse({ ...valid, maxWalkMinutes: 0 }).success).toBe(false)
+  it('rejette maxWalkMinutes inférieur à 5', () => {
+    expect(updateProfileSchema.safeParse({ ...valid, maxWalkMinutes: 4 }).success).toBe(false)
+  })
+
+  it('accepte maxWalkMinutes à 5 (borne minimale)', () => {
+    expect(updateProfileSchema.safeParse({ ...valid, maxWalkMinutes: 5 }).success).toBe(true)
   })
 
   it('rejette maxWalkMinutes supérieur à 60', () => {

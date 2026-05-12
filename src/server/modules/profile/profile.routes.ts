@@ -32,7 +32,7 @@ const router = Router()
  *           example: [walk, tramway, bike]
  *         maxWalkMinutes:
  *           type: integer
- *           minimum: 1
+ *           minimum: 5
  *           maximum: 60
  *           example: 15
  *         preference:
@@ -60,7 +60,7 @@ const router = Router()
  *           example: [walk, tramway, bike]
  *         maxWalkMinutes:
  *           type: integer
- *           minimum: 1
+ *           minimum: 5
  *           maximum: 60
  *           example: 15
  *         preference:
