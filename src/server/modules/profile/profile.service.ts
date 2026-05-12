@@ -8,7 +8,7 @@ interface ProfileRow {
   max_walk_minutes: number
   preference: string
   pmr_accessibility: boolean
-  updated_at: Date
+  updated_at: string | Date
 }
 
 const DEFAULT_PROFILE = {
@@ -32,7 +32,7 @@ function rowToProfile(row: ProfileRow): MobilityProfile {
     maxWalkMinutes: row.max_walk_minutes,
     preference: validPreference,
     pmrAccessibility: row.pmr_accessibility,
-    updatedAt: row.updated_at.toISOString(),
+    updatedAt: new Date(row.updated_at).toISOString(),
   }
 }
 

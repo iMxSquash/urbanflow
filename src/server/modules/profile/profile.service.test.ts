@@ -53,6 +53,16 @@ describe('getProfile', () => {
     expect(result.pmrAccessibility).toBe(false)
   })
 
+  it('convertit updated_at string (comportement pg sans type parser) en ISO string', async () => {
+    mockQuery.mockResolvedValueOnce({
+      rows: [{ ...BASE_ROW, updated_at: '2026-05-12T10:00:00.000Z' }],
+    })
+
+    const result = await getProfile(USER_ID)
+
+    expect(result.updatedAt).toBe('2026-05-12T10:00:00.000Z')
+  })
+
   it('passe le userId en paramètre de la requête SQL', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [] })
 
