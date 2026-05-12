@@ -73,6 +73,20 @@ export interface StopDepartures {
   departures: Departure[]
 }
 
+export interface MobilityProfile {
+  userId: string
+  preferredModes: TransportMode[]
+  maxWalkMinutes: number
+  preference: UserPreference
+  updatedAt: string
+}
+
+export interface UpdateProfileInput {
+  preferredModes: TransportMode[]
+  maxWalkMinutes: number
+  preference: UserPreference
+}
+
 export interface ApiResponse<T> {
   data: T
   meta?: Record<string, unknown>
