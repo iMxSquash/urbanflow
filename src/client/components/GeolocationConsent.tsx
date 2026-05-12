@@ -46,7 +46,6 @@ export const GeolocationConsent: FC<GeolocationConsentProps> = ({ onGrant, onDen
     <div
       className="fixed inset-0 z-modal flex items-end sm:items-center justify-center px-4 pb-4 sm:pb-0"
       style={{ backgroundColor: 'rgba(15, 23, 42, 0.5)' }}
-      aria-hidden="true"
     >
       {/* Dialog */}
       <div
