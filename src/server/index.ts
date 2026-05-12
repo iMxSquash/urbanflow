@@ -17,6 +17,7 @@ import swaggerUi from 'swagger-ui-express'
 import { runMigrations } from './db/migrate.js'
 import { swaggerSpec } from './config/swagger.js'
 import authRouter from './modules/auth/index.js'
+import profileRouter from './modules/profile/index.js'
 
 const app = express()
 const PORT = process.env.PORT ?? 3000
@@ -41,6 +42,7 @@ if (process.env.NODE_ENV === 'development') {
   app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 }
 app.use('/api/auth', authRouter)
+app.use('/api/profile', profileRouter)
 
 app.get(['/health', '/api/health'], (_req, res) => {
   res.json({ status: 'ok' })

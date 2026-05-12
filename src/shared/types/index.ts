@@ -5,9 +5,11 @@ export interface Coordinates {
   lng: number
 }
 
-export type TransportMode = 'walk' | 'bus' | 'tramway' | 'bike' | 'scooter'
+export const TRANSPORT_MODES = ['walk', 'bus', 'tramway', 'bike', 'scooter'] as const
+export type TransportMode = (typeof TRANSPORT_MODES)[number]
 
-export type UserPreference = 'eco' | 'fast' | 'balanced'
+export const USER_PREFERENCES = ['eco', 'fast', 'balanced'] as const
+export type UserPreference = (typeof USER_PREFERENCES)[number]
 
 export interface JourneyOptions {
   preference: UserPreference
