@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { logout } from '../services/auth.service'
 import { useAuthStore } from '../stores/auth.store'
+import { useProfileStore } from '../stores/profile.store'
 
 export default function LogoutButton() {
   const clearAuth = useAuthStore((s) => s.clearAuth)
+  const clearProfile = useProfileStore((s) => s.clearProfile)
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
 
@@ -13,6 +15,7 @@ export default function LogoutButton() {
     try {
       await logout()
     } finally {
+      clearProfile()
       clearAuth()
       navigate('/login', { replace: true })
     }

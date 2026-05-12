@@ -5,9 +5,11 @@ export interface Coordinates {
   lng: number
 }
 
-export type TransportMode = 'walk' | 'bus' | 'tramway' | 'bike' | 'scooter'
+export const TRANSPORT_MODES = ['walk', 'bus', 'tramway', 'bike', 'scooter'] as const
+export type TransportMode = (typeof TRANSPORT_MODES)[number]
 
-export type UserPreference = 'eco' | 'fast' | 'balanced'
+export const USER_PREFERENCES = ['eco', 'fast', 'balanced'] as const
+export type UserPreference = (typeof USER_PREFERENCES)[number]
 
 export interface JourneyOptions {
   preference: UserPreference
@@ -69,6 +71,22 @@ export interface StopDepartures {
   stopRef: string
   stopName: string
   departures: Departure[]
+}
+
+export interface MobilityProfile {
+  userId: string
+  preferredModes: TransportMode[]
+  maxWalkMinutes: number
+  preference: UserPreference
+  pmrAccessibility: boolean
+  updatedAt: string
+}
+
+export interface UpdateProfileInput {
+  preferredModes: TransportMode[]
+  maxWalkMinutes: number
+  preference: UserPreference
+  pmrAccessibility: boolean
 }
 
 export interface ApiResponse<T> {

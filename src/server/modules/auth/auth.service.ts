@@ -121,6 +121,11 @@ export async function refreshTokens(
   return { accessToken, refreshToken }
 }
 
+export async function deleteAccount(userId: string): Promise<void> {
+  // La suppression cascade sur mobility_profiles, trips, user_badges, refresh_tokens (ON DELETE CASCADE)
+  await pool.query('DELETE FROM users WHERE id = $1', [userId])
+}
+
 export async function logoutUser(incomingToken: string): Promise<void> {
   let payload: RefreshTokenPayload
   try {

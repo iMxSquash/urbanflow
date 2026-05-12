@@ -171,11 +171,11 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="text-center text-body-sm text-slate-600 mt-6">
-            Pas encore de compte ?{' '}
+          <div className="flex items-center justify-center gap-1 text-body-sm text-slate-600 mt-6">
+            Pas encore de compte ?
             <Link
               to="/register"
-              className="text-eco-700 font-medium underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-600 focus-visible:rounded"
+              className="inline-flex items-center px-1 min-h-[48px] text-eco-700 font-medium underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-600 focus-visible:rounded"
             >
               Créer un compte
             </Link>
