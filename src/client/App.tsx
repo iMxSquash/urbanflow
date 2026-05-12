@@ -6,6 +6,7 @@ import { useAuthInit } from './hooks/useAuthInit'
 
 const LoginPage = lazy(() => import('./pages/LoginPage'))
 const RegisterPage = lazy(() => import('./pages/RegisterPage'))
+const ProfilePage = lazy(() => import('./pages/ProfilePage'))
 
 function PageSpinner() {
   return (
@@ -41,6 +42,7 @@ function AppRoutes() {
               <LogoutButton />
             </div>
           } />
+          <Route path="/profile" element={<ProfilePage />} />
         </Route>
 
         {/* Fallback */}

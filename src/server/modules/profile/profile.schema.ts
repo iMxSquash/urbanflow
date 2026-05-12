@@ -11,6 +11,7 @@ export const updateProfileSchema = z.object({
     .min(1, { message: 'Minimum 1 minute' })
     .max(60, { message: 'Maximum 60 minutes' }),
   preference: z.enum(USER_PREFERENCES),
+  pmrAccessibility: z.boolean(),
 })
 
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>

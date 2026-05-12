@@ -18,6 +18,7 @@ export async function updateProfile(req: Request, res: Response): Promise<void> 
       preferredModes: input.preferredModes,
       maxWalkMinutes: input.maxWalkMinutes,
       preference: input.preference,
+      pmrAccessibility: input.pmrAccessibility,
     })
     res.status(200).json(profile)
   } catch {

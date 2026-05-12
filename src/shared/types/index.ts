@@ -78,6 +78,7 @@ export interface MobilityProfile {
   preferredModes: TransportMode[]
   maxWalkMinutes: number
   preference: UserPreference
+  pmrAccessibility: boolean
   updatedAt: string
 }
 
@@ -85,6 +86,7 @@ export interface UpdateProfileInput {
   preferredModes: TransportMode[]
   maxWalkMinutes: number
   preference: UserPreference
+  pmrAccessibility: boolean
 }
 
 export interface ApiResponse<T> {
