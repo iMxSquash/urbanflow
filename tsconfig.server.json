@@ -4,6 +4,7 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "composite": true,
+    "rootDir": "./src",
     "outDir": "./dist/server",
     "types": ["node"],
     "paths": {
