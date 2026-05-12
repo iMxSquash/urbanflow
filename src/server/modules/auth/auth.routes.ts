@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
 import { validate } from '../../middleware/validate.js'
+import { authGuard } from '../../middleware/auth-guard.js'
 import { registerSchema, loginSchema } from './auth.schema.js'
 import * as authController from './auth.controller.js'
 
@@ -166,5 +167,36 @@ router.post('/refresh', refreshRateLimit, authController.refresh)
  *         description: Déconnexion réussie
  */
 router.post('/logout', refreshRateLimit, authController.logout)
+
+/**
+ * @swagger
+ * /api/auth/me:
+ *   delete:
+ *     summary: Suppression du compte — droit à l'effacement RGPD
+ *     description: >
+ *       Supprime définitivement le compte de l'utilisateur connecté ainsi que
+ *       toutes ses données associées (profil de mobilité, trajets, badges,
+ *       tokens de rafraîchissement) par cascade SQL.
+ *       Conformément à l'article 17 du RGPD (droit à l'effacement).
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       204:
+ *         description: Compte supprimé avec succès
+ *       401:
+ *         description: Token manquant ou invalide
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Erreur interne du serveur
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.delete('/me', authGuard, authController.deleteAccount)
 
 export default router
