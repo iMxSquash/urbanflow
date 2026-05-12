@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useProfileStore } from '../stores/profile.store'
 import type { MobilityProfile, TransportMode, UserPreference } from '@shared/types/index'
@@ -135,6 +135,7 @@ interface FormState {
 
 function ProfileForm({ profile }: { profile: MobilityProfile }) {
   const updateProfile = useProfileStore((s) => s.updateProfile)
+  const radioGroupRef = useRef<HTMLDivElement>(null)
 
   const [form, setForm] = useState<FormState>({
     preference: profile.preference,
@@ -146,6 +147,18 @@ function ProfileForm({ profile }: { profile: MobilityProfile }) {
   const [isSaving, setIsSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+
+  function handleRadioKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) return
+    e.preventDefault()
+    const currentIndex = PREF_OPTIONS.findIndex((opt) => opt.value === form.preference)
+    const delta = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : -1
+    const nextIndex = (currentIndex + delta + PREF_OPTIONS.length) % PREF_OPTIONS.length
+    const nextValue = PREF_OPTIONS[nextIndex].value
+    setForm((f) => ({ ...f, preference: nextValue }))
+    const buttons = radioGroupRef.current?.querySelectorAll<HTMLButtonElement>('[role="radio"]')
+    buttons?.[nextIndex]?.focus()
+  }
 
   function toggleMode(mode: TransportMode) {
     setForm((prev) => {
@@ -189,9 +202,11 @@ function ProfileForm({ profile }: { profile: MobilityProfile }) {
         </p>
 
         <div
+          ref={radioGroupRef}
           role="radiogroup"
           aria-labelledby="pref-heading"
           className="grid grid-cols-3 gap-3"
+          onKeyDown={handleRadioKeyDown}
         >
           {PREF_OPTIONS.map((opt) => {
             const isSelected = form.preference === opt.value
@@ -201,6 +216,7 @@ function ProfileForm({ profile }: { profile: MobilityProfile }) {
                 type="button"
                 role="radio"
                 aria-checked={isSelected}
+                tabIndex={isSelected ? 0 : -1}
                 onClick={() => setForm((f) => ({ ...f, preference: opt.value }))}
                 className={[
                   'flex flex-col items-center text-center gap-1.5 p-3 rounded-card border-2 w-full',
