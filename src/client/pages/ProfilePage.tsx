@@ -255,7 +255,7 @@ export default function ProfilePage() {
                     >
                       <span aria-hidden="true" className="text-2xl leading-none">{opt.icon}</span>
                       <span className="text-body-sm font-semibold">{opt.label}</span>
-                      <span className="text-caption leading-snug">{opt.description}</span>
+                      <span className="text-caption leading-snug hidden sm:block">{opt.description}</span>
                     </button>
                   )
                 })}
