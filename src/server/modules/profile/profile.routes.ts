@@ -39,13 +39,17 @@ const router = Router()
  *           type: string
  *           enum: [eco, fast, balanced]
  *           example: eco
+ *         pmrAccessibility:
+ *           type: boolean
+ *           description: Filtre les itinéraires selon l'accessibilité PMR
+ *           example: false
  *         updatedAt:
  *           type: string
  *           format: date-time
  *           example: '2026-05-12T10:30:00.000Z'
  *     UpdateProfileInput:
  *       type: object
- *       required: [preferredModes, maxWalkMinutes, preference]
+ *       required: [preferredModes, maxWalkMinutes, preference, pmrAccessibility]
  *       properties:
  *         preferredModes:
  *           type: array
@@ -63,6 +67,10 @@ const router = Router()
  *           type: string
  *           enum: [eco, fast, balanced]
  *           example: eco
+ *         pmrAccessibility:
+ *           type: boolean
+ *           description: Filtre les itinéraires selon l'accessibilité PMR
+ *           example: false
  */
 
 /**
