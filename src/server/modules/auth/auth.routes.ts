@@ -4,10 +4,20 @@ import { validate } from '../../middleware/validate.js'
 import { registerSchema, loginSchema } from './auth.schema.js'
 import * as authController from './auth.controller.js'
 
-const authRateLimit = rateLimit({
+// Credentials : 5 req/15min — protège contre le credential stuffing
+const credentialsRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 5,
   message: { error: 'Trop de tentatives, réessayez dans 15 minutes' },
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+})
+
+// Refresh : 60 req/15min — déclenché automatiquement à chaque chargement d'app
+const refreshRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 60,
+  message: { error: 'Trop de requêtes, réessayez plus tard' },
   standardHeaders: 'draft-8',
   legacyHeaders: false,
 })
@@ -70,7 +80,7 @@ const router = Router()
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/register', authRateLimit, validate(registerSchema), authController.register)
+router.post('/register', credentialsRateLimit, validate(registerSchema), authController.register)
 
 /**
  * @swagger
@@ -119,7 +129,7 @@ router.post('/register', authRateLimit, validate(registerSchema), authController
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/login', authRateLimit, validate(loginSchema), authController.login)
+router.post('/login', credentialsRateLimit, validate(loginSchema), authController.login)
 
 /**
  * @swagger
@@ -141,7 +151,7 @@ router.post('/login', authRateLimit, validate(loginSchema), authController.login
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/refresh', authRateLimit, authController.refresh)
+router.post('/refresh', refreshRateLimit, authController.refresh)
 
 /**
  * @swagger
@@ -155,6 +165,6 @@ router.post('/refresh', authRateLimit, authController.refresh)
  *       204:
  *         description: Déconnexion réussie
  */
-router.post('/logout', authRateLimit, authController.logout)
+router.post('/logout', refreshRateLimit, authController.logout)
 
 export default router
