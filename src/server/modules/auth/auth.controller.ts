@@ -60,6 +60,7 @@ export async function refresh(req: Request, res: Response): Promise<void> {
 export async function deleteAccount(req: Request, res: Response): Promise<void> {
   try {
     await authService.deleteAccount(req.user!.sub)
+    res.clearCookie(REFRESH_COOKIE, cookieBase)
     res.status(204).send()
   } catch {
     res.status(500).json({ error: 'Erreur interne du serveur' })
