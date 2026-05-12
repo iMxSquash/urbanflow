@@ -187,7 +187,7 @@ export default function ProfilePage() {
           <Link
             to="/"
             aria-label="Retour à la carte"
-            className="shrink-0 w-10 h-10 flex items-center justify-center rounded-button text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-fast"
+            className="shrink-0 w-12 h-12 flex items-center justify-center rounded-button text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-fast"
           >
             <svg
               aria-hidden="true"
@@ -294,7 +294,7 @@ export default function ProfilePage() {
                         isOnlyMode ? 'opacity-60 cursor-not-allowed' : '',
                         isSelected
                           ? `${mode.selectedBg} ${mode.selectedBorder} ${mode.selectedText}`
-                          : 'bg-white border-slate-200 text-slate-400 hover:bg-slate-50 hover:text-slate-600',
+                          : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50',
                       ].join(' ')}
                     >
                       <span aria-hidden="true">{mode.icon}</span>
