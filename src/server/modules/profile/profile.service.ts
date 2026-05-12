@@ -1,6 +1,6 @@
 import { pool } from '../../db/pool.js'
 import type { MobilityProfile } from './profile.types.js'
-import type { TransportMode, UserPreference } from '../../../shared/types/index.js'
+import { TRANSPORT_MODES, USER_PREFERENCES, type TransportMode, type UserPreference } from '../../../shared/types/index.js'
 
 interface ProfileRow {
   user_id: string
@@ -11,22 +11,29 @@ interface ProfileRow {
   updated_at: Date
 }
 
-function rowToProfile(row: ProfileRow): MobilityProfile {
-  return {
-    userId: row.user_id,
-    preferredModes: row.preferred_modes as TransportMode[],
-    maxWalkMinutes: row.max_walk_minutes,
-    preference: row.preference as UserPreference,
-    pmrAccessibility: row.pmr_accessibility,
-    updatedAt: row.updated_at.toISOString(),
-  }
-}
-
 const DEFAULT_PROFILE = {
   preferredModes: ['walk', 'tramway', 'bus'] as TransportMode[],
   maxWalkMinutes: 15,
   preference: 'balanced' as UserPreference,
   pmrAccessibility: false,
+}
+
+function rowToProfile(row: ProfileRow): MobilityProfile {
+  const validModes = row.preferred_modes.filter(
+    (m): m is TransportMode => (TRANSPORT_MODES as readonly string[]).includes(m),
+  )
+  const validPreference = (USER_PREFERENCES as readonly string[]).includes(row.preference)
+    ? (row.preference as UserPreference)
+    : DEFAULT_PROFILE.preference
+
+  return {
+    userId: row.user_id,
+    preferredModes: validModes.length > 0 ? validModes : DEFAULT_PROFILE.preferredModes,
+    maxWalkMinutes: row.max_walk_minutes,
+    preference: validPreference,
+    pmrAccessibility: row.pmr_accessibility,
+    updatedAt: row.updated_at.toISOString(),
+  }
 }
 
 export async function getProfile(userId: string): Promise<MobilityProfile> {
