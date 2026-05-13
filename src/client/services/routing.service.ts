@@ -1,11 +1,29 @@
 import { apiFetch } from '../utils/api-client'
-import type { Coordinates, Journey } from '@shared/types/index'
+import type { Coordinates, Journey, TransportMode, UserPreference } from '@shared/types/index'
 
-export async function planJourney(from: Coordinates, to: Coordinates): Promise<Journey[]> {
+export interface JourneyProfile {
+  preference: UserPreference
+  preferredModes: TransportMode[]
+  maxWalkMinutes: number
+}
+
+export async function planJourney(
+  from: Coordinates,
+  to: Coordinates,
+  profile?: JourneyProfile,
+): Promise<Journey[]> {
   const res = await apiFetch('/api/routing/journey', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from, to }),
+    body: JSON.stringify({
+      from,
+      to,
+      ...(profile ? {
+        preference: profile.preference,
+        preferredModes: profile.preferredModes,
+        maxWalkMinutes: profile.maxWalkMinutes,
+      } : {}),
+    }),
   })
 
   const data: unknown = await res.json()

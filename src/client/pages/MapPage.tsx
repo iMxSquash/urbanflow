@@ -14,6 +14,7 @@ import { useGeolocation } from '../hooks/useGeolocation'
 import { useJourney } from '../hooks/useJourney'
 import { useConsentStore } from '../stores/consent.store'
 import { useMapLayersStore } from '../stores/map-layers.store'
+import { useProfileStore } from '../stores/profile.store'
 import type { Coordinates } from '@shared/types/index'
 
 const BiclooLayer = lazy(() => import('../components/BiclooLayer'))
@@ -32,6 +33,7 @@ export default function MapPage() {
   const [addressPosition, setAddressPosition] = useState<Coordinates | null>(null)
   const { journey, loading: journeyLoading, error: journeyError, calculate, clear: clearJourney } = useJourney()
   const { layers } = useMapLayersStore()
+  const { profile } = useProfileStore()
   const locatedOnMount = useRef(false)
 
   // Si le consentement était déjà accordé (session persistée), localiser au mount
@@ -49,7 +51,12 @@ export default function MapPage() {
   }
 
   function handleDestinationSelect(dest: Coordinates) {
-    if (userPosition) void calculate(userPosition, dest)
+    if (!userPosition) return
+    void calculate(userPosition, dest, profile ? {
+      preference: profile.preference,
+      preferredModes: profile.preferredModes,
+      maxWalkMinutes: profile.maxWalkMinutes,
+    } : undefined)
   }
 
   // Position effective : géoloc en priorité, sinon adresse saisie manuellement

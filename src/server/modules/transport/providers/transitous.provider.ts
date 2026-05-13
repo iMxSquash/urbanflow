@@ -1,4 +1,4 @@
-import type { Coordinates, Journey, JourneyOptions, JourneySegment, TransportMode } from '@shared/types/index.js'
+import type { Coordinates, Journey, JourneyOptions, JourneySegment, TransportMode, UserPreference } from '@shared/types/index.js'
 import { CO2_FACTORS } from '@shared/constants/co2-factors.js'
 import type { TransportProvider } from '../transport-provider.interface.js'
 
@@ -19,6 +19,7 @@ interface OtpLeg {
   routeShortName?: string
   routeLongName?: string
   headsign?: string
+  legGeometry?: { points: string; precision?: number }
 }
 
 interface OtpItinerary {
@@ -32,6 +33,25 @@ interface OtpResponse {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function decodePolyline(encoded: string, precision = 5): { lat: number; lng: number }[] {
+  const factor = 10 ** precision
+  const result: { lat: number; lng: number }[] = []
+  let index = 0, lat = 0, lng = 0
+
+  while (index < encoded.length) {
+    let b: number, shift = 0, n = 0
+    do { b = encoded.charCodeAt(index++) - 63; n |= (b & 0x1f) << shift; shift += 5 } while (b >= 0x20)
+    lat += n & 1 ? ~(n >> 1) : n >> 1
+
+    shift = 0; n = 0
+    do { b = encoded.charCodeAt(index++) - 63; n |= (b & 0x1f) << shift; shift += 5 } while (b >= 0x20)
+    lng += n & 1 ? ~(n >> 1) : n >> 1
+
+    result.push({ lat: lat / factor, lng: lng / factor })
+  }
+  return result
+}
 
 function haversineKm(a: { lat: number; lon: number }, b: { lat: number; lon: number }): number {
   const R = 6371
@@ -64,7 +84,36 @@ function modeLabel(mode: TransportMode): string {
   return labels[mode]
 }
 
-function mapItinerary(itin: OtpItinerary, idx: number): Journey {
+// ─── Scoring multicritères ────────────────────────────────────────────────────
+
+function scoringWeights(preference: UserPreference): { duration: number; co2: number; comfort: number } {
+  switch (preference) {
+    case 'eco':      return { duration: 0.2, co2: 0.7, comfort: 0.1 }
+    case 'fast':     return { duration: 0.7, co2: 0.2, comfort: 0.1 }
+    default:         return { duration: 0.4, co2: 0.5, comfort: 0.1 }
+  }
+}
+
+function computeComfortScore(
+  segments: JourneySegment[],
+  preferredModes: TransportMode[],
+  maxWalkMinutes: number,
+): number {
+  // Ratio de segments utilisant un mode préféré
+  let base = preferredModes.length > 0
+    ? Math.round((segments.filter(s => preferredModes.includes(s.mode)).length / segments.length) * 100)
+    : 50
+
+  // Pénalité si un segment de marche dépasse la tolérance utilisateur
+  const maxWalkSeg = segments
+    .filter(s => s.mode === 'walk')
+    .reduce((max, s) => Math.max(max, s.durationMin), 0)
+  if (maxWalkSeg > maxWalkMinutes) base = Math.max(0, base - 40)
+
+  return base
+}
+
+function mapItinerary(itin: OtpItinerary, idx: number, options: JourneyOptions): Journey {
   const segments: JourneySegment[] = itin.legs.map((leg): JourneySegment => {
     const mode = otpModeToTransportMode(leg.mode)
     const distKm = Math.round(
@@ -77,6 +126,10 @@ function mapItinerary(itin: OtpItinerary, idx: number): Journey {
       ? `${leg.routeShortName}${leg.headsign ? ` — ${leg.headsign}` : ''}`
       : undefined
 
+    const shape = leg.legGeometry?.points
+      ? decodePolyline(leg.legGeometry.points, leg.legGeometry.precision ?? 5)
+      : undefined
+
     return {
       mode,
       from: { lat: leg.from.lat, lng: leg.from.lon },
@@ -86,6 +139,7 @@ function mapItinerary(itin: OtpItinerary, idx: number): Journey {
       co2g,
       ...(leg.routeShortName ? { lineRef: leg.routeShortName } : {}),
       ...(lineName            ? { lineName }                   : {}),
+      ...(shape               ? { shape }                      : {}),
     }
   })
 
@@ -94,10 +148,12 @@ function mapItinerary(itin: OtpItinerary, idx: number): Journey {
   const totalCo2g         = segments.reduce((s, seg) => s + seg.co2g, 0)
   const co2SavingG        = Math.max(0, Math.round(totalDistanceKm * CO2_FACTORS.car) - totalCo2g)
 
-  const durationScore     = Math.max(0, 100 - (totalDurationMin / 120) * 100)
-  const maxCo2            = totalDistanceKm * CO2_FACTORS.car
-  const co2Score          = maxCo2 > 0 ? Math.max(0, (1 - totalCo2g / maxCo2) * 100) : 100
-  const score             = Math.round(0.4 * durationScore + 0.6 * co2Score)
+  const w             = scoringWeights(options.preference)
+  const durationScore = Math.max(0, 100 - (totalDurationMin / 120) * 100)
+  const maxCo2        = totalDistanceKm * CO2_FACTORS.car
+  const co2Score      = maxCo2 > 0 ? Math.max(0, (1 - totalCo2g / maxCo2) * 100) : 100
+  const comfort       = computeComfortScore(segments, options.modes ?? [], options.maxWalkMinutes ?? 30)
+  const score         = Math.round(w.duration * durationScore + w.co2 * co2Score + w.comfort * comfort)
 
   const usedModes = [...new Set(segments.map((s) => s.mode))]
   const label     = usedModes.map(modeLabel).join(' + ')
@@ -122,7 +178,7 @@ export class TransitousProvider implements TransportProvider {
   async getJourneys(
     from: Coordinates,
     to: Coordinates,
-    _options: JourneyOptions,
+    options: JourneyOptions,
   ): Promise<Journey[]> {
     const params = new URLSearchParams({
       fromPlace:      `${from.lat},${from.lng}`,
@@ -162,7 +218,7 @@ export class TransitousProvider implements TransportProvider {
     }
 
     const itineraries = raw.itineraries ?? []
-    const journeys = itineraries.map((itin, idx) => mapItinerary(itin, idx))
+    const journeys = itineraries.map((itin, idx) => mapItinerary(itin, idx, options))
     console.log(`[routing] TransitousProvider: ${journeys.length} itinéraires mappés`)
     return journeys
   }

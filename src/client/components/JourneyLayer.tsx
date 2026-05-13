@@ -15,10 +15,11 @@ export function JourneyLayer({ journey }: { journey: Journey }) {
   const map = useMap()
 
   useEffect(() => {
-    const points = journey.segments.flatMap((s) => [
-      L.latLng(s.from.lat, s.from.lng),
-      L.latLng(s.to.lat, s.to.lng),
-    ])
+    const points = journey.segments.flatMap((s) =>
+      s.shape && s.shape.length >= 2
+        ? s.shape.map((c) => L.latLng(c.lat, c.lng))
+        : [L.latLng(s.from.lat, s.from.lng), L.latLng(s.to.lat, s.to.lng)]
+    )
     if (points.length > 0) {
       map.fitBounds(L.latLngBounds(points), { padding: [48, 48] })
     }
@@ -26,23 +27,27 @@ export function JourneyLayer({ journey }: { journey: Journey }) {
 
   return (
     <>
-      {journey.segments.map((segment, idx) => (
-        <Polyline
-          key={idx}
-          positions={[
-            [segment.from.lat, segment.from.lng],
-            [segment.to.lat, segment.to.lng],
-          ]}
-          pathOptions={{
-            color: MODE_COLORS[segment.mode],
-            weight: segment.mode === 'walk' ? 3 : 5,
-            opacity: 0.9,
-            dashArray: segment.mode === 'walk' ? '5 9' : undefined,
-            lineCap: 'round',
-            lineJoin: 'round',
-          }}
-        />
-      ))}
+      {journey.segments.map((segment, idx) => {
+        const positions: [number, number][] =
+          segment.shape && segment.shape.length >= 2
+            ? segment.shape.map((c) => [c.lat, c.lng])
+            : [[segment.from.lat, segment.from.lng], [segment.to.lat, segment.to.lng]]
+
+        return (
+          <Polyline
+            key={idx}
+            positions={positions}
+            pathOptions={{
+              color: MODE_COLORS[segment.mode],
+              weight: segment.mode === 'walk' ? 3 : 5,
+              opacity: 0.9,
+              dashArray: segment.mode === 'walk' ? '5 9' : undefined,
+              lineCap: 'round',
+              lineJoin: 'round',
+            }}
+          />
+        )
+      })}
     </>
   )
 }

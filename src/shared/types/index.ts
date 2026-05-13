@@ -14,7 +14,8 @@ export type UserPreference = (typeof USER_PREFERENCES)[number]
 export interface JourneyOptions {
   preference: UserPreference
   departureTime?: Date
-  modes?: TransportMode[]
+  modes?: TransportMode[]       // modes préférés — influence le score confort
+  maxWalkMinutes?: number       // pénalité si segment marche dépasse ce seuil
 }
 
 export interface JourneySegment {
@@ -26,6 +27,7 @@ export interface JourneySegment {
   co2g: number
   lineRef?: string
   lineName?: string
+  shape?: Coordinates[]   // tracé réel décodé depuis legGeometry
 }
 
 export interface Journey {
