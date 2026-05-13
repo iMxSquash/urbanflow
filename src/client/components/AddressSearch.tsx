@@ -14,9 +14,10 @@ const NANTES_VIEWBOX = '-2.1,47.0,-1.0,47.5'
 
 interface AddressSearchProps {
   onSelect: (coords: Coordinates) => void
+  placeholder?: string
 }
 
-export function AddressSearch({ onSelect }: AddressSearchProps) {
+export function AddressSearch({ onSelect, placeholder = 'Rechercher une adresse de départ...' }: AddressSearchProps) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<NominatimResult[]>([])
   const [loading, setLoading] = useState(false)
@@ -126,7 +127,7 @@ export function AddressSearch({ onSelect }: AddressSearchProps) {
           onKeyDown={handleKeyDown}
           onFocus={() => results.length > 0 && setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
-          placeholder="Rechercher une adresse de départ..."
+          placeholder={placeholder}
           autoComplete="off"
           className="input pl-9 bg-white shadow-card-md"
         />

@@ -5,9 +5,12 @@ import { MapContainer, TileLayer } from 'react-leaflet'
 import { Link } from 'react-router-dom'
 import { AddressSearch } from '../components/AddressSearch'
 import { GeolocationConsent } from '../components/GeolocationConsent'
+import { JourneyLayer } from '../components/JourneyLayer'
+import { JourneyPanel } from '../components/JourneyPanel'
 import LogoutButton from '../components/LogoutButton'
 import { UserLocationMarker } from '../components/UserLocationMarker'
 import { useGeolocation } from '../hooks/useGeolocation'
+import { useJourney } from '../hooks/useJourney'
 import { useConsentStore } from '../stores/consent.store'
 import type { Coordinates } from '@shared/types/index'
 
@@ -23,6 +26,7 @@ export default function MapPage() {
   const { geolocationConsent, grantGeolocation, denyGeolocation } = useConsentStore()
   const { position: geoPosition, error: geoError, loading: geoLoading, locate } = useGeolocation()
   const [addressPosition, setAddressPosition] = useState<Coordinates | null>(null)
+  const { journey, loading: journeyLoading, error: journeyError, calculate, clear: clearJourney } = useJourney()
   const locatedOnMount = useRef(false)
 
   // Si le consentement était déjà accordé (session persistée), localiser au mount
@@ -39,11 +43,17 @@ export default function MapPage() {
     locate()
   }
 
+  function handleDestinationSelect(dest: Coordinates) {
+    if (userPosition) void calculate(userPosition, dest)
+  }
+
   // Position effective : géoloc en priorité, sinon adresse saisie manuellement
   const userPosition = geoPosition ?? addressPosition
 
   const showAddressSearch = geolocationConsent === 'denied' && !geoPosition
   const showGeoError = !!geoError && !geoLoading && geolocationConsent !== 'denied'
+  // Barre de destination : visible dès qu'on a une position de départ et pas de trajet actif
+  const showDestSearch = !!userPosition && !journey && !journeyLoading
 
   return (
     <div className="flex flex-col h-screen">
@@ -82,10 +92,42 @@ export default function MapPage() {
         role="application"
         aria-label="Carte de mobilité de Nantes"
       >
-        {/* Barre de recherche d'adresse (consentement refusé) */}
+        {/* Barre de départ (consentement refusé, pas encore de position) */}
         {showAddressSearch && (
           <div className="absolute top-3 left-3 right-3 z-[1100]">
             <AddressSearch onSelect={setAddressPosition} />
+          </div>
+        )}
+
+        {/* Barre de destination */}
+        {showDestSearch && (
+          <div className={['absolute left-3 right-3 z-[1100]', showAddressSearch ? 'top-16' : 'top-3'].join(' ')}>
+            <AddressSearch onSelect={handleDestinationSelect} placeholder="Où allez-vous ?" />
+          </div>
+        )}
+
+        {/* Indicateur de calcul d'itinéraire */}
+        {journeyLoading && (
+          <div
+            role="status"
+            aria-label="Calcul de l'itinéraire en cours"
+            className="absolute top-3 left-1/2 -translate-x-1/2 z-[1100] bg-white rounded-full px-4 py-2 shadow-card flex items-center gap-2 text-body-sm text-slate-600 whitespace-nowrap"
+          >
+            <div className="w-4 h-4 border-2 border-slate-200 border-t-eco-600 rounded-full animate-spin" aria-hidden="true" />
+            Calcul de l'itinéraire…
+          </div>
+        )}
+
+        {/* Bannière d'erreur itinéraire */}
+        {journeyError && !journeyLoading && (
+          <div
+            role="alert"
+            className="absolute top-3 left-3 right-3 z-[1100] bg-white rounded-card shadow-card-md border border-red-100 px-4 py-3 flex items-center justify-between gap-3"
+          >
+            <p className="text-body-sm text-red-600 truncate">{journeyError}</p>
+            <button type="button" onClick={clearJourney} className="btn-ghost text-caption px-3 shrink-0" style={{ minHeight: '36px' }}>
+              Fermer
+            </button>
           </div>
         )}
 
@@ -162,7 +204,11 @@ export default function MapPage() {
             <BiclooLayer />
           </Suspense>
           {userPosition && <UserLocationMarker position={userPosition} />}
+          {journey && <JourneyLayer journey={journey} />}
         </MapContainer>
+
+        {/* Panneau itinéraire */}
+        {journey && <JourneyPanel journey={journey} onClose={clearJourney} />}
       </main>
 
       {/* Modale de consentement RGPD — portail dans <body> pour échapper au stacking context Leaflet */}
