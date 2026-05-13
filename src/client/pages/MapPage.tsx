@@ -1,7 +1,10 @@
 import 'leaflet/dist/leaflet.css'
+import { lazy, Suspense } from 'react'
 import { MapContainer, TileLayer } from 'react-leaflet'
 import { Link } from 'react-router-dom'
 import LogoutButton from '../components/LogoutButton'
+
+const BiclooLayer = lazy(() => import('../components/BiclooLayer'))
 
 const NANTES_COMMERCE: [number, number] = [47.218, -1.553]
 const CARTO_POSITRON = 'https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
@@ -34,6 +37,9 @@ export default function MapPage() {
           zoomControl
         >
           <TileLayer url={CARTO_POSITRON} attribution={CARTO_ATTRIBUTION} />
+          <Suspense fallback={null}>
+            <BiclooLayer />
+          </Suspense>
         </MapContainer>
       </main>
     </div>
