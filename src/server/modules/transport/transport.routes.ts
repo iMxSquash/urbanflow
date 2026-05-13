@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import * as biclooController from './bicloo.controller.js'
+import * as tanController from './tan.controller.js'
 
 /**
  * @swagger
@@ -67,5 +68,7 @@ import * as biclooController from './bicloo.controller.js'
 const router = Router()
 
 router.get('/bicloo-stations', biclooController.getBiclooStations)
+router.get('/tan-lines', tanController.getTanLines)
+router.get('/tan-stops', tanController.getTanStops)
 
 export default router

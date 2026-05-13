@@ -17,6 +17,8 @@ import { useMapLayersStore } from '../stores/map-layers.store'
 import type { Coordinates } from '@shared/types/index'
 
 const BiclooLayer = lazy(() => import('../components/BiclooLayer'))
+const TanLinesLayer = lazy(() => import('../components/TanLinesLayer'))
+const TanStopsLayer = lazy(() => import('../components/TanStopsLayer'))
 
 const NANTES_COMMERCE: [number, number] = [47.218, -1.553]
 const CARTO_POSITRON = 'https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
@@ -203,6 +205,16 @@ export default function MapPage() {
           attributionControl={false}
         >
           <TileLayer url={CARTO_POSITRON} attribution={CARTO_ATTRIBUTION} />
+          {layers.tanLines && (
+            <Suspense fallback={null}>
+              <TanLinesLayer />
+            </Suspense>
+          )}
+          {layers.tanStops && (
+            <Suspense fallback={null}>
+              <TanStopsLayer />
+            </Suspense>
+          )}
           {layers.bikesharing && (
             <Suspense fallback={null}>
               <BiclooLayer />
