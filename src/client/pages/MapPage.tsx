@@ -7,11 +7,13 @@ import { AddressSearch } from '../components/AddressSearch'
 import { GeolocationConsent } from '../components/GeolocationConsent'
 import { JourneyLayer } from '../components/JourneyLayer'
 import { JourneyPanel } from '../components/JourneyPanel'
+import { MapLayerToggle } from '../components/MapLayerToggle'
 import LogoutButton from '../components/LogoutButton'
 import { UserLocationMarker } from '../components/UserLocationMarker'
 import { useGeolocation } from '../hooks/useGeolocation'
 import { useJourney } from '../hooks/useJourney'
 import { useConsentStore } from '../stores/consent.store'
+import { useMapLayersStore } from '../stores/map-layers.store'
 import type { Coordinates } from '@shared/types/index'
 
 const BiclooLayer = lazy(() => import('../components/BiclooLayer'))
@@ -27,6 +29,7 @@ export default function MapPage() {
   const { position: geoPosition, error: geoError, loading: geoLoading, locate } = useGeolocation()
   const [addressPosition, setAddressPosition] = useState<Coordinates | null>(null)
   const { journey, loading: journeyLoading, error: journeyError, calculate, clear: clearJourney } = useJourney()
+  const { layers } = useMapLayersStore()
   const locatedOnMount = useRef(false)
 
   // Si le consentement était déjà accordé (session persistée), localiser au mount
@@ -200,12 +203,17 @@ export default function MapPage() {
           attributionControl={false}
         >
           <TileLayer url={CARTO_POSITRON} attribution={CARTO_ATTRIBUTION} />
-          <Suspense fallback={null}>
-            <BiclooLayer />
-          </Suspense>
+          {layers.bikesharing && (
+            <Suspense fallback={null}>
+              <BiclooLayer />
+            </Suspense>
+          )}
           {userPosition && <UserLocationMarker position={userPosition} />}
           {journey && <JourneyLayer journey={journey} />}
         </MapContainer>
+
+        {/* Sélecteur de calques */}
+        <MapLayerToggle hasJourney={!!journey} />
 
         {/* Panneau itinéraire */}
         {journey && <JourneyPanel journey={journey} onClose={clearJourney} />}

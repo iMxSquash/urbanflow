@@ -122,7 +122,7 @@ export class TransitousProvider implements TransportProvider {
   async getJourneys(
     from: Coordinates,
     to: Coordinates,
-    options: JourneyOptions,
+    _options: JourneyOptions,
   ): Promise<Journey[]> {
     const params = new URLSearchParams({
       fromPlace:      `${from.lat},${from.lng}`,
