@@ -90,9 +90,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-h2 font-bold text-slate-900">Créer un compte</h1>
-          <p className="mt-2 text-body-sm text-slate-600">
-            Rejoignez UrbanFlow SmartRoute
-          </p>
+          <p className="mt-2 text-body-sm text-slate-600">Rejoignez UrbanFlow SmartRoute</p>
         </div>
 
         <div className="card p-6 md:p-8">
@@ -105,16 +103,14 @@ export default function RegisterPage() {
             )}
           </div>
 
-          <form
-            onSubmit={handleSubmit}
-            aria-label="Formulaire d'inscription"
-            noValidate
-          >
+          <form onSubmit={handleSubmit} aria-label="Formulaire d'inscription" noValidate>
             {/* Email */}
             <div className="mb-4">
               <label htmlFor="register-email" className="label">
                 Adresse email
-                <span aria-hidden="true" className="text-red-600 ml-1">*</span>
+                <span aria-hidden="true" className="text-red-600 ml-1">
+                  *
+                </span>
               </label>
               <input
                 id="register-email"
@@ -144,7 +140,9 @@ export default function RegisterPage() {
             <div className="mb-4">
               <label htmlFor="register-password" className="label">
                 Mot de passe
-                <span aria-hidden="true" className="text-red-600 ml-1">*</span>
+                <span aria-hidden="true" className="text-red-600 ml-1">
+                  *
+                </span>
               </label>
               <input
                 id="register-password"
@@ -177,7 +175,9 @@ export default function RegisterPage() {
             <div className="mb-6">
               <label htmlFor="register-confirm" className="label">
                 Confirmer le mot de passe
-                <span aria-hidden="true" className="text-red-600 ml-1">*</span>
+                <span aria-hidden="true" className="text-red-600 ml-1">
+                  *
+                </span>
               </label>
               <input
                 id="register-confirm"

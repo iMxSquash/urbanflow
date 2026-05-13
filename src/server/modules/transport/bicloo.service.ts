@@ -50,12 +50,14 @@ async function fetchFromNantes(): Promise<BiclooStation[]> {
 
   const extra = remaining > 0 ? await fetchPage(100) : { results: [] as NantesStation[] }
 
-  return [...first.results, ...extra.results].map((s): BiclooStation => ({
-    id: `bicloo-${s.number}`,
-    name: s.name,
-    coordinates: { lat: s.position.lat, lng: s.position.lon },
-    availableBikes: parseInt(s.available_bikes, 10),
-    availableDocks: parseInt(s.available_bike_stands, 10),
-    totalDocks: s.bike_stands,
-  }))
+  return [...first.results, ...extra.results].map(
+    (s): BiclooStation => ({
+      id: `bicloo-${s.number}`,
+      name: s.name,
+      coordinates: { lat: s.position.lat, lng: s.position.lon },
+      availableBikes: parseInt(s.available_bikes, 10),
+      availableDocks: parseInt(s.available_bike_stands, 10),
+      totalDocks: s.bike_stands,
+    })
+  )
 }

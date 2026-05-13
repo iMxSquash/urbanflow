@@ -18,6 +18,6 @@ export const useConsentStore = create<ConsentState>()(
       denyGeolocation: () => set({ geolocationConsent: 'denied' }),
       resetGeolocation: () => set({ geolocationConsent: null }),
     }),
-    { name: 'urbanflow-consent' },
-  ),
+    { name: 'urbanflow-consent' }
+  )
 )

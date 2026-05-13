@@ -26,11 +26,7 @@ export function AddressSearch({ onSelect }: AddressSearchProps) {
   const abortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
-    if (query.length < 3) {
-      setResults([])
-      setOpen(false)
-      return
-    }
+    if (query.length < 3) return
 
     const timer = setTimeout(async () => {
       abortRef.current?.abort()
@@ -101,7 +97,12 @@ export function AddressSearch({ onSelect }: AddressSearchProps) {
         <span className="absolute left-3 text-slate-400 pointer-events-none" aria-hidden="true">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" strokeWidth="1.5" />
-            <path d="m10 10 2.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <path
+              d="m10 10 2.5 2.5"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
           </svg>
         </span>
         <input
@@ -114,7 +115,14 @@ export function AddressSearch({ onSelect }: AddressSearchProps) {
           aria-autocomplete="list"
           aria-activedescendant={activeIndex >= 0 ? `address-result-${activeIndex}` : undefined}
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            const val = e.target.value
+            setQuery(val)
+            if (val.length < 3) {
+              setResults([])
+              setOpen(false)
+            }
+          }}
           onKeyDown={handleKeyDown}
           onFocus={() => results.length > 0 && setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
@@ -145,7 +153,9 @@ export function AddressSearch({ onSelect }: AddressSearchProps) {
               onMouseDown={() => handleSelect(result)}
               title={result.display_name}
               className={`px-4 py-3 cursor-pointer text-body-sm border-b border-slate-50 last:border-0 truncate transition-colors duration-fast ${
-                index === activeIndex ? 'bg-eco-50 text-eco-800' : 'text-slate-700 hover:bg-slate-50'
+                index === activeIndex
+                  ? 'bg-eco-50 text-eco-800'
+                  : 'text-slate-700 hover:bg-slate-50'
               }`}
             >
               {result.display_name}

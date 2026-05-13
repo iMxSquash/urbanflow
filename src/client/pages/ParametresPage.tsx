@@ -6,9 +6,7 @@ function ConsentBadge({ granted }: { granted: boolean }) {
     <span
       className={[
         'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-caption font-medium',
-        granted
-          ? 'bg-eco-50 text-eco-700'
-          : 'bg-slate-100 text-slate-500',
+        granted ? 'bg-eco-50 text-eco-700' : 'bg-slate-100 text-slate-500',
       ].join(' ')}
     >
       <span
@@ -125,28 +123,36 @@ export default function ParametresPage() {
 
           <ul className="space-y-3 text-body-sm text-slate-600">
             <li className="flex gap-2">
-              <span aria-hidden="true" className="text-eco-500 shrink-0">✓</span>
+              <span aria-hidden="true" className="text-eco-500 shrink-0">
+                ✓
+              </span>
               <span>
                 <strong className="font-medium text-slate-800">Droit d'accès</strong> — vos données
                 de profil et de mobilité sont visibles dans votre profil
               </span>
             </li>
             <li className="flex gap-2">
-              <span aria-hidden="true" className="text-eco-500 shrink-0">✓</span>
+              <span aria-hidden="true" className="text-eco-500 shrink-0">
+                ✓
+              </span>
               <span>
                 <strong className="font-medium text-slate-800">Droit à l'effacement</strong> — vous
                 pouvez supprimer votre compte et toutes vos données à tout moment
               </span>
             </li>
             <li className="flex gap-2">
-              <span aria-hidden="true" className="text-eco-500 shrink-0">✓</span>
+              <span aria-hidden="true" className="text-eco-500 shrink-0">
+                ✓
+              </span>
               <span>
                 <strong className="font-medium text-slate-800">Données GPS</strong> — aucune donnée
                 de position n'est transmise à des tiers ni stockée au-delà de la session
               </span>
             </li>
             <li className="flex gap-2">
-              <span aria-hidden="true" className="text-eco-500 shrink-0">✓</span>
+              <span aria-hidden="true" className="text-eco-500 shrink-0">
+                ✓
+              </span>
               <span>
                 <strong className="font-medium text-slate-800">Conservation</strong> — les données
                 de trajets sont conservées 12 mois maximum
@@ -161,7 +167,8 @@ export default function ParametresPage() {
             Supprimer mon compte
           </h2>
           <p className="text-body-sm text-slate-500 mt-0.5 mb-4">
-            Suppression définitive de votre compte et de toutes vos données (droit à l'effacement RGPD)
+            Suppression définitive de votre compte et de toutes vos données (droit à l'effacement
+            RGPD)
           </p>
           <Link
             to="/profile"

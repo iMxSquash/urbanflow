@@ -172,7 +172,13 @@ describe('upsertProfile', () => {
 
     expect(mockQuery).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO mobility_profiles'),
-      [USER_ID, INPUT.preferredModes, INPUT.maxWalkMinutes, INPUT.preference, INPUT.pmrAccessibility],
+      [
+        USER_ID,
+        INPUT.preferredModes,
+        INPUT.maxWalkMinutes,
+        INPUT.preference,
+        INPUT.pmrAccessibility,
+      ]
     )
   })
 

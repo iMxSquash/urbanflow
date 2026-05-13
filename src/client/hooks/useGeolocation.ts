@@ -52,7 +52,7 @@ export function useGeolocation() {
         console.warn('[geo] erreur :', err.code, err.message)
         setState({ position: null, error: toErrorMessage(err), loading: false })
       },
-      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 },
+      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 }
     )
   }, [])
 

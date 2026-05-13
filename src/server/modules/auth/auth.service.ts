@@ -22,7 +22,9 @@ function signAccessToken(payload: AuthTokenPayload): string {
 }
 
 function signRefreshToken(payload: AuthTokenPayload, jti: string): string {
-  return jwt.sign({ ...payload, jti }, process.env.JWT_REFRESH_SECRET!, { expiresIn: REFRESH_EXPIRY })
+  return jwt.sign({ ...payload, jti }, process.env.JWT_REFRESH_SECRET!, {
+    expiresIn: REFRESH_EXPIRY,
+  })
 }
 
 async function storeRefreshToken(userId: string, jti: string): Promise<void> {
@@ -36,7 +38,7 @@ async function storeRefreshToken(userId: string, jti: string): Promise<void> {
 
 export async function registerUser(
   email: string,
-  password: string,
+  password: string
 ): Promise<{ accessToken: string; refreshToken: string }> {
   const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS)
 
@@ -44,7 +46,7 @@ export async function registerUser(
   try {
     const result = await pool.query(
       'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email',
-      [email, passwordHash],
+      [email, passwordHash]
     )
     user = result.rows[0] as { id: string; email: string }
   } catch (err) {
@@ -65,9 +67,11 @@ export async function registerUser(
 
 export async function loginUser(
   email: string,
-  password: string,
+  password: string
 ): Promise<{ accessToken: string; refreshToken: string }> {
-  const result = await pool.query('SELECT id, email, password_hash FROM users WHERE email = $1', [email])
+  const result = await pool.query('SELECT id, email, password_hash FROM users WHERE email = $1', [
+    email,
+  ])
   const user = result.rows[0] as { id: string; email: string; password_hash: string } | undefined
 
   // bcrypt.compare s'exécute toujours pour égaliser le timing (anti-énumération).
@@ -91,7 +95,7 @@ export async function loginUser(
 }
 
 export async function refreshTokens(
-  incomingToken: string,
+  incomingToken: string
 ): Promise<{ accessToken: string; refreshToken: string }> {
   let payload: RefreshTokenPayload
   try {
@@ -103,7 +107,7 @@ export async function refreshTokens(
   // Rotation : delete old jti, only if not expired in DB
   const deleted = await pool.query(
     'DELETE FROM refresh_tokens WHERE id = $1 AND user_id = $2 AND expires_at > now() RETURNING id',
-    [payload.jti, payload.sub],
+    [payload.jti, payload.sub]
   )
   if (deleted.rowCount === 0) {
     throw new Error('INVALID_TOKEN')
