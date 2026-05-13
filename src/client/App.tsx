@@ -7,6 +7,7 @@ const LoginPage = lazy(() => import('./pages/LoginPage'))
 const RegisterPage = lazy(() => import('./pages/RegisterPage'))
 const ProfilePage = lazy(() => import('./pages/ProfilePage'))
 const MapPage = lazy(() => import('./pages/MapPage'))
+const ParametresPage = lazy(() => import('./pages/ParametresPage'))
 
 function PageSpinner() {
   return (
@@ -38,6 +39,7 @@ function AppRoutes() {
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<MapPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/parametres" element={<ParametresPage />} />
         </Route>
 
         {/* Fallback */}

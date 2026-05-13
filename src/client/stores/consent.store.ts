@@ -7,6 +7,7 @@ interface ConsentState {
   geolocationConsent: GeolocationConsent
   grantGeolocation: () => void
   denyGeolocation: () => void
+  resetGeolocation: () => void
 }
 
 export const useConsentStore = create<ConsentState>()(
@@ -15,6 +16,7 @@ export const useConsentStore = create<ConsentState>()(
       geolocationConsent: null,
       grantGeolocation: () => set({ geolocationConsent: 'granted' }),
       denyGeolocation: () => set({ geolocationConsent: 'denied' }),
+      resetGeolocation: () => set({ geolocationConsent: null }),
     }),
     { name: 'urbanflow-consent' },
   ),
