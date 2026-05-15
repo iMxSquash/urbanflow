@@ -4,12 +4,12 @@
 
 | Source | Type | Format | Auth | Usage dans le projet |
 |--------|------|--------|------|---------------------|
-| Transitous | Routage multimodal | MOTIS JSON | Aucune (User-Agent requis) | Calcul itinéraire A→B |
-| OTP (localhost) | Routage multimodal | GraphQL | Aucune (local) | Développement et validation |
+| Transitous | Routage TC (bus/tram/navibus/train) | OTP JSON | Aucune (User-Agent requis) | Calcul itinéraire TC A→B |
+| OSRM public | Routage vélo/marche/scooter | GeoJSON | Aucune | Distance réelle + shape polyline |
 | GTFS Naolib | Horaires théoriques | ZIP/CSV | Aucune (téléchargement) | Affichage arrêts, lignes |
-| SIRI-Lite Naolib | Prochains passages | JSON/XML | `RequestorRef: opendata` | Horaires temps réel |
-| GBFS Bicloo (JCDecaux) | Stations vélos | JSON | Aucune | Marqueurs vélos sur carte |
-| OpenWeatherMap | Météo | JSON | API key (free tier) | Pondération scoring |
+| SIRI-Lite Naolib | Prochains passages | JSON/XML | `RequestorRef: opendata` | Horaires temps réel (non intégré) |
+| GBFS Bicloo (JCDecaux) | Stations vélos | JSON | Aucune | Marqueurs vélos sur carte + routing Bicloo |
+| OpenWeatherMap | Météo | JSON | API key (free tier) | Pondération scoring (non intégré) |
 | CartoDB Positron | Tuiles carte | PNG tiles | Aucune | Fond de carte Leaflet |
 
 ---
@@ -36,47 +36,67 @@ https://api.transitous.org/api/
 
 ### Exemple d'appel (routing)
 
-```javascript
-// Avec le client npm
-import { MotisClient } from '@motis-project/motis-client'
+L'implémentation utilise l'endpoint REST `/v1/plan` (compatible OTP) et non le client npm :
 
-const client = new MotisClient('https://api.transitous.org/api/')
-
-const journeys = await client.route({
-  from: { lat: 47.218, lng: -1.553 },  // Nantes Commerce
-  to: { lat: 47.208, lng: -1.567 },    // Gare de Nantes
-  time: new Date().toISOString(),
-  arriveBy: false,
-  modes: ['TRANSIT', 'WALK', 'BIKE']
+```typescript
+const params = new URLSearchParams({
+  fromPlace: `${from.lat},${from.lng}`,
+  toPlace:   `${to.lat},${to.lng}`,
+  numItineraries: '5',
+  arriveBy: 'false',
+  // Filtre OTP par modes demandés — WALK toujours inclus pour les legs piétons
+  mode: 'WALK,BUS,TRAM',   // ou FERRY pour navibus, RAIL pour train
 })
+const url = `https://api.transitous.org/api/v1/plan?${params}`
 ```
+
+**Mapping modes OTP :**
+
+| Mode applicatif | Paramètre OTP |
+|-----------------|---------------|
+| bus | BUS |
+| tramway | TRAM |
+| navibus | FERRY |
+| train | RAIL |
+
+> **Note** : le navibus Naolib (Navibus Loire/Erdre) peut ne pas être présent dans le feed GTFS Transitous ou ne pas desservir toutes les origines/destinations. En l'absence de données FERRY, `itineraries: []` est retourné — c'est un comportement attendu, pas un bug.
 
 ---
 
-## 2. OpenTripPlanner (local) — Développement
+## 2. OSRM public — Routage vélo/marche/scooter
 
-### Installation locale
+### Endpoint
 
-```bash
-# Télécharger OTP
-wget https://repo1.maven.org/maven2/org/opentripplanner/otp-shaded/2.8.1/otp-shaded-2.8.1.jar
-
-# Télécharger les données
-# GTFS Naolib depuis transport.data.gouv.fr
-# OSM Nantes depuis download.geofabrik.de/europe/france/pays-de-la-loire-latest.osm.pbf
-
-# Construire le graphe
-java -Xmx2G -jar otp-shaded-2.8.1.jar --buildStreet --save .
-
-# Lancer le serveur
-java -Xmx2G -jar otp-shaded-2.8.1.jar --load --serve .
-# API GraphQL disponible sur http://localhost:8080/otp/gtfs/v1
-# Interface GraphiQL sur http://localhost:8080/graphiql
+```
+http://router.project-osrm.org/route/v1/{profile}/{lng1},{lat1};{lng2},{lat2}?overview=full&geometries=geojson
 ```
 
-### Note
+### Profils disponibles
 
-OTP 2.x n'expose plus d'API REST (supprimée en 2025). L'API est désormais **GraphQL uniquement**.
+- `cycling` — utilisé pour vélo et scooter
+- `foot` — utilisé pour marche
+
+> **Limitation** : le serveur public OSRM ne fournit que le profil `driving` pour les durées. Les durées sont donc ignorées et recalculées côté serveur à partir de la distance retournée et d'une vitesse constante par mode (bike 15 km/h, walk 5 km/h, scooter 20 km/h).
+
+### Ce que ça retourne
+
+- Distance réelle par route (mètres)
+- Géométrie GeoJSON pour la polyline sur carte
+
+### Exemple d'appel
+
+```typescript
+const url = `http://router.project-osrm.org/route/v1/cycling/${from.lng},${from.lat};${to.lng},${to.lat}?overview=full&geometries=geojson`
+const { distance, geometry } = await fetch(url).then(r => r.json()).then(d => d.routes[0])
+const distKm = distance / 1000
+const durationMin = Math.round((distKm / 15) * 60) // 15 km/h pour le vélo
+```
+
+### Variable d'environnement
+
+```
+OSRM_URL=http://router.project-osrm.org  # peut pointer vers une instance locale
+```
 
 ---
 

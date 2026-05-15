@@ -47,14 +47,16 @@
 
 ## Sprint 3 — Moteur de scoring & Multimodal complet (semaine 7–8)
 
-| Priorité | Tâche | Validation |
-|----------|-------|------------|
-| P0 | Algorithme de scoring (durée × CO2 × préférences × météo) | 2–3 itinéraires classés retournés |
-| P0 | Appel OpenWeather → pondération météo dans le scoring | Pluie → TC favorisé |
-| P0 | Affichage comparatif des itinéraires (durée, CO2, coût) | UI claire avec 3 propositions |
-| P0 | Mode démo (flag `DEMO_MODE` + fichiers JSON statiques) | Scénarios testables offline |
-| P1 | SIRI-Lite : prochains passages à l'arrêt le plus proche | Horaires affichés en temps réel |
-| P1 | Gestion des erreurs API (timeout, fallback gracieux) | Message d'erreur UX propre |
+| Priorité | Tâche | Statut | Validation |
+|----------|-------|--------|------------|
+| P0 | Algorithme de scoring (durée × CO2 × préférences) | ✅ Fait | `scoring.service.ts` — 153 tests |
+| P0 | Modes multimodaux complets (bus/tram/navibus/train/vélo/marche/scooter) | ✅ Fait | TransitousProvider + OsrmProvider |
+| P0 | Accessibilité PMR (filtre dur maxWalkMinutes, pénalités scoring) | ✅ Fait | `pmrAccessibility` dans JourneyOptions |
+| P0 | Affichage comparatif des itinéraires (durée, CO2, coût) | ✅ Fait | `JourneyPanel.tsx` |
+| P0 | Mode démo (`DEMO_MODE` + fichiers JSON statiques) | ✅ Fait | `DemoProvider` |
+| P0 | Appel OpenWeather → pondération météo dans le scoring | ❌ À faire | Pluie → TC favorisé |
+| P1 | SIRI-Lite : prochains passages à l'arrêt le plus proche | ❌ À faire | Horaires affichés en temps réel |
+| P1 | Gestion des erreurs API (timeout, fallback gracieux côté UI) | ⚠️ Partiel | Timeout providers OK, message UX manquant |
 
 **Livrable** : F2 + F3 fonctionnels + mode démo opérationnel.
 

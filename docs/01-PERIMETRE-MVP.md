@@ -72,9 +72,11 @@ Référence à citer dans le dossier : **Base Empreinte de l'ADEME**.
 | Mode | Facteur | Source |
 |------|---------|--------|
 | Voiture thermique | 253 g CO2e/km | Base Empreinte ADEME |
-| Bus | ~109 g CO2e/km/passager | Base Empreinte ADEME |
-| Tramway | ~4 g CO2e/km/passager | électrique, Base ADEME |
-| Vélo / marche | ~0 g usage | référence ADEME |
+| Bus | 109 g CO2e/km/passager | Base Empreinte ADEME |
+| Tramway | 4 g CO2e/km/passager | électrique réseau Naolib, Base ADEME |
+| Navibus | 50 g CO2e/km/passager | ferry Loire — estimation Base ADEME |
+| Train (TER) | 14 g CO2e/km/passager | TER électrifié, Base Empreinte ADEME |
+| Vélo / marche / trottinette électrique | 0 g usage | référence ADEME |
 
 Le scoring CO2 d'un itinéraire = somme des (distance segment × facteur du mode du segment).
 L'économie CO2 = score voiture équivalent – score itinéraire choisi.
