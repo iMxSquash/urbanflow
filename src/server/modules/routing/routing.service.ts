@@ -24,8 +24,8 @@ function selectProviders(options: JourneyOptions): TransportProvider[] {
 
   const selected: TransportProvider[] = []
 
-  // Transitous : activé si l'utilisateur veut bus ou tramway (ou les deux)
-  const wantsTC = requestedModes.includes('bus') || requestedModes.includes('tramway')
+  // Transitous : activé si l'utilisateur veut un mode TC (bus, tramway, navibus, train)
+  const wantsTC = requestedModes.some((m) => TC_PROVIDER.supportedModes.includes(m))
   if (wantsTC) selected.push(TC_PROVIDER)
 
   // OSRM : activé si l'utilisateur veut vélo, trottinette ou marche

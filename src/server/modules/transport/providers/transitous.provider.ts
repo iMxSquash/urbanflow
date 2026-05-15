@@ -66,21 +66,22 @@ function haversineKm(a: { lat: number; lon: number }, b: { lat: number; lon: num
 
 function otpModeToTransportMode(mode: string): TransportMode {
   switch (mode.toUpperCase()) {
-    case 'WALK':        return 'walk'
-    case 'BICYCLE':     return 'bike'
-    case 'TRAM':        return 'tramway'
-    case 'SUBWAY':
-    case 'RAIL':        return 'tramway'
-    case 'BUS':
-    case 'FERRY':       return 'bus'
-    case 'SCOOTER':     return 'scooter'
-    default:            return 'bus'
+    case 'WALK':    return 'walk'
+    case 'BICYCLE': return 'bike'
+    case 'TRAM':    return 'tramway'
+    case 'SUBWAY':  return 'tramway'
+    case 'RAIL':    return 'train'
+    case 'FERRY':   return 'navibus'
+    case 'BUS':     return 'bus'
+    case 'SCOOTER': return 'scooter'
+    default:        return 'bus'
   }
 }
 
 function modeLabel(mode: TransportMode): string {
   const labels: Record<TransportMode, string> = {
-    walk: 'Marche', bus: 'Bus', tramway: 'Tramway', bike: 'Vélo', scooter: 'Trottinette',
+    walk: 'Marche', bus: 'Bus', tramway: 'Tramway', bike: 'Vélo',
+    scooter: 'Trottinette', navibus: 'Navibus', train: 'Train',
   }
   return labels[mode]
 }
@@ -143,7 +144,7 @@ function mapItinerary(itin: OtpItinerary, idx: number, options: JourneyOptions):
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
 export class TransitousProvider implements TransportProvider {
-  readonly supportedModes: TransportMode[] = ['bus', 'tramway']
+  readonly supportedModes: TransportMode[] = ['bus', 'tramway', 'navibus', 'train']
   private readonly baseUrl = (process.env.TRANSITOUS_URL ?? 'https://api.transitous.org/api/').replace(/\/$/, '')
 
   async getJourneys(
@@ -157,6 +158,17 @@ export class TransitousProvider implements TransportProvider {
       numItineraries: '5',
       arriveBy:       'false',
     })
+
+    // Traduire les modes utilisateur en modes OTP et les passer à Transitous.
+    // WALK est toujours inclus (legs de connexion). Sans filtre → OTP choisit librement.
+    const OTP_MODE: Partial<Record<TransportMode, string>> = {
+      bus: 'BUS', tramway: 'TRAM', navibus: 'FERRY', train: 'RAIL',
+    }
+    const requestedTC = (options.modes ?? []).filter((m) => this.supportedModes.includes(m))
+    if (requestedTC.length > 0) {
+      const otpModes = ['WALK', ...requestedTC.map((m) => OTP_MODE[m]).filter(Boolean)]
+      params.set('mode', otpModes.join(','))
+    }
 
     const url = `${this.baseUrl}/v1/plan?${params}`
 

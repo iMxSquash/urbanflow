@@ -91,6 +91,22 @@ const MODE_OPTIONS: Array<{
     selectedBorder: 'border-amber-600',
     selectedText: 'text-amber-700',
   },
+  {
+    value: 'navibus',
+    label: 'Navibus',
+    icon: '⛴️',
+    selectedBg: 'bg-sky-50',
+    selectedBorder: 'border-sky-500',
+    selectedText: 'text-sky-700',
+  },
+  {
+    value: 'train',
+    label: 'Train',
+    icon: '🚆',
+    selectedBg: 'bg-violet-50',
+    selectedBorder: 'border-violet-600',
+    selectedText: 'text-violet-700',
+  },
 ]
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────

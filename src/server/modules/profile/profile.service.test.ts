@@ -122,7 +122,7 @@ describe('getProfile', () => {
   })
 
   it('accepte tous les modes valides sans filtrage', async () => {
-    const allModes: TransportMode[] = ['walk', 'bus', 'tramway', 'bike', 'scooter']
+    const allModes: TransportMode[] = ['walk', 'bus', 'tramway', 'bike', 'scooter', 'navibus', 'train']
     mockQuery.mockResolvedValueOnce({
       rows: [{ ...BASE_ROW, preferred_modes: allModes }],
     })
@@ -130,6 +130,16 @@ describe('getProfile', () => {
     const result = await getProfile(USER_ID)
 
     expect(result.preferredModes).toEqual(allModes)
+  })
+
+  it('conserve navibus et train comme modes valides', async () => {
+    mockQuery.mockResolvedValueOnce({
+      rows: [{ ...BASE_ROW, preferred_modes: ['navibus', 'train', 'avion'] }],
+    })
+
+    const result = await getProfile(USER_ID)
+
+    expect(result.preferredModes).toEqual(['navibus', 'train'])
   })
 })
 

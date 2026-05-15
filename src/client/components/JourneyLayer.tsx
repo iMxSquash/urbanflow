@@ -9,6 +9,8 @@ const MODE_COLORS: Record<TransportMode, string> = {
   tramway: '#6366f1',
   bus: '#f59e0b',
   scooter: '#0891b2',
+  navibus: '#0ea5e9',
+  train: '#7c3aed',
 }
 
 export function JourneyLayer({ journey }: { journey: Journey }) {

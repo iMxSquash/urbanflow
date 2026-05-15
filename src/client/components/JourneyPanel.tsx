@@ -6,6 +6,8 @@ const MODE_COLORS: Record<TransportMode, string> = {
   tramway: '#6366f1',
   bus: '#f59e0b',
   scooter: '#0891b2',
+  navibus: '#0ea5e9',
+  train: '#7c3aed',
 }
 
 const MODE_ICONS: Record<TransportMode, string> = {
@@ -14,6 +16,8 @@ const MODE_ICONS: Record<TransportMode, string> = {
   tramway: '🚋',
   bus: '🚌',
   scooter: '🛴',
+  navibus: '⛴️',
+  train: '🚆',
 }
 
 const MODE_LABELS: Record<TransportMode, string> = {
@@ -22,6 +26,8 @@ const MODE_LABELS: Record<TransportMode, string> = {
   tramway: 'Tramway',
   bus: 'Bus',
   scooter: 'Trottinette',
+  navibus: 'Navibus',
+  train: 'Train',
 }
 
 function formatDuration(min: number): string {

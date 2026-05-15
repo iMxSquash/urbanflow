@@ -11,7 +11,7 @@ export const journeyRequestSchema = z.object({
   datetime: z.string().datetime({ offset: true }).optional(),
   preference: z.enum(['eco', 'fast', 'balanced']).optional().default('balanced'),
   preferredModes: z
-    .array(z.enum(['walk', 'bus', 'tramway', 'bike', 'scooter']))
+    .array(z.enum(['walk', 'bus', 'tramway', 'bike', 'scooter', 'navibus', 'train']))
     .optional()
     .default([]),
   maxWalkMinutes: z.number().min(1).max(120).optional().default(30),

@@ -20,6 +20,10 @@ const OSRM_BASE = (process.env.OSRM_URL ?? 'http://router.project-osrm.org').rep
 // driving, les durées retournées pour /cycling/ et /foot/ sont invalides.
 const MODE_SPEED_KMH: Record<'bike' | 'walk' | 'scooter', number> = { bike: 15, walk: 5, scooter: 20 }
 
+// Distance max (km) de marche acceptable vers/depuis une station Bicloo.
+// Au-delà, le trajet Bicloo n'est pas proposé (station trop lointaine).
+const MAX_WALK_TO_STATION_KM = 1.5
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function haversineKm(a: Coordinates, b: Coordinates): number {
@@ -120,13 +124,24 @@ async function buildBiclooJourney(
   if (!depStation) throw new Error('Aucune station Bicloo avec vélos disponibles à proximité')
   if (!arrStation) throw new Error('Aucune station Bicloo avec places libres à destination')
 
-  // Récupérer les shapes en parallèle (uniquement vélo — les marches sont courtes)
+  const walkToDist   = haversineKm(from, depStation.coordinates)
+  const walkFromDist = haversineKm(arrStation.coordinates, to)
+
+  if (walkToDist > MAX_WALK_TO_STATION_KM) {
+    throw new Error(
+      `Station Bicloo de départ trop éloignée (${Math.round(walkToDist * 1000)} m > ${MAX_WALK_TO_STATION_KM * 1000} m)`
+    )
+  }
+  if (walkFromDist > MAX_WALK_TO_STATION_KM) {
+    throw new Error(
+      `Station Bicloo d'arrivée trop éloignée (${Math.round(walkFromDist * 1000)} m > ${MAX_WALK_TO_STATION_KM * 1000} m)`
+    )
+  }
+
+  // Récupérer la shape vélo après validation des distances
   const [bikeRoute] = await Promise.all([
     fetchOsrmRoute(depStation.coordinates, arrStation.coordinates, 'cycling'),
   ])
-
-  const walkToDist   = haversineKm(from, depStation.coordinates)
-  const walkFromDist = haversineKm(arrStation.coordinates, to)
 
   const segments: JourneySegment[] = [
     makeSegment('walk', from, depStation.coordinates, walkToDist, {
