@@ -120,7 +120,7 @@ function modeLabel(mode: TransportMode): string {
 }
 
 // ─── Scoring multicritères ────────────────────────────────────────────────────
-// Logique centralisée dans scoring.service.ts — scoringWeights et computeScore importés.
+// Logique centralisée dans scoring.service.ts — computeScore importé.
 
 function mapItinerary(itin: OtpItinerary, idx: number, options: JourneyOptions): Journey {
   const segments: JourneySegment[] = itin.legs.map((leg): JourneySegment => {
