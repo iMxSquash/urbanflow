@@ -4,7 +4,7 @@ import { useMapLayersStore } from '../stores/map-layers.store'
 interface LayerConfig {
   key: MapLayerKey
   label: string
-  activeColor: string   // couleur du token eco/indigo/etc. pour l'icône active
+  activeColor: string // couleur du token eco/indigo/etc. pour l'icône active
   activeTextClass: string
   activeBgClass: string
   activeRingClass: string
@@ -39,7 +39,17 @@ const LAYERS: LayerConfig[] = [
 
 function BikeIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <circle cx="5.5" cy="17.5" r="3.5" />
       <circle cx="18.5" cy="17.5" r="3.5" />
       <path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5L9 6l-3 3 3.5 4h7" />
@@ -50,7 +60,17 @@ function BikeIcon() {
 
 function RouteIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M3 6h18M3 12h18M3 18h18" />
     </svg>
   )
@@ -58,7 +78,17 @@ function RouteIcon() {
 
 function StopIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="4" />
       <circle cx="12" cy="12" r="9" />
     </svg>
@@ -88,30 +118,30 @@ export function MapLayerToggle({ hasJourney }: MapLayerToggleProps) {
       aria-label="Calques de la carte"
     >
       <div className="bg-white rounded-xl shadow-card-md border border-slate-100 p-1.5 flex flex-col gap-2">
-        {LAYERS.map(({ key, label, activeColor, activeTextClass, activeBgClass, activeRingClass }) => {
-          const active = layers[key]
-          return (
-            <button
-              key={key}
-              type="button"
-              onClick={() => toggleLayer(key)}
-              aria-pressed={active}
-              aria-label={`${active ? 'Masquer' : 'Afficher'} : ${label}`}
-              className={[
-                'flex items-center gap-2.5 px-3 h-11 rounded-lg text-body-sm font-medium cursor-pointer',
-                'transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-600',
-                active
-                  ? `${activeBgClass} ${activeTextClass} ring-1 ring-inset ${activeRingClass}`
-                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700',
-              ].join(' ')}
-            >
-              <span style={{ color: active ? activeColor : undefined }}>
-                {LAYER_ICONS[key]}
-              </span>
-              {label}
-            </button>
-          )
-        })}
+        {LAYERS.map(
+          ({ key, label, activeColor, activeTextClass, activeBgClass, activeRingClass }) => {
+            const active = layers[key]
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => toggleLayer(key)}
+                aria-pressed={active}
+                aria-label={`${active ? 'Masquer' : 'Afficher'} : ${label}`}
+                className={[
+                  'flex items-center gap-2.5 px-3 h-11 rounded-lg text-body-sm font-medium cursor-pointer',
+                  'transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-600',
+                  active
+                    ? `${activeBgClass} ${activeTextClass} ring-1 ring-inset ${activeRingClass}`
+                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700',
+                ].join(' ')}
+              >
+                <span style={{ color: active ? activeColor : undefined }}>{LAYER_ICONS[key]}</span>
+                {label}
+              </button>
+            )
+          }
+        )}
       </div>
     </div>
   )

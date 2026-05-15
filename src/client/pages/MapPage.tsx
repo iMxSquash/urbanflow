@@ -31,12 +31,20 @@ export default function MapPage() {
   const { geolocationConsent, grantGeolocation, denyGeolocation } = useConsentStore()
   const { position: geoPosition, error: geoError, loading: geoLoading, locate } = useGeolocation()
   const [addressPosition, setAddressPosition] = useState<Coordinates | null>(null)
-  const { journey, loading: journeyLoading, error: journeyError, calculate, clear: clearJourney } = useJourney()
+  const {
+    journey,
+    loading: journeyLoading,
+    error: journeyError,
+    calculate,
+    clear: clearJourney,
+  } = useJourney()
   const { layers } = useMapLayersStore()
   const { profile, fetchProfile } = useProfileStore()
   const locatedOnMount = useRef(false)
 
-  useEffect(() => { void fetchProfile() }, [fetchProfile])
+  useEffect(() => {
+    void fetchProfile()
+  }, [fetchProfile])
 
   // Si le consentement était déjà accordé (session persistée), localiser au mount
   useEffect(() => {
@@ -54,12 +62,18 @@ export default function MapPage() {
 
   function handleDestinationSelect(dest: Coordinates) {
     if (!userPosition) return
-    void calculate(userPosition, dest, profile ? {
-      preference: profile.preference,
-      preferredModes: profile.preferredModes,
-      maxWalkMinutes: profile.maxWalkMinutes,
-      pmrAccessibility: profile.pmrAccessibility,
-    } : undefined)
+    void calculate(
+      userPosition,
+      dest,
+      profile
+        ? {
+            preference: profile.preference,
+            preferredModes: profile.preferredModes,
+            maxWalkMinutes: profile.maxWalkMinutes,
+            pmrAccessibility: profile.pmrAccessibility,
+          }
+        : undefined
+    )
   }
 
   // Position effective : géoloc en priorité, sinon adresse saisie manuellement
@@ -116,7 +130,12 @@ export default function MapPage() {
 
         {/* Barre de destination */}
         {showDestSearch && (
-          <div className={['absolute left-3 right-3 z-[1100]', showAddressSearch ? 'top-16' : 'top-3'].join(' ')}>
+          <div
+            className={[
+              'absolute left-3 right-3 z-[1100]',
+              showAddressSearch ? 'top-16' : 'top-3',
+            ].join(' ')}
+          >
             <AddressSearch onSelect={handleDestinationSelect} placeholder="Où allez-vous ?" />
           </div>
         )}
@@ -128,7 +147,10 @@ export default function MapPage() {
             aria-label="Calcul de l'itinéraire en cours"
             className="absolute top-3 left-1/2 -translate-x-1/2 z-[1100] bg-white rounded-full px-4 py-2 shadow-card flex items-center gap-2 text-body-sm text-slate-600 whitespace-nowrap"
           >
-            <div className="w-4 h-4 border-2 border-slate-200 border-t-eco-600 rounded-full animate-spin" aria-hidden="true" />
+            <div
+              className="w-4 h-4 border-2 border-slate-200 border-t-eco-600 rounded-full animate-spin"
+              aria-hidden="true"
+            />
             Calcul de l'itinéraire…
           </div>
         )}
@@ -140,7 +162,12 @@ export default function MapPage() {
             className="absolute top-3 left-3 right-3 z-[1100] bg-white rounded-card shadow-card-md border border-red-100 px-4 py-3 flex items-center justify-between gap-3"
           >
             <p className="text-body-sm text-red-600 truncate">{journeyError}</p>
-            <button type="button" onClick={clearJourney} className="btn-ghost text-caption px-3 shrink-0" style={{ minHeight: '36px' }}>
+            <button
+              type="button"
+              onClick={clearJourney}
+              className="btn-ghost text-caption px-3 shrink-0"
+              style={{ minHeight: '36px' }}
+            >
               Fermer
             </button>
           </div>

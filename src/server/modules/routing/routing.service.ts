@@ -5,14 +5,11 @@ import { OsrmProvider } from '../transport/providers/osrm.provider.js'
 import { TransitousProvider } from '../transport/providers/transitous.provider.js'
 
 // Tous les providers disponibles (hors mode démo)
-const ALL_PROVIDERS: TransportProvider[] = [
-  new TransitousProvider(),
-  new OsrmProvider(),
-]
+const ALL_PROVIDERS: TransportProvider[] = [new TransitousProvider(), new OsrmProvider()]
 
 const DEMO_PROVIDER = new DemoProvider()
 
-const TC_PROVIDER = ALL_PROVIDERS.find((p) => p.supportedModes.includes('bus'))!  // TransitousProvider
+const TC_PROVIDER = ALL_PROVIDERS.find((p) => p.supportedModes.includes('bus'))! // TransitousProvider
 
 function selectProviders(options: JourneyOptions): TransportProvider[] {
   if (process.env.DEMO_MODE === 'true') return [DEMO_PROVIDER]
@@ -30,11 +27,11 @@ function selectProviders(options: JourneyOptions): TransportProvider[] {
 
   // OSRM : activé si l'utilisateur veut vélo, trottinette ou marche
   const osrm = ALL_PROVIDERS.find((p) => p.supportedModes.includes('bike'))
-  const wantsOsrm = osrm && (
-    requestedModes.includes('bike') ||
-    requestedModes.includes('scooter') ||
-    requestedModes.includes('walk')
-  )
+  const wantsOsrm =
+    osrm &&
+    (requestedModes.includes('bike') ||
+      requestedModes.includes('scooter') ||
+      requestedModes.includes('walk'))
   if (wantsOsrm && osrm) selected.push(osrm)
 
   // Si aucun provider sélectionné (ex: scooter seul), fallback TC
@@ -44,15 +41,13 @@ function selectProviders(options: JourneyOptions): TransportProvider[] {
 export async function planJourney(
   from: Coordinates,
   to: Coordinates,
-  options: JourneyOptions,
+  options: JourneyOptions
 ): Promise<Journey[]> {
   const providers = selectProviders(options)
   const modeNames = providers.map((p) => p.supportedModes.join('/')).join(', ')
   console.log(`[routing] ${providers.length} provider(s) activé(s) : [${modeNames}]`)
 
-  const results = await Promise.allSettled(
-    providers.map((p) => p.getJourneys(from, to, options))
-  )
+  const results = await Promise.allSettled(providers.map((p) => p.getJourneys(from, to, options)))
 
   const journeys: Journey[] = []
   for (const result of results) {
@@ -67,14 +62,17 @@ export async function planJourney(
   // itinéraires contenant des segments de modes non souhaités.
   // La marche est toujours tolérée comme mode de connexion.
   const allowedModes = options.modes ?? []
-  const filtered = allowedModes.length === 0
-    ? journeys
-    : journeys.filter((j) =>
-        j.segments.every((s) => s.mode === 'walk' || allowedModes.includes(s.mode))
-      )
+  const filtered =
+    allowedModes.length === 0
+      ? journeys
+      : journeys.filter((j) =>
+          j.segments.every((s) => s.mode === 'walk' || allowedModes.includes(s.mode))
+        )
 
   if (allowedModes.length > 0 && filtered.length < journeys.length) {
-    console.log(`[routing] Filtre modes [${allowedModes.join(', ')}] : ${journeys.length} → ${filtered.length} itinéraire(s)`)
+    console.log(
+      `[routing] Filtre modes [${allowedModes.join(', ')}] : ${journeys.length} → ${filtered.length} itinéraire(s)`
+    )
   }
 
   // Filtre dur maxWalkMinutes : éliminer tout itinéraire dont un segment marche
@@ -84,13 +82,13 @@ export async function planJourney(
     : (options.maxWalkMinutes ?? 30)
 
   const withWalkFilter = filtered.filter((j) =>
-    j.segments
-      .filter((s) => s.mode === 'walk')
-      .every((s) => s.durationMin <= maxWalk)
+    j.segments.filter((s) => s.mode === 'walk').every((s) => s.durationMin <= maxWalk)
   )
 
   if (withWalkFilter.length < filtered.length) {
-    console.log(`[routing] Filtre maxWalkMinutes=${maxWalk}min : ${filtered.length} → ${withWalkFilter.length} itinéraire(s)`)
+    console.log(
+      `[routing] Filtre maxWalkMinutes=${maxWalk}min : ${filtered.length} → ${withWalkFilter.length} itinéraire(s)`
+    )
   }
 
   return withWalkFilter.sort((a, b) => b.score - a.score)

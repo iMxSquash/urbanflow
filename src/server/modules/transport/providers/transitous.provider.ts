@@ -1,4 +1,10 @@
-import type { Coordinates, Journey, JourneyOptions, JourneySegment, TransportMode } from '@shared/types/index.js'
+import type {
+  Coordinates,
+  Journey,
+  JourneyOptions,
+  JourneySegment,
+  TransportMode,
+} from '@shared/types/index.js'
 import { CO2_FACTORS } from '@shared/constants/co2-factors.js'
 import { computeScore, scoringWeights } from '../../routing/scoring.service.js'
 import type { TransportProvider } from '../transport-provider.interface.js'
@@ -13,8 +19,8 @@ interface OtpPlace {
 
 interface OtpLeg {
   mode: string
-  duration: number        // secondes
-  distance?: number       // mètres — absent sur les legs transit
+  duration: number // secondes
+  distance?: number // mètres — absent sur les legs transit
   from: OtpPlace
   to: OtpPlace
   routeShortName?: string
@@ -24,12 +30,12 @@ interface OtpLeg {
 }
 
 interface OtpItinerary {
-  duration: number        // secondes
+  duration: number // secondes
   legs: OtpLeg[]
 }
 
 interface OtpResponse {
-  itineraries?: OtpItinerary[]   // directement à la racine, pas de wrapper plan
+  itineraries?: OtpItinerary[] // directement à la racine, pas de wrapper plan
   error?: { message: string }
 }
 
@@ -38,15 +44,28 @@ interface OtpResponse {
 function decodePolyline(encoded: string, precision = 5): { lat: number; lng: number }[] {
   const factor = 10 ** precision
   const result: { lat: number; lng: number }[] = []
-  let index = 0, lat = 0, lng = 0
+  let index = 0,
+    lat = 0,
+    lng = 0
 
   while (index < encoded.length) {
-    let b: number, shift = 0, n = 0
-    do { b = encoded.charCodeAt(index++) - 63; n |= (b & 0x1f) << shift; shift += 5 } while (b >= 0x20)
+    let b: number,
+      shift = 0,
+      n = 0
+    do {
+      b = encoded.charCodeAt(index++) - 63
+      n |= (b & 0x1f) << shift
+      shift += 5
+    } while (b >= 0x20)
     lat += n & 1 ? ~(n >> 1) : n >> 1
 
-    shift = 0; n = 0
-    do { b = encoded.charCodeAt(index++) - 63; n |= (b & 0x1f) << shift; shift += 5 } while (b >= 0x20)
+    shift = 0
+    n = 0
+    do {
+      b = encoded.charCodeAt(index++) - 63
+      n |= (b & 0x1f) << shift
+      shift += 5
+    } while (b >= 0x20)
     lng += n & 1 ? ~(n >> 1) : n >> 1
 
     result.push({ lat: lat / factor, lng: lng / factor })
@@ -66,22 +85,36 @@ function haversineKm(a: { lat: number; lon: number }, b: { lat: number; lon: num
 
 function otpModeToTransportMode(mode: string): TransportMode {
   switch (mode.toUpperCase()) {
-    case 'WALK':    return 'walk'
-    case 'BICYCLE': return 'bike'
-    case 'TRAM':    return 'tramway'
-    case 'SUBWAY':  return 'tramway'
-    case 'RAIL':    return 'train'
-    case 'FERRY':   return 'navibus'
-    case 'BUS':     return 'bus'
-    case 'SCOOTER': return 'scooter'
-    default:        return 'bus'
+    case 'WALK':
+      return 'walk'
+    case 'BICYCLE':
+      return 'bike'
+    case 'TRAM':
+      return 'tramway'
+    case 'SUBWAY':
+      return 'tramway'
+    case 'RAIL':
+      return 'train'
+    case 'FERRY':
+      return 'navibus'
+    case 'BUS':
+      return 'bus'
+    case 'SCOOTER':
+      return 'scooter'
+    default:
+      return 'bus'
   }
 }
 
 function modeLabel(mode: TransportMode): string {
   const labels: Record<TransportMode, string> = {
-    walk: 'Marche', bus: 'Bus', tramway: 'Tramway', bike: 'Vélo',
-    scooter: 'Trottinette', navibus: 'Navibus', train: 'Train',
+    walk: 'Marche',
+    bus: 'Bus',
+    tramway: 'Tramway',
+    bike: 'Vélo',
+    scooter: 'Trottinette',
+    navibus: 'Navibus',
+    train: 'Train',
   }
   return labels[mode]
 }
@@ -92,9 +125,10 @@ function modeLabel(mode: TransportMode): string {
 function mapItinerary(itin: OtpItinerary, idx: number, options: JourneyOptions): Journey {
   const segments: JourneySegment[] = itin.legs.map((leg): JourneySegment => {
     const mode = otpModeToTransportMode(leg.mode)
-    const distKm = Math.round(
-      (leg.distance !== undefined ? leg.distance / 1000 : haversineKm(leg.from, leg.to)) * 100,
-    ) / 100
+    const distKm =
+      Math.round(
+        (leg.distance !== undefined ? leg.distance / 1000 : haversineKm(leg.from, leg.to)) * 100
+      ) / 100
     const durationMin = Math.max(1, Math.round(leg.duration / 60))
     const co2g = Math.round(distKm * CO2_FACTORS[mode])
 
@@ -109,25 +143,25 @@ function mapItinerary(itin: OtpItinerary, idx: number, options: JourneyOptions):
     return {
       mode,
       from: { lat: leg.from.lat, lng: leg.from.lon },
-      to:   { lat: leg.to.lat,   lng: leg.to.lon   },
+      to: { lat: leg.to.lat, lng: leg.to.lon },
       distanceKm: distKm,
       durationMin,
       co2g,
       ...(leg.routeShortName ? { lineRef: leg.routeShortName } : {}),
-      ...(lineName            ? { lineName }                   : {}),
-      ...(shape               ? { shape }                      : {}),
+      ...(lineName ? { lineName } : {}),
+      ...(shape ? { shape } : {}),
     }
   })
 
-  const totalDurationMin  = Math.round(itin.duration / 60)
-  const totalDistanceKm   = Math.round(segments.reduce((s, seg) => s + seg.distanceKm, 0) * 100) / 100
-  const totalCo2g         = segments.reduce((s, seg) => s + seg.co2g, 0)
-  const co2SavingG        = Math.max(0, Math.round(totalDistanceKm * CO2_FACTORS.car) - totalCo2g)
+  const totalDurationMin = Math.round(itin.duration / 60)
+  const totalDistanceKm = Math.round(segments.reduce((s, seg) => s + seg.distanceKm, 0) * 100) / 100
+  const totalCo2g = segments.reduce((s, seg) => s + seg.co2g, 0)
+  const co2SavingG = Math.max(0, Math.round(totalDistanceKm * CO2_FACTORS.car) - totalCo2g)
 
   const score = computeScore(segments, totalDurationMin, totalDistanceKm, totalCo2g, options)
 
   const usedModes = [...new Set(segments.map((s) => s.mode))]
-  const label     = usedModes.map(modeLabel).join(' + ')
+  const label = usedModes.map(modeLabel).join(' + ')
 
   return {
     id: `transitous-${idx}`,
@@ -145,24 +179,29 @@ function mapItinerary(itin: OtpItinerary, idx: number, options: JourneyOptions):
 
 export class TransitousProvider implements TransportProvider {
   readonly supportedModes: TransportMode[] = ['bus', 'tramway', 'navibus', 'train']
-  private readonly baseUrl = (process.env.TRANSITOUS_URL ?? 'https://api.transitous.org/api/').replace(/\/$/, '')
+  private readonly baseUrl = (
+    process.env.TRANSITOUS_URL ?? 'https://api.transitous.org/api/'
+  ).replace(/\/$/, '')
 
   async getJourneys(
     from: Coordinates,
     to: Coordinates,
-    options: JourneyOptions,
+    options: JourneyOptions
   ): Promise<Journey[]> {
     const params = new URLSearchParams({
-      fromPlace:      `${from.lat},${from.lng}`,
-      toPlace:        `${to.lat},${to.lng}`,
+      fromPlace: `${from.lat},${from.lng}`,
+      toPlace: `${to.lat},${to.lng}`,
       numItineraries: '5',
-      arriveBy:       'false',
+      arriveBy: 'false',
     })
 
     // Traduire les modes utilisateur en modes OTP et les passer à Transitous.
     // WALK est toujours inclus (legs de connexion). Sans filtre → OTP choisit librement.
     const OTP_MODE: Partial<Record<TransportMode, string>> = {
-      bus: 'BUS', tramway: 'TRAM', navibus: 'FERRY', train: 'RAIL',
+      bus: 'BUS',
+      tramway: 'TRAM',
+      navibus: 'FERRY',
+      train: 'RAIL',
     }
     const requestedTC = (options.modes ?? []).filter((m) => this.supportedModes.includes(m))
     if (requestedTC.length > 0) {

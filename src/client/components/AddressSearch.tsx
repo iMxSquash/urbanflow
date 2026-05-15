@@ -17,7 +17,10 @@ interface AddressSearchProps {
   placeholder?: string
 }
 
-export function AddressSearch({ onSelect, placeholder = 'Rechercher une adresse de départ...' }: AddressSearchProps) {
+export function AddressSearch({
+  onSelect,
+  placeholder = 'Rechercher une adresse de départ...',
+}: AddressSearchProps) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<NominatimResult[]>([])
   const [loading, setLoading] = useState(false)

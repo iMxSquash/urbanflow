@@ -12,7 +12,15 @@ function simulatedWeather(): 'sunny' | 'rainy' {
 }
 
 export class DemoProvider implements TransportProvider {
-  readonly supportedModes: TransportMode[] = ['walk', 'bus', 'tramway', 'bike', 'scooter', 'navibus', 'train']
+  readonly supportedModes: TransportMode[] = [
+    'walk',
+    'bus',
+    'tramway',
+    'bike',
+    'scooter',
+    'navibus',
+    'train',
+  ]
 
   async getJourneys(
     _from: Coordinates,

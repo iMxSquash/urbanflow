@@ -33,7 +33,10 @@ export function JourneyLayer({ journey }: { journey: Journey }) {
         const positions: [number, number][] =
           segment.shape && segment.shape.length >= 2
             ? segment.shape.map((c) => [c.lat, c.lng])
-            : [[segment.from.lat, segment.from.lng], [segment.to.lat, segment.to.lng]]
+            : [
+                [segment.from.lat, segment.from.lng],
+                [segment.to.lat, segment.to.lng],
+              ]
 
         return (
           <Polyline

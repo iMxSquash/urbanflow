@@ -1,4 +1,11 @@
-import type { BiclooStation, Coordinates, Journey, JourneyOptions, JourneySegment, TransportMode } from '@shared/types/index.js'
+import type {
+  BiclooStation,
+  Coordinates,
+  Journey,
+  JourneyOptions,
+  JourneySegment,
+  TransportMode,
+} from '@shared/types/index.js'
 import { CO2_FACTORS } from '@shared/constants/co2-factors.js'
 import { computeScore } from '../../routing/scoring.service.js'
 import { getBiclooStations } from '../bicloo.service.js'
@@ -7,10 +14,14 @@ import type { TransportProvider } from '../transport-provider.interface.js'
 // ─── Types OSRM ───────────────────────────────────────────────────────────────
 
 interface OsrmRoute {
-  distance: number                           // mètres
+  distance: number // mètres
   geometry: { coordinates: [number, number][] }
 }
-interface OsrmResponse { code: string; routes?: OsrmRoute[]; message?: string }
+interface OsrmResponse {
+  code: string
+  routes?: OsrmRoute[]
+  message?: string
+}
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
@@ -18,7 +29,11 @@ const OSRM_BASE = (process.env.OSRM_URL ?? 'http://router.project-osrm.org').rep
 
 // Vitesses réalistes par mode (km/h) — le serveur public ne charge que le profil
 // driving, les durées retournées pour /cycling/ et /foot/ sont invalides.
-const MODE_SPEED_KMH: Record<'bike' | 'walk' | 'scooter', number> = { bike: 15, walk: 5, scooter: 20 }
+const MODE_SPEED_KMH: Record<'bike' | 'walk' | 'scooter', number> = {
+  bike: 15,
+  walk: 5,
+  scooter: 20,
+}
 
 // Distance max (km) de marche acceptable vers/depuis une station Bicloo.
 // Au-delà, le trajet Bicloo n'est pas proposé (station trop lointaine).
@@ -32,30 +47,30 @@ function haversineKm(a: Coordinates, b: Coordinates): number {
   const dLon = ((b.lng - a.lng) * Math.PI) / 180
   const h =
     Math.sin(dLat / 2) ** 2 +
-    Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) *
-    Math.sin(dLon / 2) ** 2
+    Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
   return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h))
 }
 
 function nearestStation(
   stations: BiclooStation[],
   point: Coordinates,
-  filter: (s: BiclooStation) => boolean,
+  filter: (s: BiclooStation) => boolean
 ): BiclooStation | null {
-  return stations
-    .filter(filter)
-    .reduce<BiclooStation | null>((best, s) => {
-      const d = haversineKm(point, s.coordinates)
-      return best === null || d < haversineKm(point, best.coordinates) ? s : best
-    }, null)
+  return stations.filter(filter).reduce<BiclooStation | null>((best, s) => {
+    const d = haversineKm(point, s.coordinates)
+    return best === null || d < haversineKm(point, best.coordinates) ? s : best
+  }, null)
 }
 
-interface OsrmResult { shape: Coordinates[]; distKm: number }
+interface OsrmResult {
+  shape: Coordinates[]
+  distKm: number
+}
 
 async function fetchOsrmRoute(
   from: Coordinates,
   to: Coordinates,
-  profile: 'cycling' | 'foot',
+  profile: 'cycling' | 'foot'
 ): Promise<OsrmResult> {
   const url =
     `${OSRM_BASE}/route/v1/${profile}/${from.lng},${from.lat};${to.lng},${to.lat}` +
@@ -86,7 +101,7 @@ function makeSegment(
   from: Coordinates,
   to: Coordinates,
   distKm: number,
-  opts: { lineName?: string; shape?: Coordinates[] },
+  opts: { lineName?: string; shape?: Coordinates[] }
 ): JourneySegment {
   const speed = MODE_SPEED_KMH[mode as 'bike' | 'walk'] ?? 5
   const durationMin = Math.max(1, Math.round((distKm / speed) * 60))
@@ -99,7 +114,7 @@ function makeSegment(
     durationMin,
     co2g,
     ...(opts.lineName ? { lineName: opts.lineName } : {}),
-    ...(opts.shape    ? { shape: opts.shape }         : {}),
+    ...(opts.shape ? { shape: opts.shape } : {}),
   }
 }
 
@@ -110,7 +125,7 @@ function makeSegment(
 async function buildBiclooJourney(
   from: Coordinates,
   to: Coordinates,
-  options: JourneyOptions,
+  options: JourneyOptions
 ): Promise<Journey> {
   if (options.pmrAccessibility) {
     throw new Error('Vélo Bicloo non adapté aux besoins PMR')
@@ -119,12 +134,12 @@ async function buildBiclooJourney(
   const stations = await getBiclooStations()
 
   const depStation = nearestStation(stations, from, (s) => s.availableBikes > 0)
-  const arrStation = nearestStation(stations, to,   (s) => s.availableDocks > 0)
+  const arrStation = nearestStation(stations, to, (s) => s.availableDocks > 0)
 
   if (!depStation) throw new Error('Aucune station Bicloo avec vélos disponibles à proximité')
   if (!arrStation) throw new Error('Aucune station Bicloo avec places libres à destination')
 
-  const walkToDist   = haversineKm(from, depStation.coordinates)
+  const walkToDist = haversineKm(from, depStation.coordinates)
   const walkFromDist = haversineKm(arrStation.coordinates, to)
 
   if (walkToDist > MAX_WALK_TO_STATION_KM) {
@@ -156,15 +171,15 @@ async function buildBiclooJourney(
     }),
   ]
 
-  const totalDurationMin  = segments.reduce((s, seg) => s + seg.durationMin, 0)
-  const totalDistanceKm   = Math.round(segments.reduce((s, seg) => s + seg.distanceKm, 0) * 100) / 100
-  const totalCo2g         = 0 // vélo + marche = 0 g CO2
-  const co2SavingG        = Math.max(0, Math.round(totalDistanceKm * CO2_FACTORS.car))
-  const score             = computeScore(segments, totalDurationMin, totalDistanceKm, totalCo2g, options)
+  const totalDurationMin = segments.reduce((s, seg) => s + seg.durationMin, 0)
+  const totalDistanceKm = Math.round(segments.reduce((s, seg) => s + seg.distanceKm, 0) * 100) / 100
+  const totalCo2g = 0 // vélo + marche = 0 g CO2
+  const co2SavingG = Math.max(0, Math.round(totalDistanceKm * CO2_FACTORS.car))
+  const score = computeScore(segments, totalDurationMin, totalDistanceKm, totalCo2g, options)
 
   console.log(
     `[routing] OsrmProvider Bicloo: ${depStation.name} (${depStation.availableBikes} vélos) → ` +
-    `${arrStation.name} (${arrStation.availableDocks} places) — ${totalDurationMin} min`
+      `${arrStation.name} (${arrStation.availableDocks} places) — ${totalDurationMin} min`
   )
 
   return {
@@ -182,7 +197,7 @@ async function buildBiclooJourney(
 async function buildScooterJourney(
   from: Coordinates,
   to: Coordinates,
-  options: JourneyOptions,
+  options: JourneyOptions
 ): Promise<Journey> {
   if (options.pmrAccessibility) {
     throw new Error('Trottinette non adaptée aux besoins PMR')
@@ -195,9 +210,9 @@ async function buildScooterJourney(
   })
 
   const totalDurationMin = segment.durationMin
-  const totalDistanceKm  = segment.distanceKm
-  const co2SavingG       = Math.max(0, Math.round(totalDistanceKm * CO2_FACTORS.car) - co2g)
-  const score            = computeScore([segment], totalDurationMin, totalDistanceKm, co2g, options)
+  const totalDistanceKm = segment.distanceKm
+  const co2SavingG = Math.max(0, Math.round(totalDistanceKm * CO2_FACTORS.car) - co2g)
+  const score = computeScore([segment], totalDurationMin, totalDistanceKm, co2g, options)
 
   return {
     id: 'osrm-scooter',
@@ -214,7 +229,7 @@ async function buildScooterJourney(
 async function buildWalkJourney(
   from: Coordinates,
   to: Coordinates,
-  options: JourneyOptions,
+  options: JourneyOptions
 ): Promise<Journey> {
   const { distKm, shape } = await fetchOsrmRoute(from, to, 'foot')
   const segment = makeSegment('walk', from, to, distKm, {
@@ -222,9 +237,9 @@ async function buildWalkJourney(
   })
 
   const totalDurationMin = segment.durationMin
-  const totalDistanceKm  = segment.distanceKm
-  const co2SavingG       = Math.max(0, Math.round(totalDistanceKm * CO2_FACTORS.car))
-  const score            = computeScore([segment], totalDurationMin, totalDistanceKm, 0, options)
+  const totalDistanceKm = segment.distanceKm
+  const co2SavingG = Math.max(0, Math.round(totalDistanceKm * CO2_FACTORS.car))
+  const score = computeScore([segment], totalDurationMin, totalDistanceKm, 0, options)
 
   return {
     id: 'osrm-walk',
@@ -246,7 +261,7 @@ export class OsrmProvider implements TransportProvider {
   async getJourneys(
     from: Coordinates,
     to: Coordinates,
-    options: JourneyOptions,
+    options: JourneyOptions
   ): Promise<Journey[]> {
     const requestedModes = (options.modes ?? []).filter((m) =>
       this.supportedModes.includes(m)
@@ -256,9 +271,9 @@ export class OsrmProvider implements TransportProvider {
     const modes = requestedModes.length > 0 ? requestedModes : ['bike' as const]
 
     const tasks: Promise<Journey>[] = []
-    if (modes.includes('bike'))    tasks.push(buildBiclooJourney(from, to, options))
+    if (modes.includes('bike')) tasks.push(buildBiclooJourney(from, to, options))
     if (modes.includes('scooter')) tasks.push(buildScooterJourney(from, to, options))
-    if (modes.includes('walk'))    tasks.push(buildWalkJourney(from, to, options))
+    if (modes.includes('walk')) tasks.push(buildWalkJourney(from, to, options))
 
     const results = await Promise.allSettled(tasks)
     const journeys: Journey[] = []

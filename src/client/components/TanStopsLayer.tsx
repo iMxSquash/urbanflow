@@ -8,9 +8,7 @@ function StopPopup({ name, wheelchairBoarding }: { name: string; wheelchairBoard
   return (
     <div className="min-w-32">
       <p className="font-semibold text-slate-900 text-sm">{name}</p>
-      {wheelchairBoarding && (
-        <p className="text-caption text-slate-400 mt-1">Accessible PMR</p>
-      )}
+      {wheelchairBoarding && <p className="text-caption text-slate-400 mt-1">Accessible PMR</p>}
     </div>
   )
 }
@@ -21,9 +19,13 @@ export default function TanStopsLayer() {
   const [zoom, setZoom] = useState(() => map.getZoom())
 
   useEffect(() => {
-    function onZoom() { setZoom(map.getZoom()) }
+    function onZoom() {
+      setZoom(map.getZoom())
+    }
     map.on('zoomend', onZoom)
-    return () => { map.off('zoomend', onZoom) }
+    return () => {
+      map.off('zoomend', onZoom)
+    }
   }, [map])
 
   if (error) {

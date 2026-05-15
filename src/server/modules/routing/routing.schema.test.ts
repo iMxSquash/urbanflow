@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { journeyRequestSchema } from './routing.schema.js'
 
 const PT_FROM = { lat: 47.218, lng: -1.553 }
-const PT_TO   = { lat: 47.225, lng: -1.545 }
+const PT_TO = { lat: 47.225, lng: -1.545 }
 
 const MINIMAL = { from: PT_FROM, to: PT_TO }
 
@@ -67,19 +67,27 @@ describe('journeyRequestSchema', () => {
   })
 
   it('rejette lat hors bornes (< −90)', () => {
-    expect(journeyRequestSchema.safeParse({ from: { lat: -91, lng: 0 }, to: PT_TO }).success).toBe(false)
+    expect(journeyRequestSchema.safeParse({ from: { lat: -91, lng: 0 }, to: PT_TO }).success).toBe(
+      false
+    )
   })
 
   it('rejette lat hors bornes (> 90)', () => {
-    expect(journeyRequestSchema.safeParse({ from: { lat: 91, lng: 0 }, to: PT_TO }).success).toBe(false)
+    expect(journeyRequestSchema.safeParse({ from: { lat: 91, lng: 0 }, to: PT_TO }).success).toBe(
+      false
+    )
   })
 
   it('rejette lng hors bornes (< −180)', () => {
-    expect(journeyRequestSchema.safeParse({ from: { lat: 0, lng: -181 }, to: PT_TO }).success).toBe(false)
+    expect(journeyRequestSchema.safeParse({ from: { lat: 0, lng: -181 }, to: PT_TO }).success).toBe(
+      false
+    )
   })
 
   it('rejette lng hors bornes (> 180)', () => {
-    expect(journeyRequestSchema.safeParse({ from: PT_FROM, to: { lat: 0, lng: 181 } }).success).toBe(false)
+    expect(
+      journeyRequestSchema.safeParse({ from: PT_FROM, to: { lat: 0, lng: 181 } }).success
+    ).toBe(false)
   })
 
   it('accepte maxWalkMinutes à la borne minimale (1)', () => {

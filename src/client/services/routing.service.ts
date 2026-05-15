@@ -11,7 +11,7 @@ export interface JourneyProfile {
 export async function planJourney(
   from: Coordinates,
   to: Coordinates,
-  profile?: JourneyProfile,
+  profile?: JourneyProfile
 ): Promise<Journey[]> {
   const res = await apiFetch('/api/routing/journey', {
     method: 'POST',
@@ -19,12 +19,14 @@ export async function planJourney(
     body: JSON.stringify({
       from,
       to,
-      ...(profile ? {
-        preference: profile.preference,
-        preferredModes: profile.preferredModes,
-        maxWalkMinutes: profile.maxWalkMinutes,
-        pmrAccessibility: profile.pmrAccessibility,
-      } : {}),
+      ...(profile
+        ? {
+            preference: profile.preference,
+            preferredModes: profile.preferredModes,
+            maxWalkMinutes: profile.maxWalkMinutes,
+            pmrAccessibility: profile.pmrAccessibility,
+          }
+        : {}),
     }),
   })
 

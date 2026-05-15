@@ -73,12 +73,14 @@ async function fetchAllStops(): Promise<TanStop[]> {
   return results.flat().flatMap((r): TanStop[] => {
     const c = r.stop_coordinates
     if (!c?.lat || !c?.lon) return []
-    return [{
-      stopId: r.stop_id,
-      name: r.stop_name,
-      coordinates: { lat: c.lat, lng: c.lon },
-      wheelchairBoarding: r.wheelchair_boarding === '1',
-    }]
+    return [
+      {
+        stopId: r.stop_id,
+        name: r.stop_name,
+        coordinates: { lat: c.lat, lng: c.lon },
+        wheelchairBoarding: r.wheelchair_boarding === '1',
+      },
+    ]
   })
 }
 

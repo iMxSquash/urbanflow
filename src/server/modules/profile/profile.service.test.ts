@@ -122,7 +122,15 @@ describe('getProfile', () => {
   })
 
   it('accepte tous les modes valides sans filtrage', async () => {
-    const allModes: TransportMode[] = ['walk', 'bus', 'tramway', 'bike', 'scooter', 'navibus', 'train']
+    const allModes: TransportMode[] = [
+      'walk',
+      'bus',
+      'tramway',
+      'bike',
+      'scooter',
+      'navibus',
+      'train',
+    ]
     mockQuery.mockResolvedValueOnce({
       rows: [{ ...BASE_ROW, preferred_modes: allModes }],
     })

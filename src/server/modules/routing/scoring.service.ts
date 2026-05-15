@@ -3,22 +3,26 @@ import { CO2_FACTORS } from '@shared/constants/co2-factors.js'
 
 // ─── Pondérations ─────────────────────────────────────────────────────────────
 
-interface Weights { duration: number; co2: number; comfort: number }
+interface Weights {
+  duration: number
+  co2: number
+  comfort: number
+}
 
 export function scoringWeights(preference: UserPreference): Weights {
   switch (preference) {
-    case 'eco':  return { duration: 0.2, co2: 0.7, comfort: 0.1 }
-    case 'fast': return { duration: 0.7, co2: 0.2, comfort: 0.1 }
-    default:     return { duration: 0.4, co2: 0.5, comfort: 0.1 }
+    case 'eco':
+      return { duration: 0.2, co2: 0.7, comfort: 0.1 }
+    case 'fast':
+      return { duration: 0.7, co2: 0.2, comfort: 0.1 }
+    default:
+      return { duration: 0.4, co2: 0.5, comfort: 0.1 }
   }
 }
 
 // ─── Score confort ────────────────────────────────────────────────────────────
 
-export function computeComfortScore(
-  segments: JourneySegment[],
-  options: JourneyOptions,
-): number {
+export function computeComfortScore(segments: JourneySegment[], options: JourneyOptions): number {
   const preferredModes = options.modes ?? []
   const pmr = options.pmrAccessibility ?? false
 
@@ -26,9 +30,12 @@ export function computeComfortScore(
   const maxWalk = pmr ? Math.min(options.maxWalkMinutes ?? 30, 5) : (options.maxWalkMinutes ?? 30)
 
   // Base : ratio de segments utilisant un mode préféré (50 si aucune préférence)
-  let base = preferredModes.length > 0
-    ? Math.round((segments.filter((s) => preferredModes.includes(s.mode)).length / segments.length) * 100)
-    : 50
+  let base =
+    preferredModes.length > 0
+      ? Math.round(
+          (segments.filter((s) => preferredModes.includes(s.mode)).length / segments.length) * 100
+        )
+      : 50
 
   // Pénalité si un segment marche dépasse le seuil
   const maxWalkSeg = segments
@@ -55,7 +62,7 @@ export function computeScore(
   totalDurationMin: number,
   totalDistKm: number,
   totalCo2g: number,
-  options: JourneyOptions,
+  options: JourneyOptions
 ): number {
   const w = scoringWeights(options.preference)
 

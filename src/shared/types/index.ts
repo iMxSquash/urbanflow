@@ -5,7 +5,15 @@ export interface Coordinates {
   lng: number
 }
 
-export const TRANSPORT_MODES = ['walk', 'bus', 'tramway', 'bike', 'scooter', 'navibus', 'train'] as const
+export const TRANSPORT_MODES = [
+  'walk',
+  'bus',
+  'tramway',
+  'bike',
+  'scooter',
+  'navibus',
+  'train',
+] as const
 export type TransportMode = (typeof TRANSPORT_MODES)[number]
 
 export const USER_PREFERENCES = ['eco', 'fast', 'balanced'] as const
@@ -14,9 +22,9 @@ export type UserPreference = (typeof USER_PREFERENCES)[number]
 export interface JourneyOptions {
   preference: UserPreference
   departureTime?: Date
-  modes?: TransportMode[]       // modes préférés — influence le score confort
-  maxWalkMinutes?: number       // pénalité si segment marche dépasse ce seuil
-  pmrAccessibility?: boolean    // réduit maxWalkMinutes effectif à 5 min, pénalise le vélo
+  modes?: TransportMode[] // modes préférés — influence le score confort
+  maxWalkMinutes?: number // pénalité si segment marche dépasse ce seuil
+  pmrAccessibility?: boolean // réduit maxWalkMinutes effectif à 5 min, pénalise le vélo
 }
 
 export interface JourneySegment {
@@ -28,7 +36,7 @@ export interface JourneySegment {
   co2g: number
   lineRef?: string
   lineName?: string
-  shape?: Coordinates[]   // tracé réel décodé depuis legGeometry
+  shape?: Coordinates[] // tracé réel décodé depuis legGeometry
 }
 
 export interface Journey {
@@ -97,8 +105,8 @@ export interface TanLine {
   shortName: string
   longName: string
   routeType: string
-  color: string        // hex sans #, ex: "E30613"
-  coordinates: [number, number][][]  // MultiLineString
+  color: string // hex sans #, ex: "E30613"
+  coordinates: [number, number][][] // MultiLineString
 }
 
 export interface TanStop {

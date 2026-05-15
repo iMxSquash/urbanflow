@@ -5,8 +5,8 @@ import type { Journey, JourneyOptions, JourneySegment } from '../../../shared/ty
 
 const mocks = vi.hoisted(() => ({
   transitousGetJourneys: vi.fn<() => Promise<Journey[]>>(),
-  osrmGetJourneys:       vi.fn<() => Promise<Journey[]>>(),
-  demoGetJourneys:       vi.fn<() => Promise<Journey[]>>(),
+  osrmGetJourneys: vi.fn<() => Promise<Journey[]>>(),
+  demoGetJourneys: vi.fn<() => Promise<Journey[]>>(),
 }))
 
 vi.mock('../transport/providers/transitous.provider.js', () => ({
@@ -35,7 +35,7 @@ import { planJourney } from './routing.service.js'
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const FROM = { lat: 47.218, lng: -1.553 }
-const TO   = { lat: 47.225, lng: -1.545 }
+const TO = { lat: 47.225, lng: -1.545 }
 
 function seg(mode: JourneySegment['mode'], durationMin = 10): JourneySegment {
   return {
@@ -214,7 +214,11 @@ describe('planJourney — filtre dur maxWalkMinutes', () => {
   it("segment marche dépassant maxWalkMinutes élimine l'itinéraire", async () => {
     const journey = makeJourney('j1', 80, [seg('walk', 25), seg('bus', 15)])
     mocks.transitousGetJourneys.mockResolvedValue([journey])
-    const opts: JourneyOptions = { preference: 'balanced', modes: ['walk', 'bus'], maxWalkMinutes: 20 }
+    const opts: JourneyOptions = {
+      preference: 'balanced',
+      modes: ['walk', 'bus'],
+      maxWalkMinutes: 20,
+    }
     const result = await planJourney(FROM, TO, opts)
     expect(result).toHaveLength(0)
   })
@@ -222,14 +226,18 @@ describe('planJourney — filtre dur maxWalkMinutes', () => {
   it('segment marche exactement à maxWalkMinutes est conservé', async () => {
     const journey = makeJourney('j1', 80, [seg('walk', 20), seg('bus', 15)])
     mocks.transitousGetJourneys.mockResolvedValue([journey])
-    const opts: JourneyOptions = { preference: 'balanced', modes: ['walk', 'bus'], maxWalkMinutes: 20 }
+    const opts: JourneyOptions = {
+      preference: 'balanced',
+      modes: ['walk', 'bus'],
+      maxWalkMinutes: 20,
+    }
     const result = await planJourney(FROM, TO, opts)
     expect(result).toHaveLength(1)
   })
 
   it('PMR : maxWalkMinutes est réduit à 5 min', async () => {
-    const journeyOk  = makeJourney('j1', 80, [seg('walk', 4), seg('bus', 15)])
-    const journeyKo  = makeJourney('j2', 70, [seg('walk', 8), seg('bus', 15)])
+    const journeyOk = makeJourney('j1', 80, [seg('walk', 4), seg('bus', 15)])
+    const journeyKo = makeJourney('j2', 70, [seg('walk', 8), seg('bus', 15)])
     mocks.transitousGetJourneys.mockResolvedValue([journeyOk, journeyKo])
     const opts: JourneyOptions = {
       preference: 'balanced',
@@ -272,9 +280,9 @@ describe('planJourney — filtre dur maxWalkMinutes', () => {
 describe('planJourney — tri par score décroissant', () => {
   it('les itinéraires sont retournés du plus haut au plus bas score', async () => {
     const journeys = [
-      makeJourney('low',  40, [seg('bus', 30)]),
+      makeJourney('low', 40, [seg('bus', 30)]),
       makeJourney('high', 90, [seg('bus', 10)]),
-      makeJourney('mid',  65, [seg('bus', 20)]),
+      makeJourney('mid', 65, [seg('bus', 20)]),
     ]
     mocks.transitousGetJourneys.mockResolvedValue(journeys)
     const opts: JourneyOptions = { preference: 'balanced' }
@@ -287,9 +295,7 @@ describe('planJourney — tri par score décroissant', () => {
       makeJourney('tc-low', 30, [seg('bus', 30)]),
       makeJourney('tc-high', 85, [seg('bus', 5)]),
     ])
-    mocks.osrmGetJourneys.mockResolvedValue([
-      makeJourney('osrm-mid', 60, [seg('bike', 15)]),
-    ])
+    mocks.osrmGetJourneys.mockResolvedValue([makeJourney('osrm-mid', 60, [seg('bike', 15)])])
     const opts: JourneyOptions = { preference: 'balanced', modes: ['bus', 'bike'] }
     const result = await planJourney(FROM, TO, opts)
     expect(result.map((j) => j.id)).toEqual(['tc-high', 'osrm-mid', 'tc-low'])

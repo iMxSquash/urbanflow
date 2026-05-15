@@ -22,11 +22,15 @@ describe('updateProfileSchema', () => {
   })
 
   it('accepte navibus seul', () => {
-    expect(updateProfileSchema.safeParse({ ...valid, preferredModes: ['navibus'] }).success).toBe(true)
+    expect(updateProfileSchema.safeParse({ ...valid, preferredModes: ['navibus'] }).success).toBe(
+      true
+    )
   })
 
   it('accepte train seul', () => {
-    expect(updateProfileSchema.safeParse({ ...valid, preferredModes: ['train'] }).success).toBe(true)
+    expect(updateProfileSchema.safeParse({ ...valid, preferredModes: ['train'] }).success).toBe(
+      true
+    )
   })
 
   it('rejette un tableau de modes vide', () => {

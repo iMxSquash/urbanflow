@@ -8,7 +8,11 @@ import { scoringWeights, computeComfortScore, computeScore } from './scoring.ser
 const PT_A = { lat: 47.218, lng: -1.553 }
 const PT_B = { lat: 47.225, lng: -1.545 }
 
-function seg(mode: JourneySegment['mode'], distanceKm: number, durationMin: number): JourneySegment {
+function seg(
+  mode: JourneySegment['mode'],
+  distanceKm: number,
+  durationMin: number
+): JourneySegment {
   return {
     mode,
     from: PT_A,
@@ -85,14 +89,22 @@ describe('computeComfortScore', () => {
 
   it('marche dans la limite maxWalkMinutes → pas de pénalité', () => {
     const segments = [seg('walk', 1, 10), seg('bus', 3, 15)]
-    const options: JourneyOptions = { preference: 'balanced', modes: ['walk', 'bus'], maxWalkMinutes: 15 }
+    const options: JourneyOptions = {
+      preference: 'balanced',
+      modes: ['walk', 'bus'],
+      maxWalkMinutes: 15,
+    }
     const score = computeComfortScore(segments, options)
     expect(score).toBe(100)
   })
 
   it('marche dépassant maxWalkMinutes sans PMR → pénalité −40', () => {
     const segments = [seg('walk', 2, 25), seg('bus', 3, 15)]
-    const options: JourneyOptions = { preference: 'balanced', modes: ['walk', 'bus'], maxWalkMinutes: 20 }
+    const options: JourneyOptions = {
+      preference: 'balanced',
+      modes: ['walk', 'bus'],
+      maxWalkMinutes: 20,
+    }
     const base = 100
     expect(computeComfortScore(segments, options)).toBe(base - 40)
   })
@@ -186,20 +198,20 @@ describe('computeScore', () => {
 
   it('préférence eco : score influencé par CO2 plus que durée', () => {
     const fastHighCo2Segs = [seg('bus', 5, 10)]
-    const slowLowCo2Segs  = [seg('bike', 5, 60)]
+    const slowLowCo2Segs = [seg('bike', 5, 60)]
 
     const scoreEcoFast = computeScore(fastHighCo2Segs, 10, 5, 5 * 109, { preference: 'eco' })
-    const scoreEcoSlow = computeScore(slowLowCo2Segs,  60, 5, 0,       { preference: 'eco' })
+    const scoreEcoSlow = computeScore(slowLowCo2Segs, 60, 5, 0, { preference: 'eco' })
 
     expect(scoreEcoSlow).toBeGreaterThan(scoreEcoFast)
   })
 
   it('préférence fast : score influencé par durée plus que CO2', () => {
     const fastHighCo2Segs = [seg('bus', 5, 10)]
-    const slowLowCo2Segs  = [seg('bike', 5, 60)]
+    const slowLowCo2Segs = [seg('bike', 5, 60)]
 
     const scoreFastFast = computeScore(fastHighCo2Segs, 10, 5, 5 * 109, { preference: 'fast' })
-    const scoreFastSlow = computeScore(slowLowCo2Segs,  60, 5, 0,       { preference: 'fast' })
+    const scoreFastSlow = computeScore(slowLowCo2Segs, 60, 5, 0, { preference: 'fast' })
 
     expect(scoreFastFast).toBeGreaterThan(scoreFastSlow)
   })
@@ -212,9 +224,9 @@ describe('computeScore', () => {
 
   it('le score est toujours dans [0, 100]', () => {
     const cases: [JourneySegment[], number, number, number, JourneyOptions][] = [
-      [[seg('walk', 20, 200)], 200, 20, 0,                  { preference: 'eco' }],
+      [[seg('walk', 20, 200)], 200, 20, 0, { preference: 'eco' }],
       [[seg('car' as any, 1, 1)], 1, 1, CO2_FACTORS.car * 1, { preference: 'balanced' }],
-      [[seg('bike', 0.1, 1)], 1, 0.1, 0,                   { preference: 'fast' }],
+      [[seg('bike', 0.1, 1)], 1, 0.1, 0, { preference: 'fast' }],
     ]
     for (const [segs, dur, dist, co2, opts] of cases) {
       const score = computeScore(segs, dur, dist, co2, opts)
