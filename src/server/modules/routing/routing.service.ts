@@ -34,7 +34,7 @@ function selectProviders(options: JourneyOptions): TransportProvider[] {
       requestedModes.includes('walk'))
   if (wantsOsrm && osrm) selected.push(osrm)
 
-  // Si aucun provider sélectionné (ex: scooter seul), fallback TC
+  // Si aucun provider sélectionné (ex: mode inconnu non géré), fallback TC
   return selected.length > 0 ? selected : [TC_PROVIDER]
 }
 
