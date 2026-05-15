@@ -28,8 +28,6 @@ export function useGeolocation() {
   })
 
   const locate = useCallback(() => {
-    console.log('[geo] locate() appelé')
-
     if (!navigator.geolocation) {
       console.warn('[geo] navigator.geolocation indisponible')
       setState((s) => ({ ...s, error: 'Géolocalisation non supportée par ce navigateur' }))
@@ -37,11 +35,9 @@ export function useGeolocation() {
     }
 
     setState({ position: null, error: null, loading: true })
-    console.log('[geo] getCurrentPosition lancé')
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        console.log('[geo] position obtenue :', pos.coords.latitude, pos.coords.longitude)
         setState({
           position: { lat: pos.coords.latitude, lng: pos.coords.longitude },
           error: null,
