@@ -15,6 +15,7 @@ export const journeyRequestSchema = z.object({
     .optional()
     .default([]),
   maxWalkMinutes: z.number().min(1).max(120).optional().default(30),
+  pmrAccessibility: z.boolean().optional().default(false),
 })
 
 export type JourneyRequest = z.infer<typeof journeyRequestSchema>

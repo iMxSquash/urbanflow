@@ -1,5 +1,6 @@
-import type { Coordinates, Journey, JourneyOptions, JourneySegment, TransportMode, UserPreference } from '@shared/types/index.js'
+import type { Coordinates, Journey, JourneyOptions, JourneySegment, TransportMode } from '@shared/types/index.js'
 import { CO2_FACTORS } from '@shared/constants/co2-factors.js'
+import { computeScore, scoringWeights } from '../../routing/scoring.service.js'
 import type { TransportProvider } from '../transport-provider.interface.js'
 
 // ─── Types réponse Transitous (OTP-like, sans wrapper plan) ──────────────────
@@ -85,33 +86,7 @@ function modeLabel(mode: TransportMode): string {
 }
 
 // ─── Scoring multicritères ────────────────────────────────────────────────────
-
-function scoringWeights(preference: UserPreference): { duration: number; co2: number; comfort: number } {
-  switch (preference) {
-    case 'eco':      return { duration: 0.2, co2: 0.7, comfort: 0.1 }
-    case 'fast':     return { duration: 0.7, co2: 0.2, comfort: 0.1 }
-    default:         return { duration: 0.4, co2: 0.5, comfort: 0.1 }
-  }
-}
-
-function computeComfortScore(
-  segments: JourneySegment[],
-  preferredModes: TransportMode[],
-  maxWalkMinutes: number,
-): number {
-  // Ratio de segments utilisant un mode préféré
-  let base = preferredModes.length > 0
-    ? Math.round((segments.filter(s => preferredModes.includes(s.mode)).length / segments.length) * 100)
-    : 50
-
-  // Pénalité si un segment de marche dépasse la tolérance utilisateur
-  const maxWalkSeg = segments
-    .filter(s => s.mode === 'walk')
-    .reduce((max, s) => Math.max(max, s.durationMin), 0)
-  if (maxWalkSeg > maxWalkMinutes) base = Math.max(0, base - 40)
-
-  return base
-}
+// Logique centralisée dans scoring.service.ts — scoringWeights et computeScore importés.
 
 function mapItinerary(itin: OtpItinerary, idx: number, options: JourneyOptions): Journey {
   const segments: JourneySegment[] = itin.legs.map((leg): JourneySegment => {
@@ -148,12 +123,7 @@ function mapItinerary(itin: OtpItinerary, idx: number, options: JourneyOptions):
   const totalCo2g         = segments.reduce((s, seg) => s + seg.co2g, 0)
   const co2SavingG        = Math.max(0, Math.round(totalDistanceKm * CO2_FACTORS.car) - totalCo2g)
 
-  const w             = scoringWeights(options.preference)
-  const durationScore = Math.max(0, 100 - (totalDurationMin / 120) * 100)
-  const maxCo2        = totalDistanceKm * CO2_FACTORS.car
-  const co2Score      = maxCo2 > 0 ? Math.max(0, (1 - totalCo2g / maxCo2) * 100) : 100
-  const comfort       = computeComfortScore(segments, options.modes ?? [], options.maxWalkMinutes ?? 30)
-  const score         = Math.round(w.duration * durationScore + w.co2 * co2Score + w.comfort * comfort)
+  const score = computeScore(segments, totalDurationMin, totalDistanceKm, totalCo2g, options)
 
   const usedModes = [...new Set(segments.map((s) => s.mode))]
   const label     = usedModes.map(modeLabel).join(' + ')
@@ -173,6 +143,7 @@ function mapItinerary(itin: OtpItinerary, idx: number, options: JourneyOptions):
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
 export class TransitousProvider implements TransportProvider {
+  readonly supportedModes: TransportMode[] = ['bus', 'tramway']
   private readonly baseUrl = (process.env.TRANSITOUS_URL ?? 'https://api.transitous.org/api/').replace(/\/$/, '')
 
   async getJourneys(

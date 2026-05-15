@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
-import type { Coordinates, Journey, JourneyOptions } from '@shared/types/index.js'
+import type { Coordinates, Journey, JourneyOptions, TransportMode } from '@shared/types/index.js'
 import type { TransportProvider } from '../transport-provider.interface.js'
 
 function simulatedWeather(): 'sunny' | 'rainy' {
@@ -12,6 +12,8 @@ function simulatedWeather(): 'sunny' | 'rainy' {
 }
 
 export class DemoProvider implements TransportProvider {
+  readonly supportedModes: TransportMode[] = ['walk', 'bus', 'tramway', 'bike', 'scooter']
+
   async getJourneys(
     _from: Coordinates,
     _to: Coordinates,

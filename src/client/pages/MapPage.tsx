@@ -33,8 +33,10 @@ export default function MapPage() {
   const [addressPosition, setAddressPosition] = useState<Coordinates | null>(null)
   const { journey, loading: journeyLoading, error: journeyError, calculate, clear: clearJourney } = useJourney()
   const { layers } = useMapLayersStore()
-  const { profile } = useProfileStore()
+  const { profile, fetchProfile } = useProfileStore()
   const locatedOnMount = useRef(false)
+
+  useEffect(() => { void fetchProfile() }, [fetchProfile])
 
   // Si le consentement était déjà accordé (session persistée), localiser au mount
   useEffect(() => {
@@ -56,6 +58,7 @@ export default function MapPage() {
       preference: profile.preference,
       preferredModes: profile.preferredModes,
       maxWalkMinutes: profile.maxWalkMinutes,
+      pmrAccessibility: profile.pmrAccessibility,
     } : undefined)
   }
 

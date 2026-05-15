@@ -16,6 +16,7 @@ export interface JourneyOptions {
   departureTime?: Date
   modes?: TransportMode[]       // modes préférés — influence le score confort
   maxWalkMinutes?: number       // pénalité si segment marche dépasse ce seuil
+  pmrAccessibility?: boolean    // réduit maxWalkMinutes effectif à 5 min, pénalise le vélo
 }
 
 export interface JourneySegment {

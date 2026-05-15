@@ -3,12 +3,13 @@ import type { JourneyRequest } from './routing.schema.js'
 import { planJourney } from './routing.service.js'
 
 export async function journey(req: Request, res: Response): Promise<void> {
-  const { from, to, datetime, preference, preferredModes, maxWalkMinutes } = req.body as JourneyRequest
+  const { from, to, datetime, preference, preferredModes, maxWalkMinutes, pmrAccessibility } = req.body as JourneyRequest
 
   const options = {
     preference,
     modes: preferredModes,
     maxWalkMinutes,
+    pmrAccessibility,
     ...(datetime ? { departureTime: new Date(datetime) } : {}),
   }
 

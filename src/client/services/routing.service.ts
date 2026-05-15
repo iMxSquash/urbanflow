@@ -5,6 +5,7 @@ export interface JourneyProfile {
   preference: UserPreference
   preferredModes: TransportMode[]
   maxWalkMinutes: number
+  pmrAccessibility: boolean
 }
 
 export async function planJourney(
@@ -22,6 +23,7 @@ export async function planJourney(
         preference: profile.preference,
         preferredModes: profile.preferredModes,
         maxWalkMinutes: profile.maxWalkMinutes,
+        pmrAccessibility: profile.pmrAccessibility,
       } : {}),
     }),
   })
