@@ -18,7 +18,7 @@ const OSRM_BASE = (process.env.OSRM_URL ?? 'http://router.project-osrm.org').rep
 
 // Vitesses réalistes par mode (km/h) — le serveur public ne charge que le profil
 // driving, les durées retournées pour /cycling/ et /foot/ sont invalides.
-const MODE_SPEED_KMH: Record<'bike' | 'walk', number> = { bike: 15, walk: 5 }
+const MODE_SPEED_KMH: Record<'bike' | 'walk' | 'scooter', number> = { bike: 15, walk: 5, scooter: 20 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -164,6 +164,38 @@ async function buildBiclooJourney(
   }
 }
 
+async function buildScooterJourney(
+  from: Coordinates,
+  to: Coordinates,
+  options: JourneyOptions,
+): Promise<Journey> {
+  if (options.pmrAccessibility) {
+    throw new Error('Trottinette non adaptée aux besoins PMR')
+  }
+
+  const { distKm, shape } = await fetchOsrmRoute(from, to, 'cycling')
+  const co2g = Math.round(distKm * CO2_FACTORS['scooter'])
+  const segment = makeSegment('scooter', from, to, distKm, {
+    shape: shape.length >= 2 ? shape : undefined,
+  })
+
+  const totalDurationMin = segment.durationMin
+  const totalDistanceKm  = segment.distanceKm
+  const co2SavingG       = Math.max(0, Math.round(totalDistanceKm * CO2_FACTORS.car) - co2g)
+  const score            = computeScore([segment], totalDurationMin, totalDistanceKm, co2g, options)
+
+  return {
+    id: 'osrm-scooter',
+    label: 'Trottinette',
+    segments: [segment],
+    totalDurationMin,
+    totalDistanceKm,
+    totalCo2g: co2g,
+    co2SavingG,
+    score,
+  }
+}
+
 async function buildWalkJourney(
   from: Coordinates,
   to: Coordinates,
@@ -194,7 +226,7 @@ async function buildWalkJourney(
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
 export class OsrmProvider implements TransportProvider {
-  readonly supportedModes: TransportMode[] = ['bike', 'walk']
+  readonly supportedModes: TransportMode[] = ['bike', 'walk', 'scooter']
 
   async getJourneys(
     from: Coordinates,
@@ -203,14 +235,15 @@ export class OsrmProvider implements TransportProvider {
   ): Promise<Journey[]> {
     const requestedModes = (options.modes ?? []).filter((m) =>
       this.supportedModes.includes(m)
-    ) as Array<'bike' | 'walk'>
+    ) as Array<'bike' | 'walk' | 'scooter'>
 
     // Si aucun mode spécifique → proposer le vélo par défaut
     const modes = requestedModes.length > 0 ? requestedModes : ['bike' as const]
 
     const tasks: Promise<Journey>[] = []
-    if (modes.includes('bike')) tasks.push(buildBiclooJourney(from, to, options))
-    if (modes.includes('walk')) tasks.push(buildWalkJourney(from, to, options))
+    if (modes.includes('bike'))    tasks.push(buildBiclooJourney(from, to, options))
+    if (modes.includes('scooter')) tasks.push(buildScooterJourney(from, to, options))
+    if (modes.includes('walk'))    tasks.push(buildWalkJourney(from, to, options))
 
     const results = await Promise.allSettled(tasks)
     const journeys: Journey[] = []

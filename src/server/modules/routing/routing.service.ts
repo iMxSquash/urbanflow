@@ -28,9 +28,13 @@ function selectProviders(options: JourneyOptions): TransportProvider[] {
   const wantsTC = requestedModes.includes('bus') || requestedModes.includes('tramway')
   if (wantsTC) selected.push(TC_PROVIDER)
 
-  // OSRM : activé si l'utilisateur veut vélo ou marche
+  // OSRM : activé si l'utilisateur veut vélo, trottinette ou marche
   const osrm = ALL_PROVIDERS.find((p) => p.supportedModes.includes('bike'))
-  const wantsOsrm = osrm && (requestedModes.includes('bike') || requestedModes.includes('walk'))
+  const wantsOsrm = osrm && (
+    requestedModes.includes('bike') ||
+    requestedModes.includes('scooter') ||
+    requestedModes.includes('walk')
+  )
   if (wantsOsrm && osrm) selected.push(osrm)
 
   // Si aucun provider sélectionné (ex: scooter seul), fallback TC
