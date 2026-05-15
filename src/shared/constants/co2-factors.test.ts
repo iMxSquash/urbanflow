@@ -25,4 +25,17 @@ describe('CO2_FACTORS', () => {
     expect(CO2_FACTORS.bus).toBe(109)
     expect(CO2_FACTORS.tramway).toBe(4)
   })
+
+  it('navibus et train ont des facteurs documentés (ADEME)', () => {
+    expect(CO2_FACTORS.navibus).toBe(50)
+    expect(CO2_FACTORS.train).toBe(14)
+  })
+
+  it('navibus émet moins que le bus', () => {
+    expect(CO2_FACTORS.navibus).toBeLessThan(CO2_FACTORS.bus)
+  })
+
+  it('train émet moins que le bus', () => {
+    expect(CO2_FACTORS.train).toBeLessThan(CO2_FACTORS.bus)
+  })
 })

@@ -18,6 +18,8 @@ import { runMigrations } from './db/migrate.js'
 import { swaggerSpec } from './config/swagger.js'
 import authRouter from './modules/auth/index.js'
 import profileRouter from './modules/profile/index.js'
+import transportRouter from './modules/transport/index.js'
+import routingRouter from './modules/routing/index.js'
 
 const app = express()
 const PORT = process.env.PORT ?? 3000
@@ -43,6 +45,8 @@ if (process.env.NODE_ENV === 'development') {
 }
 app.use('/api/auth', authRouter)
 app.use('/api/profile', profileRouter)
+app.use('/api/transport', transportRouter)
+app.use('/api/routing', routingRouter)
 
 app.get(['/health', '/api/health'], (_req, res) => {
   res.json({ status: 'ok' })

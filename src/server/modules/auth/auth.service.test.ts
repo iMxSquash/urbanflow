@@ -41,8 +41,8 @@ beforeEach(() => {
 describe('registerUser', () => {
   it('crée un utilisateur et retourne access + refresh token', async () => {
     mockQuery
-      .mockResolvedValueOnce({ rows: [{ id: USER_ID, email: USER_EMAIL }] })  // INSERT user
-      .mockResolvedValueOnce({ rows: [] })                                     // INSERT refresh_token
+      .mockResolvedValueOnce({ rows: [{ id: USER_ID, email: USER_EMAIL }] }) // INSERT user
+      .mockResolvedValueOnce({ rows: [] }) // INSERT refresh_token
     mockHash.mockResolvedValue(HASHED)
 
     const result = await registerUser(USER_EMAIL, PASSWORD)
@@ -67,8 +67,8 @@ describe('registerUser', () => {
     const pgError = Object.assign(new Error('unique violation'), { code: '23505' })
     mockQuery
       .mockResolvedValueOnce({ rows: [{ id: USER_ID, email: USER_EMAIL }] }) // INSERT call 1 → succès
-      .mockRejectedValueOnce(pgError)                                         // INSERT call 2 → 23505
-      .mockResolvedValueOnce({ rows: [] })                                    // storeRefreshToken call 1
+      .mockRejectedValueOnce(pgError) // INSERT call 2 → 23505
+      .mockResolvedValueOnce({ rows: [] }) // storeRefreshToken call 1
 
     const results = await Promise.allSettled([
       registerUser(USER_EMAIL, PASSWORD),
@@ -90,7 +90,7 @@ describe('loginUser', () => {
   it('authentifie un utilisateur et retourne les tokens', async () => {
     mockQuery
       .mockResolvedValueOnce({ rows: [{ id: USER_ID, email: USER_EMAIL, password_hash: HASHED }] })
-      .mockResolvedValueOnce({ rows: [] })  // INSERT refresh_token
+      .mockResolvedValueOnce({ rows: [] }) // INSERT refresh_token
     mockCompare.mockResolvedValue(true)
 
     const result = await loginUser(USER_EMAIL, PASSWORD)
@@ -107,7 +107,9 @@ describe('loginUser', () => {
   })
 
   it('lance INVALID_CREDENTIALS si le mot de passe est incorrect', async () => {
-    mockQuery.mockResolvedValueOnce({ rows: [{ id: USER_ID, email: USER_EMAIL, password_hash: HASHED }] })
+    mockQuery.mockResolvedValueOnce({
+      rows: [{ id: USER_ID, email: USER_EMAIL, password_hash: HASHED }],
+    })
     mockCompare.mockResolvedValue(false)
 
     await expect(loginUser(USER_EMAIL, 'MauvaisMotDePasse1')).rejects.toThrow('INVALID_CREDENTIALS')
@@ -118,11 +120,9 @@ describe('loginUser', () => {
 
 describe('refreshTokens', () => {
   function makeRefreshToken(jti: string): string {
-    return jwt.sign(
-      { sub: USER_ID, email: USER_EMAIL, jti },
-      process.env.JWT_REFRESH_SECRET!,
-      { expiresIn: '7d' },
-    )
+    return jwt.sign({ sub: USER_ID, email: USER_EMAIL, jti }, process.env.JWT_REFRESH_SECRET!, {
+      expiresIn: '7d',
+    })
   }
 
   it('émet de nouveaux tokens si le jti existe en base', async () => {
@@ -130,8 +130,8 @@ describe('refreshTokens', () => {
     const token = makeRefreshToken(jti)
 
     mockQuery
-      .mockResolvedValueOnce({ rowCount: 1 })  // DELETE old jti
-      .mockResolvedValueOnce({ rows: [] })     // INSERT new jti
+      .mockResolvedValueOnce({ rowCount: 1 }) // DELETE old jti
+      .mockResolvedValueOnce({ rows: [] }) // INSERT new jti
 
     const result = await refreshTokens(token)
 
@@ -162,7 +162,7 @@ describe('logoutUser', () => {
     const token = jwt.sign(
       { sub: USER_ID, email: USER_EMAIL, jti },
       process.env.JWT_REFRESH_SECRET!,
-      { expiresIn: '7d' },
+      { expiresIn: '7d' }
     )
     mockQuery.mockResolvedValueOnce({ rows: [] })
 

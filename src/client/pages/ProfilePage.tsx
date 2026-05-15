@@ -91,6 +91,22 @@ const MODE_OPTIONS: Array<{
     selectedBorder: 'border-amber-600',
     selectedText: 'text-amber-700',
   },
+  {
+    value: 'navibus',
+    label: 'Navibus',
+    icon: '⛴️',
+    selectedBg: 'bg-sky-50',
+    selectedBorder: 'border-sky-500',
+    selectedText: 'text-sky-700',
+  },
+  {
+    value: 'train',
+    label: 'Train',
+    icon: '🚆',
+    selectedBg: 'bg-violet-50',
+    selectedBorder: 'border-violet-600',
+    selectedText: 'text-violet-700',
+  },
 ]
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
@@ -227,7 +243,9 @@ function ProfileForm({ profile }: { profile: MobilityProfile }) {
                     : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50',
                 ].join(' ')}
               >
-                <span aria-hidden="true" className="text-2xl leading-none">{opt.icon}</span>
+                <span aria-hidden="true" className="text-2xl leading-none">
+                  {opt.icon}
+                </span>
                 <span className="text-body-sm font-semibold">{opt.label}</span>
                 <span className="text-caption leading-snug hidden sm:block">{opt.description}</span>
               </button>
@@ -241,15 +259,9 @@ function ProfileForm({ profile }: { profile: MobilityProfile }) {
         <h2 id="modes-heading" className="text-h3 font-semibold text-slate-900">
           Modes de transport acceptés
         </h2>
-        <p className="text-body-sm text-slate-500 mt-0.5 mb-4">
-          Sélectionnez au moins un mode
-        </p>
+        <p className="text-body-sm text-slate-500 mt-0.5 mb-4">Sélectionnez au moins un mode</p>
 
-        <div
-          role="group"
-          aria-labelledby="modes-heading"
-          className="flex flex-wrap gap-3"
-        >
+        <div role="group" aria-labelledby="modes-heading" className="flex flex-wrap gap-3">
           {MODE_OPTIONS.map((mode) => {
             const isSelected = form.modes.includes(mode.value)
             const isOnlyMode = form.modes.length === 1 && isSelected
@@ -300,9 +312,7 @@ function ProfileForm({ profile }: { profile: MobilityProfile }) {
             className={[
               'relative shrink-0 w-12 h-7 rounded-full border-2 transition-colors duration-fast',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-600 focus-visible:ring-offset-2',
-              form.pmrAccessibility
-                ? 'bg-eco-600 border-eco-600'
-                : 'bg-slate-200 border-slate-200',
+              form.pmrAccessibility ? 'bg-eco-600 border-eco-600' : 'bg-slate-200 border-slate-200',
             ].join(' ')}
           >
             <span
@@ -355,10 +365,7 @@ function ProfileForm({ profile }: { profile: MobilityProfile }) {
           aria-valuenow={form.maxWalkMinutes}
           aria-valuetext={`${form.maxWalkMinutes} minutes`}
         />
-        <div
-          className="flex justify-between text-caption text-slate-400 mt-2"
-          aria-hidden="true"
-        >
+        <div className="flex justify-between text-caption text-slate-400 mt-2" aria-hidden="true">
           <span>5 min</span>
           <span>30 min</span>
           <span>60 min</span>
@@ -376,7 +383,10 @@ function ProfileForm({ profile }: { profile: MobilityProfile }) {
           </div>
         )}
         {saveError && (
-          <div role="alert" className="bg-red-50 border border-red-200 rounded-card px-4 py-3 text-red-700 text-body-sm">
+          <div
+            role="alert"
+            className="bg-red-50 border border-red-200 rounded-card px-4 py-3 text-red-700 text-body-sm"
+          >
             {saveError}
           </div>
         )}
@@ -452,7 +462,10 @@ export default function ProfilePage() {
       <main className="max-w-2xl mx-auto px-4 py-6 lg:px-6">
         {/* Erreur de chargement */}
         {fetchError && !profile && (
-          <div role="alert" className="bg-red-50 border border-red-200 rounded-card px-4 py-3 text-red-700 text-body-sm mb-6">
+          <div
+            role="alert"
+            className="bg-red-50 border border-red-200 rounded-card px-4 py-3 text-red-700 text-body-sm mb-6"
+          >
             {fetchError}
           </div>
         )}

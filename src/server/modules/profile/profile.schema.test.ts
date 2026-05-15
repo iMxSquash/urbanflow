@@ -13,12 +13,24 @@ describe('updateProfileSchema', () => {
     expect(updateProfileSchema.safeParse(valid).success).toBe(true)
   })
 
-  it('accepte tous les modes connus', () => {
+  it('accepte tous les modes connus incluant navibus et train', () => {
     const result = updateProfileSchema.safeParse({
       ...valid,
-      preferredModes: ['walk', 'bus', 'tramway', 'bike', 'scooter'],
+      preferredModes: ['walk', 'bus', 'tramway', 'bike', 'scooter', 'navibus', 'train'],
     })
     expect(result.success).toBe(true)
+  })
+
+  it('accepte navibus seul', () => {
+    expect(updateProfileSchema.safeParse({ ...valid, preferredModes: ['navibus'] }).success).toBe(
+      true
+    )
+  })
+
+  it('accepte train seul', () => {
+    expect(updateProfileSchema.safeParse({ ...valid, preferredModes: ['train'] }).success).toBe(
+      true
+    )
   })
 
   it('rejette un tableau de modes vide', () => {

@@ -6,6 +6,8 @@ export const CO2_FACTORS = {
   bike: 0, // g CO2e/km
   walk: 0, // g CO2e/km
   scooter: 0, // g CO2e/km (électrique)
+  navibus: 50, // g CO2e/km/passager (ferry Loire — estimation)
+  train: 14, // g CO2e/km/passager (TER électrifié — Base Empreinte ADEME)
 } as const
 
 export type TransportModeKey = keyof typeof CO2_FACTORS

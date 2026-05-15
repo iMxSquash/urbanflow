@@ -8,8 +8,8 @@
     "npm": ">=10.0.0"
   },
   "scripts": {
-    "dev": "concurrently \"vite\" \"tsx watch src/server/index.ts\"",
-    "dev:client": "vite",
+    "dev": "concurrently \"vite --host\" \"tsx watch src/server/index.ts\"",
+    "dev:client": "vite --host",
     "dev:server": "tsx watch src/server/index.ts",
     "build": "tsc -b tsconfig.app.json && vite build",
     "build:server": "tsc -p tsconfig.server.json && node scripts/copy-migrations.mjs",

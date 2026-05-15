@@ -21,6 +21,70 @@ const options: swaggerJsdoc.Options = {
           type: 'object',
           properties: {
             error: { type: 'string' },
+            details: { type: 'object', nullable: true },
+          },
+        },
+        Coordinates: {
+          type: 'object',
+          required: ['lat', 'lng'],
+          properties: {
+            lat: { type: 'number', minimum: -90, maximum: 90, example: 47.218 },
+            lng: { type: 'number', minimum: -180, maximum: 180, example: -1.553 },
+          },
+        },
+        TransportMode: {
+          type: 'string',
+          enum: ['walk', 'bus', 'tramway', 'bike', 'scooter', 'navibus', 'train'],
+          description: 'Mode de transport — walk/bike/scooter via OSRM, TC via Transitous',
+        },
+        JourneySegment: {
+          type: 'object',
+          properties: {
+            mode: { $ref: '#/components/schemas/TransportMode' },
+            from: { $ref: '#/components/schemas/Coordinates' },
+            to: { $ref: '#/components/schemas/Coordinates' },
+            distanceKm: { type: 'number', example: 2.4 },
+            durationMin: { type: 'integer', example: 12 },
+            co2g: {
+              type: 'integer',
+              description: 'Émissions CO2 en grammes (facteurs ADEME)',
+              example: 261,
+            },
+            lineRef: { type: 'string', nullable: true, example: 'C2' },
+            lineName: { type: 'string', nullable: true, example: 'C2 — Orvault Grand Val' },
+            shape: {
+              type: 'array',
+              nullable: true,
+              description: 'Tracé réel décodé depuis legGeometry (polyline Leaflet)',
+              items: { $ref: '#/components/schemas/Coordinates' },
+            },
+          },
+        },
+        Journey: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', example: 'transitous-0' },
+            label: {
+              type: 'string',
+              example: 'Bus + Tramway',
+              description: 'Modes utilisés joints par " + "',
+            },
+            segments: { type: 'array', items: { $ref: '#/components/schemas/JourneySegment' } },
+            totalDurationMin: { type: 'integer', example: 28 },
+            totalDistanceKm: { type: 'number', example: 6.3 },
+            totalCo2g: { type: 'integer', example: 437 },
+            co2SavingG: {
+              type: 'integer',
+              description: 'Économie CO2 vs trajet voiture équivalent',
+              example: 1158,
+            },
+            score: {
+              type: 'integer',
+              minimum: 0,
+              maximum: 100,
+              description: 'Score multicritères (durée × CO2 × confort)',
+              example: 74,
+            },
           },
         },
       },

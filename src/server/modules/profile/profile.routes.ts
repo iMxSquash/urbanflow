@@ -27,8 +27,7 @@ const router = Router()
  *         preferredModes:
  *           type: array
  *           items:
- *             type: string
- *             enum: [walk, bus, tramway, bike, scooter]
+ *             $ref: '#/components/schemas/TransportMode'
  *           example: [walk, tramway, bike]
  *         maxWalkMinutes:
  *           type: integer
@@ -41,7 +40,9 @@ const router = Router()
  *           example: eco
  *         pmrAccessibility:
  *           type: boolean
- *           description: Filtre les itinéraires selon l'accessibilité PMR
+ *           description: >
+ *             Si true, le moteur de routage réduit maxWalkMinutes à 5 min,
+ *             bloque vélo et scooter, et applique des pénalités de confort renforcées.
  *           example: false
  *         updatedAt:
  *           type: string
@@ -54,10 +55,9 @@ const router = Router()
  *         preferredModes:
  *           type: array
  *           items:
- *             type: string
- *             enum: [walk, bus, tramway, bike, scooter]
+ *             $ref: '#/components/schemas/TransportMode'
  *           minItems: 1
- *           example: [walk, tramway, bike]
+ *           example: [walk, tramway, bus]
  *         maxWalkMinutes:
  *           type: integer
  *           minimum: 5
@@ -69,7 +69,9 @@ const router = Router()
  *           example: eco
  *         pmrAccessibility:
  *           type: boolean
- *           description: Filtre les itinéraires selon l'accessibilité PMR
+ *           description: >
+ *             Si true, le moteur de routage réduit maxWalkMinutes à 5 min,
+ *             bloque vélo et scooter, et applique des pénalités de confort renforcées.
  *           example: false
  */
 

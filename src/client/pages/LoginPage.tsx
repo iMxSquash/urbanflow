@@ -71,9 +71,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-h2 font-bold text-slate-900">Connexion</h1>
-          <p className="mt-2 text-body-sm text-slate-600">
-            Accédez à votre espace UrbanFlow
-          </p>
+          <p className="mt-2 text-body-sm text-slate-600">Accédez à votre espace UrbanFlow</p>
         </div>
 
         <div className="card p-6 md:p-8">
@@ -86,11 +84,7 @@ export default function LoginPage() {
             )}
           </div>
 
-          <form
-            onSubmit={handleSubmit}
-            aria-label="Formulaire de connexion"
-            noValidate
-          >
+          <form onSubmit={handleSubmit} aria-label="Formulaire de connexion" noValidate>
             {/* Email */}
             <div className="mb-4">
               <label htmlFor="login-email" className="label">

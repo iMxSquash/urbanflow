@@ -81,21 +81,29 @@ src/
 
 ## Pattern Stratégie — Transport Providers
 
-C'est le point architectural central. Le module routing ne connaît JAMAIS directement Transitous ou OTP. Il passe par une interface.
+C'est le point architectural central. Le module routing ne connaît JAMAIS directement Transitous ou OSRM. Il passe par une interface.
 
 ```typescript
 // server/modules/transport/transport-provider.interface.ts
 export interface TransportProvider {
+  readonly supportedModes: TransportMode[]
   getJourneys(from: Coordinates, to: Coordinates, options: JourneyOptions): Promise<Journey[]>
 }
 ```
 
-Trois implémentations :
-- `TransitousProvider` — production cloud (api.transitous.org, API MOTIS)
-- `OTPProvider` — développement local (localhost:8080, GraphQL)
-- `DemoProvider` — mode démo (fichiers JSON statiques)
+Trois implémentations actives :
+- `TransitousProvider` — modes TC : bus, tramway, navibus, train (api.transitous.org, API MOTIS/OTP)
+- `OsrmProvider` — modes actifs : bike, walk, scooter (router.project-osrm.org, profil cycling/foot)
+- `DemoProvider` — tous les modes (fichiers JSON statiques, `DEMO_MODE=true`)
 
-Sélection via variable d'environnement `TRANSPORT_PROVIDER=transitous|otp|demo`.
+Sélection dans `routing.service.ts` via `selectProviders()` en fonction des modes demandés par l'utilisateur :
+- au moins un mode TC (bus/tramway/navibus/train) → `TransitousProvider` activé
+- au moins un mode actif (bike/walk/scooter) → `OsrmProvider` activé
+- `DEMO_MODE=true` → `DemoProvider` uniquement, quelle que soit la sélection
+
+Le serveur public OSRM ne dispose que du profil `driving` — les durées sont calculées depuis la distance réelle OSRM et des vitesses constantes par mode : bike 15 km/h, walk 5 km/h, scooter 20 km/h.
+
+`OsrmProvider` refuse silencieusement de construire un trajet Bicloo si la station la plus proche dépasse **1,5 km** de marche (évite des segments walk absurdes filtrés en aval).
 
 ## Mode démo
 
@@ -105,11 +113,11 @@ Variable d'env `DEMO_MODE=true` fait basculer TOUS les appels API externes vers 
 
 | API | Variable d'env | Usage |
 |-----|---------------|-------|
-| Transitous | `TRANSITOUS_URL=https://api.transitous.org/api/` | Routage multimodal (cloud) |
-| OTP | `OTP_URL=http://localhost:8080` | Routage multimodal (dev local) |
-| OpenWeatherMap | `OPENWEATHER_API_KEY=xxx` | Météo pour scoring |
+| Transitous | `TRANSITOUS_URL=https://api.transitous.org/api/` | Routage TC multimodal (cloud) |
+| OSRM public | `OSRM_URL=http://router.project-osrm.org` | Routage vélo/marche/scooter (shape + distance) |
+| OpenWeatherMap | `OPENWEATHER_API_KEY=xxx` | Météo pour scoring (non encore intégré) |
 | GBFS Bicloo | URL fixe transport.data.gouv.fr | Stations vélos |
-| SIRI-Lite Naolib | `RequestorRef: opendata` | Prochains passages temps réel |
+| SIRI-Lite Naolib | `RequestorRef: opendata` | Prochains passages temps réel (non encore intégré) |
 | CartoDB Positron | URL fixe basemaps.cartocdn.com | Tuiles cartographiques |
 
 ## Variables d'environnement
@@ -118,15 +126,12 @@ Variable d'env `DEMO_MODE=true` fait basculer TOUS les appels API externes vers 
 # Base de données
 DATABASE_URL=postgresql://user:pass@host:5432/urbanflow
 
-# Transport provider
-TRANSPORT_PROVIDER=transitous  # transitous | otp | demo
-
 # Mode démo (surcharge tout)
 DEMO_MODE=false
 
-# APIs
+# APIs transport
 TRANSITOUS_URL=https://api.transitous.org/api/
-OTP_URL=http://localhost:8080
+OSRM_URL=http://router.project-osrm.org
 OPENWEATHER_API_KEY=
 
 # Auth
@@ -231,10 +236,12 @@ Constantes à utiliser pour le scoring :
 export const CO2_FACTORS = {
   car: 253,        // g CO2e/km — référence voiture pour calcul économie
   bus: 109,        // g CO2e/km/passager
-  tramway: 4,      // g CO2e/km/passager (électrique)
+  tramway: 4,      // g CO2e/km/passager (électrique réseau Naolib)
   bike: 0,         // g CO2e/km
   walk: 0,         // g CO2e/km
   scooter: 0,      // g CO2e/km (électrique)
+  navibus: 50,     // g CO2e/km/passager (ferry Loire — estimation ADEME)
+  train: 14,       // g CO2e/km/passager (TER électrifié — Base Empreinte ADEME)
 } as const
 ```
 
@@ -247,14 +254,30 @@ Source à citer : Base Empreinte de l'ADEME.
 Le moteur de scoring est un algorithme déterministe multicritères, PAS un modèle ML.
 Ne jamais le présenter comme de l'IA. L'appeler « moteur d'optimisation multicritères ».
 
+Implémenté dans `server/modules/routing/scoring.service.ts`.
+
 ```
 score_final = (w_duree × score_duree) + (w_co2 × score_co2) + (w_confort × score_confort)
 
-Pondérations ajustées par :
-- Préférences utilisateur (eco/fast/balanced)
-- Météo (pluie → w_confort_tc augmente, w_velo diminue)
-- Heure (heure de pointe → w_tc augmente si fréquence élevée)
+score_duree  = max(0, 100 − (totalDurationMin / 120) × 100)
+score_co2    = max(0, (1 − totalCo2g / (totalDistKm × CO2_FACTORS.car)) × 100)
+score_confort = ratio segments préférés × 100, avec pénalités marche/PMR
+
+Pondérations par préférence utilisateur :
+  eco      → { durée: 0.2, co2: 0.7, confort: 0.1 }
+  fast     → { durée: 0.7, co2: 0.2, confort: 0.1 }
+  balanced → { durée: 0.4, co2: 0.5, confort: 0.1 }
 ```
+
+**Filtres durs appliqués dans `routing.service.ts` avant le scoring :**
+- Filtre modes : élimine les itinéraires dont un segment n'est pas dans les modes demandés (marche toujours tolérée)
+- Filtre `maxWalkMinutes` : élimine les itinéraires dont un segment marche dépasse le seuil — PMR réduit ce seuil à `min(maxWalkMinutes, 5)`
+
+**PMR (`pmrAccessibility: true`) dans le score confort :**
+- Seuil marche réduit à 5 min pour la pénalité (−60 pts au lieu de −40)
+- Pénalité supplémentaire −50 pts si un segment vélo est présent
+
+**Non encore implémenté :** pondération météo (OpenWeather), pondération heure de pointe.
 
 ## Git
 

@@ -58,11 +58,12 @@ Un seul backend Express avec des modules bien séparés. Pas de microservices.
 
 ## Pattern Stratégie — Couche d'abstraction transport
 
-Point architectural clé. Le module Routing ne connaît pas directement Transitous ou OTP.
+Point architectural clé. Le module Routing ne connaît pas directement Transitous ou OSRM.
 
 ```typescript
-// src/transport/transport-provider.interface.ts
+// src/server/modules/transport/transport-provider.interface.ts
 export interface TransportProvider {
+  readonly supportedModes: TransportMode[]
   getJourneys(
     from: Coordinates,
     to: Coordinates,
@@ -70,26 +71,32 @@ export interface TransportProvider {
   ): Promise<Journey[]>
 }
 
-// src/transport/transitous.provider.ts
-export class TransitousProvider implements TransportProvider {
-  // Implémentation via api.transitous.org (MOTIS API)
-  // Utilisé en déploiement cloud
-}
+// TransitousProvider — modes TC : bus, tramway, navibus, train
+// Appelle api.transitous.org (API MOTIS/OTP) avec filtre mode OTP (BUS, TRAM, FERRY, RAIL)
+export class TransitousProvider implements TransportProvider { ... }
 
-// src/transport/otp.provider.ts
-export class OTPProvider implements TransportProvider {
-  // Implémentation via OTP localhost (GraphQL)
-  // Utilisé en développement local
-}
+// OsrmProvider — modes actifs : bike, walk, scooter
+// Appelle router.project-osrm.org pour distance/shape réelle
+// Durées calculées depuis distance × vitesse constante (bike 15 km/h, walk 5 km/h, scooter 20 km/h)
+// Itinéraire Bicloo = walk→bike→walk avec stations GBFS ; rejeté si station > 1,5 km
+export class OsrmProvider implements TransportProvider { ... }
 
-// src/transport/demo.provider.ts
-export class DemoProvider implements TransportProvider {
-  // Implémentation via fichiers JSON statiques
-  // Utilisé quand DEMO_MODE=true
-}
+// DemoProvider — tous les modes, lit les fichiers JSON dans demo-data/
+// Activé quand DEMO_MODE=true, quelle que soit la sélection de modes
+export class DemoProvider implements TransportProvider { ... }
 ```
 
-> **Pour le dossier** : « OpenTripPlanner a été retenu comme moteur de référence, validé en développement local avec le GTFS Naolib. Pour le déploiement cloud du MVP, les contraintes mémoire d'OTP (2 Go minimum) étant incompatibles avec notre stratégie d'hébergement éco-conçu sur free tier, nous utilisons l'API Transitous. Le pattern Stratégie permet une migration transparente. »
+**Logique de sélection (`routing.service.ts`) :**
+```
+selectProviders(options):
+  si DEMO_MODE=true          → [DemoProvider]
+  si aucun mode demandé      → [TransitousProvider] (fallback TC par défaut)
+  si mode TC demandé         → ajouter TransitousProvider
+  si mode actif demandé      → ajouter OsrmProvider
+  si aucun match             → [TransitousProvider] (fallback)
+```
+
+> **Pour le dossier** : « OpenTripPlanner a été évalué en développement local avec le GTFS Naolib. Pour le déploiement cloud du MVP, les contraintes mémoire d'OTP (2 Go minimum) étant incompatibles avec notre stratégie d'hébergement éco-conçu sur free tier, nous utilisons l'API Transitous pour les transports en commun. Le routage vélo/marche est délégué à l'API publique OSRM. Le pattern Stratégie permet une migration transparente vers toute autre source. »
 
 ---
 

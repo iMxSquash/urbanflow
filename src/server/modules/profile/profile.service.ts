@@ -1,6 +1,11 @@
 import { pool } from '../../db/pool.js'
 import type { MobilityProfile } from './profile.types.js'
-import { TRANSPORT_MODES, USER_PREFERENCES, type TransportMode, type UserPreference } from '../../../shared/types/index.js'
+import {
+  TRANSPORT_MODES,
+  USER_PREFERENCES,
+  type TransportMode,
+  type UserPreference,
+} from '../../../shared/types/index.js'
 
 interface ProfileRow {
   user_id: string
@@ -19,8 +24,8 @@ const DEFAULT_PROFILE = {
 }
 
 function rowToProfile(row: ProfileRow): MobilityProfile {
-  const validModes = row.preferred_modes.filter(
-    (m): m is TransportMode => (TRANSPORT_MODES as readonly string[]).includes(m),
+  const validModes = row.preferred_modes.filter((m): m is TransportMode =>
+    (TRANSPORT_MODES as readonly string[]).includes(m)
   )
   const validPreference = (USER_PREFERENCES as readonly string[]).includes(row.preference)
     ? (row.preference as UserPreference)
@@ -40,7 +45,7 @@ export async function getProfile(userId: string): Promise<MobilityProfile> {
   const result = await pool.query<ProfileRow>(
     `SELECT user_id, preferred_modes, max_walk_minutes, preference, pmr_accessibility, updated_at
      FROM mobility_profiles WHERE user_id = $1`,
-    [userId],
+    [userId]
   )
 
   if (result.rows.length === 0) {
@@ -57,7 +62,7 @@ export async function upsertProfile(
     maxWalkMinutes: number
     preference: UserPreference
     pmrAccessibility: boolean
-  },
+  }
 ): Promise<MobilityProfile> {
   const result = await pool.query<ProfileRow>(
     `INSERT INTO mobility_profiles
@@ -70,7 +75,7 @@ export async function upsertProfile(
            pmr_accessibility  = EXCLUDED.pmr_accessibility,
            updated_at         = EXCLUDED.updated_at
      RETURNING user_id, preferred_modes, max_walk_minutes, preference, pmr_accessibility, updated_at`,
-    [userId, data.preferredModes, data.maxWalkMinutes, data.preference, data.pmrAccessibility],
+    [userId, data.preferredModes, data.maxWalkMinutes, data.preference, data.pmrAccessibility]
   )
 
   return rowToProfile(result.rows[0])
