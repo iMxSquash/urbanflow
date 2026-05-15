@@ -103,7 +103,7 @@ function makeSegment(
   distKm: number,
   opts: { lineName?: string; shape?: Coordinates[] }
 ): JourneySegment {
-  const speed = MODE_SPEED_KMH[mode as 'bike' | 'walk'] ?? 5
+  const speed = MODE_SPEED_KMH[mode as 'bike' | 'walk' | 'scooter'] ?? 5
   const durationMin = Math.max(1, Math.round((distKm / speed) * 60))
   const co2g = Math.round(distKm * CO2_FACTORS[mode])
   return {
