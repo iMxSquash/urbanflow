@@ -15,11 +15,15 @@ import * as routingController from './routing.controller.js'
  * @swagger
  * /api/routing/journey:
  *   post:
- *     summary: Calcule des itinéraires entre deux points
+ *     summary: Calcule des itinéraires multimodaux entre deux points
  *     description: >
- *       Retourne une liste d'itinéraires multimodaux entre les coordonnées `from` et `to`.
- *       Le provider utilisé dépend de la variable d'environnement TRANSPORT_PROVIDER
- *       (transitous | demo). Si DEMO_MODE=true, utilise toujours le DemoProvider.
+ *       Retourne jusqu'à 5 itinéraires classés par score décroissant (algorithme multicritères
+ *       durée × CO2 × confort). Les providers activés dépendent des modes demandés :
+ *       bus/tramway/navibus/train → TransitousProvider (api.transitous.org) ;
+ *       bike/walk/scooter → OsrmProvider (router.project-osrm.org) ;
+ *       DEMO_MODE=true → DemoProvider (JSON statiques, toujours disponible).
+ *       Filtres appliqués avant le classement : modes non souhaités éliminés,
+ *       segments de marche dépassant maxWalkMinutes supprimés (PMR : seuil réduit à 5 min).
  *     tags: [Routing]
  *     security:
  *       - bearerAuth: []
@@ -32,33 +36,46 @@ import * as routingController from './routing.controller.js'
  *             required: [from, to]
  *             properties:
  *               from:
- *                 type: object
- *                 required: [lat, lng]
- *                 properties:
- *                   lat:
- *                     type: number
- *                     example: 47.218
- *                   lng:
- *                     type: number
- *                     example: -1.553
+ *                 $ref: '#/components/schemas/Coordinates'
  *               to:
- *                 type: object
- *                 required: [lat, lng]
- *                 properties:
- *                   lat:
- *                     type: number
- *                     example: 47.253
- *                   lng:
- *                     type: number
- *                     example: -1.550
+ *                 $ref: '#/components/schemas/Coordinates'
  *               datetime:
  *                 type: string
  *                 format: date-time
- *                 description: Heure de départ souhaitée (ISO 8601). Défaut = maintenant.
+ *                 description: Heure de départ souhaitée (ISO 8601 avec offset). Défaut = maintenant.
  *                 example: "2026-05-13T08:00:00+02:00"
+ *               preference:
+ *                 type: string
+ *                 enum: [eco, fast, balanced]
+ *                 default: balanced
+ *                 description: >
+ *                   Pondération du scoring — eco (CO2 ×0.7), fast (durée ×0.7), balanced (CO2 ×0.5 durée ×0.4)
+ *               preferredModes:
+ *                 type: array
+ *                 items:
+ *                   $ref: '#/components/schemas/TransportMode'
+ *                 default: []
+ *                 description: >
+ *                   Modes activés. Tableau vide = Transitous seul (fallback TC).
+ *                   TC (bus/tramway/navibus/train) active TransitousProvider ;
+ *                   actifs (bike/walk/scooter) active OsrmProvider.
+ *                 example: [bus, tramway, walk]
+ *               maxWalkMinutes:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 120
+ *                 default: 30
+ *                 description: Durée max acceptable pour un segment marche. Filtre dur (pas seulement score).
+ *                 example: 20
+ *               pmrAccessibility:
+ *                 type: boolean
+ *                 default: false
+ *                 description: >
+ *                   Si true : maxWalkMinutes effectif réduit à min(maxWalkMinutes, 5),
+ *                   vélo et scooter bloqués, pénalités de confort renforcées.
  *     responses:
  *       200:
- *         description: Liste d'itinéraires calculés
+ *         description: Liste d'itinéraires classés par score décroissant
  *         content:
  *           application/json:
  *             schema:
@@ -67,9 +84,9 @@ import * as routingController from './routing.controller.js'
  *                 journeys:
  *                   type: array
  *                   items:
- *                     type: object
+ *                     $ref: '#/components/schemas/Journey'
  *       400:
- *         description: Coordonnées invalides
+ *         description: Payload invalide (coordonnées hors bornes, mode inconnu, etc.)
  *         content:
  *           application/json:
  *             schema:
@@ -81,7 +98,7 @@ import * as routingController from './routing.controller.js'
  *             schema:
  *               $ref: '#/components/schemas/Error'
  *       502:
- *         description: Service de routage indisponible
+ *         description: Tous les providers de routage ont échoué
  *         content:
  *           application/json:
  *             schema:
