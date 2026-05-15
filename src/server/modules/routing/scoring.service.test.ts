@@ -225,7 +225,7 @@ describe('computeScore', () => {
   it('le score est toujours dans [0, 100]', () => {
     const cases: [JourneySegment[], number, number, number, JourneyOptions][] = [
       [[seg('walk', 20, 200)], 200, 20, 0, { preference: 'eco' }],
-      [[seg('car' as any, 1, 1)], 1, 1, CO2_FACTORS.car * 1, { preference: 'balanced' }],
+      [[seg('bus', 1, 1)], 1, 1, CO2_FACTORS.car * 1, { preference: 'balanced' }],
       [[seg('bike', 0.1, 1)], 1, 0.1, 0, { preference: 'fast' }],
     ]
     for (const [segs, dur, dist, co2, opts] of cases) {

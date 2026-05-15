@@ -6,7 +6,7 @@ import type {
   TransportMode,
 } from '@shared/types/index.js'
 import { CO2_FACTORS } from '@shared/constants/co2-factors.js'
-import { computeScore, scoringWeights } from '../../routing/scoring.service.js'
+import { computeScore } from '../../routing/scoring.service.js'
 import type { TransportProvider } from '../transport-provider.interface.js'
 
 // ─── Types réponse Transitous (OTP-like, sans wrapper plan) ──────────────────
