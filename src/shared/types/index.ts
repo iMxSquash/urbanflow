@@ -22,7 +22,7 @@ export type UserPreference = (typeof USER_PREFERENCES)[number]
 export interface JourneyOptions {
   preference: UserPreference
   departureTime?: Date
-  modes?: TransportMode[] // modes préférés — influence le score confort
+  modes?: TransportMode[] // modes autorisés — sélectionne les providers (TC→Transitous, actifs→OSRM) et filtre dur les itinéraires ; influence aussi le score confort
   maxWalkMinutes?: number // pénalité si segment marche dépasse ce seuil
   pmrAccessibility?: boolean // réduit maxWalkMinutes effectif à 5 min, pénalise le vélo
 }
