@@ -7,7 +7,12 @@ let _indexPromise: Promise<Map<string, TanLine>> | null = null
 
 function getIndex(): Promise<Map<string, TanLine>> {
   if (!_indexPromise) {
-    _indexPromise = getTanLines().then((lines) => new Map(lines.map((l) => [l.shortName, l])))
+    _indexPromise = getTanLines()
+      .then((lines) => new Map(lines.map((l) => [l.shortName, l])))
+      .catch((err: unknown) => {
+        _indexPromise = null // reset so the next call can retry
+        throw err
+      })
   }
   return _indexPromise
 }
