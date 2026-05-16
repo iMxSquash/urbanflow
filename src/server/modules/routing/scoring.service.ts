@@ -1,5 +1,7 @@
-import type { JourneyOptions, JourneySegment, UserPreference } from '@shared/types/index.js'
+import type { JourneyOptions, JourneySegment, TransportMode, UserPreference, WeatherCondition } from '@shared/types/index.js'
 import { CO2_FACTORS } from '@shared/constants/co2-factors.js'
+
+const TC_MODES: TransportMode[] = ['bus', 'tramway', 'navibus', 'train']
 
 // ─── Pondérations ─────────────────────────────────────────────────────────────
 
@@ -22,7 +24,11 @@ export function scoringWeights(preference: UserPreference): Weights {
 
 // ─── Score confort ────────────────────────────────────────────────────────────
 
-export function computeComfortScore(segments: JourneySegment[], options: JourneyOptions): number {
+export function computeComfortScore(
+  segments: JourneySegment[],
+  options: JourneyOptions,
+  weather?: WeatherCondition | null
+): number {
   const preferredModes = options.modes ?? []
   const pmr = options.pmrAccessibility ?? false
 
@@ -52,6 +58,17 @@ export function computeComfortScore(segments: JourneySegment[], options: Journey
     base = Math.max(0, base - 50)
   }
 
+  // Météo : pluie/neige/orage → pénalise le vélo, prime les TC couverts
+  if (weather) {
+    const isWet = ['rain', 'snow', 'thunderstorm'].includes(weather.condition)
+    const isWindy = weather.windSpeed > 40
+    const hasBike = segments.some((s) => s.mode === 'bike')
+    const isPureTC = segments.every((s) => TC_MODES.includes(s.mode) || s.mode === 'walk')
+
+    if ((isWet || isWindy) && hasBike) base = Math.max(0, base - 30)
+    if (isWet && isPureTC) base = Math.min(100, base + 10)
+  }
+
   return base
 }
 
@@ -62,7 +79,8 @@ export function computeScore(
   totalDurationMin: number,
   totalDistKm: number,
   totalCo2g: number,
-  options: JourneyOptions
+  options: JourneyOptions,
+  weather?: WeatherCondition | null
 ): number {
   const w = scoringWeights(options.preference)
 
@@ -71,7 +89,7 @@ export function computeScore(
   const maxCo2 = totalDistKm * CO2_FACTORS.car
   const co2Score = maxCo2 > 0 ? Math.max(0, (1 - totalCo2g / maxCo2) * 100) : 100
 
-  const comfort = computeComfortScore(segments, options)
+  const comfort = computeComfortScore(segments, options, weather)
 
   return Math.round(w.duration * durationScore + w.co2 * co2Score + w.comfort * comfort)
 }
