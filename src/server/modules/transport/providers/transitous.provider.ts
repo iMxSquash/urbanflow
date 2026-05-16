@@ -8,6 +8,7 @@ import type {
 import { CO2_FACTORS } from '@shared/constants/co2-factors.js'
 import { computeScore } from '../../routing/scoring.service.js'
 import type { TransportProvider } from '../transport-provider.interface.js'
+import { getShapeForLeg } from '../gtfs-shapes.service.js'
 
 // ─── Types réponse Transitous (OTP-like, sans wrapper plan) ──────────────────
 
@@ -136,9 +137,22 @@ function mapItinerary(itin: OtpItinerary, idx: number, options: JourneyOptions):
       ? `${leg.routeShortName}${leg.headsign ? ` — ${leg.headsign}` : ''}`
       : undefined
 
-    const shape = leg.legGeometry?.points
-      ? decodePolyline(leg.legGeometry.points, leg.legGeometry.precision ?? 5)
-      : undefined
+    // Transitous (MOTIS) encodes legGeometry at precision 7; fall back to GTFS
+    // shape data when the decoded polyline is absent or too sparse (< 3 points).
+    const isTransitLeg = ['BUS', 'TRAM', 'RAIL', 'FERRY', 'SUBWAY'].includes(leg.mode.toUpperCase())
+    let shape: Coordinates[] | undefined
+    if (leg.legGeometry?.points) {
+      const decoded = decodePolyline(leg.legGeometry.points, leg.legGeometry.precision ?? 7)
+      if (decoded.length >= 3) shape = decoded
+    }
+    if (!shape && isTransitLeg && leg.routeShortName) {
+      const gtfsShape = getShapeForLeg(
+        leg.routeShortName,
+        { lat: leg.from.lat, lng: leg.from.lon },
+        { lat: leg.to.lat, lng: leg.to.lon }
+      )
+      if (gtfsShape) shape = gtfsShape
+    }
 
     return {
       mode,
