@@ -1,18 +1,5 @@
-import { readFileSync } from 'node:fs'
-import path from 'node:path'
 import type { Coordinates, TanLine } from '@shared/types/index.js'
-
-// Loaded once at first call, then kept in memory for the process lifetime
-let _lines: TanLine[] | null = null
-
-function getLines(): TanLine[] {
-  if (_lines) return _lines
-  const filePath = path.resolve(process.cwd(), 'src/demo-data/tan-lines.json')
-  const data = JSON.parse(readFileSync(filePath, 'utf-8')) as { lines: TanLine[] }
-  _lines = data.lines
-  console.log(`[gtfs-shapes] ${_lines.length} lignes TAN chargées`)
-  return _lines
-}
+import { getTanLines } from './tan.service.js'
 
 function haversineKm(a: Coordinates, b: Coordinates): number {
   const R = 6371
@@ -24,7 +11,6 @@ function haversineKm(a: Coordinates, b: Coordinates): number {
   return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h))
 }
 
-// Returns the index of the point in `line` closest to `point`
 function closestIndex(line: [number, number][], point: Coordinates): number {
   let best = 0
   let bestDist = Infinity
@@ -38,22 +24,7 @@ function closestIndex(line: [number, number][], point: Coordinates): number {
   return best
 }
 
-/**
- * Returns the sub-segment of the official TAN shape for `routeShortName`
- * between the two stops, or null if unavailable.
- *
- * When Transitous returns legGeometry with < 3 decoded points (straight line),
- * this provides a precise fallback from the GTFS MultiLineString data.
- */
-export function getShapeForLeg(
-  routeShortName: string,
-  from: Coordinates,
-  to: Coordinates
-): Coordinates[] | null {
-  const lines = getLines()
-  const route = lines.find((l) => l.shortName === routeShortName)
-  if (!route) return null
-
+function extractSlice(route: TanLine, from: Coordinates, to: Coordinates): Coordinates[] | null {
   let bestSlice: Coordinates[] | null = null
   let bestLen = 0
 
@@ -78,4 +49,29 @@ export function getShapeForLeg(
   }
 
   return bestSlice && bestSlice.length >= 3 ? bestSlice : null
+}
+
+/**
+ * Returns the sub-segment of the official TAN shape for `routeShortName`
+ * between the two stops, or null if unavailable.
+ *
+ * Delegates to getTanLines() which handles DEMO_MODE vs live API and
+ * holds its own module-level cache — no local readFileSync needed.
+ */
+export async function getShapeForLeg(
+  routeShortName: string,
+  from: Coordinates,
+  to: Coordinates
+): Promise<Coordinates[] | null> {
+  let lines: TanLine[]
+  try {
+    lines = await getTanLines()
+  } catch {
+    return null
+  }
+
+  const route = lines.find((l) => l.shortName === routeShortName)
+  if (!route) return null
+
+  return extractSlice(route, from, to)
 }

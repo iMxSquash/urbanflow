@@ -123,8 +123,8 @@ function modeLabel(mode: TransportMode): string {
 // ─── Scoring multicritères ────────────────────────────────────────────────────
 // Logique centralisée dans scoring.service.ts — computeScore importé.
 
-function mapItinerary(itin: OtpItinerary, idx: number, options: JourneyOptions): Journey {
-  const segments: JourneySegment[] = itin.legs.map((leg): JourneySegment => {
+async function mapItinerary(itin: OtpItinerary, idx: number, options: JourneyOptions): Promise<Journey> {
+  const segments: JourneySegment[] = await Promise.all(itin.legs.map(async (leg): Promise<JourneySegment> => {
     const mode = otpModeToTransportMode(leg.mode)
     const distKm =
       Math.round(
@@ -146,7 +146,7 @@ function mapItinerary(itin: OtpItinerary, idx: number, options: JourneyOptions):
       if (decoded.length >= 3) shape = decoded
     }
     if (!shape && isTransitLeg && leg.routeShortName) {
-      const gtfsShape = getShapeForLeg(
+      const gtfsShape = await getShapeForLeg(
         leg.routeShortName,
         { lat: leg.from.lat, lng: leg.from.lon },
         { lat: leg.to.lat, lng: leg.to.lon }
@@ -165,7 +165,7 @@ function mapItinerary(itin: OtpItinerary, idx: number, options: JourneyOptions):
       ...(lineName ? { lineName } : {}),
       ...(shape ? { shape } : {}),
     }
-  })
+  }))
 
   const totalDurationMin = Math.round(itin.duration / 60)
   const totalDistanceKm = Math.round(segments.reduce((s, seg) => s + seg.distanceKm, 0) * 100) / 100
@@ -254,7 +254,7 @@ export class TransitousProvider implements TransportProvider {
     }
 
     const itineraries = raw.itineraries ?? []
-    const journeys = itineraries.map((itin, idx) => mapItinerary(itin, idx, options))
+    const journeys = await Promise.all(itineraries.map((itin, idx) => mapItinerary(itin, idx, options)))
     console.log(`[routing] TransitousProvider: ${journeys.length} itinéraires mappés`)
     return journeys
   }
