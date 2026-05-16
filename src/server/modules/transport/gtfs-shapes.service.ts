@@ -73,15 +73,13 @@ export async function getShapeForLeg(
   from: Coordinates,
   to: Coordinates
 ): Promise<Coordinates[] | null> {
-  let index: Map<string, TanLine>
   try {
-    index = await getIndex()
-  } catch {
+    const index = await getIndex()
+    const route = index.get(routeShortName)
+    if (!route) return null
+    return extractSlice(route, from, to)
+  } catch (err) {
+    console.warn(`[gtfs-shapes] fallback ignoré pour ${routeShortName} :`, (err as Error).message)
     return null
   }
-
-  const route = index.get(routeShortName)
-  if (!route) return null
-
-  return extractSlice(route, from, to)
 }
