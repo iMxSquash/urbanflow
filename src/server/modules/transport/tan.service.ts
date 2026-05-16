@@ -27,10 +27,16 @@ interface NantesPage<T> {
 }
 
 async function fetchPage<T>(url: string): Promise<T[]> {
-  const res = await fetch(url)
-  if (!res.ok) throw new Error(`API Nantes ${res.status}`)
-  const d = (await res.json()) as NantesPage<T>
-  return d.results ?? []
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 10_000)
+  try {
+    const res = await fetch(url, { signal: controller.signal })
+    if (!res.ok) throw new Error(`API Nantes ${res.status}`)
+    const d = (await res.json()) as NantesPage<T>
+    return d.results ?? []
+  } finally {
+    clearTimeout(timer)
+  }
 }
 
 async function fetchAllLines(): Promise<TanLine[]> {

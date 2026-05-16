@@ -8,6 +8,7 @@ import type {
 import { CO2_FACTORS } from '@shared/constants/co2-factors.js'
 import { computeScore } from '../../routing/scoring.service.js'
 import type { TransportProvider } from '../transport-provider.interface.js'
+import { getShapeForLeg } from '../gtfs-shapes.service.js'
 
 // ─── Types réponse Transitous (OTP-like, sans wrapper plan) ──────────────────
 
@@ -122,8 +123,8 @@ function modeLabel(mode: TransportMode): string {
 // ─── Scoring multicritères ────────────────────────────────────────────────────
 // Logique centralisée dans scoring.service.ts — computeScore importé.
 
-function mapItinerary(itin: OtpItinerary, idx: number, options: JourneyOptions): Journey {
-  const segments: JourneySegment[] = itin.legs.map((leg): JourneySegment => {
+async function mapItinerary(itin: OtpItinerary, idx: number, options: JourneyOptions): Promise<Journey> {
+  const segments: JourneySegment[] = await Promise.all(itin.legs.map(async (leg): Promise<JourneySegment> => {
     const mode = otpModeToTransportMode(leg.mode)
     const distKm =
       Math.round(
@@ -136,9 +137,22 @@ function mapItinerary(itin: OtpItinerary, idx: number, options: JourneyOptions):
       ? `${leg.routeShortName}${leg.headsign ? ` — ${leg.headsign}` : ''}`
       : undefined
 
-    const shape = leg.legGeometry?.points
-      ? decodePolyline(leg.legGeometry.points, leg.legGeometry.precision ?? 5)
-      : undefined
+    // Transitous (MOTIS) encodes legGeometry at precision 7; fall back to GTFS
+    // shape data when the decoded polyline is absent or too sparse (< 3 points).
+    const isTransitLeg = ['BUS', 'TRAM', 'RAIL', 'FERRY', 'SUBWAY'].includes(leg.mode.toUpperCase())
+    let shape: Coordinates[] | undefined
+    if (leg.legGeometry?.points) {
+      const decoded = decodePolyline(leg.legGeometry.points, leg.legGeometry.precision ?? 7)
+      if (decoded.length >= 3) shape = decoded
+    }
+    if (!shape && isTransitLeg && leg.routeShortName) {
+      const gtfsShape = await getShapeForLeg(
+        leg.routeShortName,
+        { lat: leg.from.lat, lng: leg.from.lon },
+        { lat: leg.to.lat, lng: leg.to.lon }
+      )
+      if (gtfsShape) shape = gtfsShape
+    }
 
     return {
       mode,
@@ -151,7 +165,7 @@ function mapItinerary(itin: OtpItinerary, idx: number, options: JourneyOptions):
       ...(lineName ? { lineName } : {}),
       ...(shape ? { shape } : {}),
     }
-  })
+  }))
 
   const totalDurationMin = Math.round(itin.duration / 60)
   const totalDistanceKm = Math.round(segments.reduce((s, seg) => s + seg.distanceKm, 0) * 100) / 100
@@ -240,7 +254,7 @@ export class TransitousProvider implements TransportProvider {
     }
 
     const itineraries = raw.itineraries ?? []
-    const journeys = itineraries.map((itin, idx) => mapItinerary(itin, idx, options))
+    const journeys = await Promise.all(itineraries.map((itin, idx) => mapItinerary(itin, idx, options)))
     console.log(`[routing] TransitousProvider: ${journeys.length} itinéraires mappés`)
     return journeys
   }
