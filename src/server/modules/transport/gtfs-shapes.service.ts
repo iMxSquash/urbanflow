@@ -1,6 +1,16 @@
 import type { Coordinates, TanLine } from '@shared/types/index.js'
 import { getTanLines } from './tan.service.js'
 
+// Built once from getTanLines() result; keyed by shortName for O(1) lookup per leg
+let _index: Map<string, TanLine> | null = null
+
+async function getIndex(): Promise<Map<string, TanLine>> {
+  if (_index) return _index
+  const lines = await getTanLines()
+  _index = new Map(lines.map((l) => [l.shortName, l]))
+  return _index
+}
+
 function haversineKm(a: Coordinates, b: Coordinates): number {
   const R = 6371
   const dLat = ((b.lat - a.lat) * Math.PI) / 180
@@ -63,14 +73,14 @@ export async function getShapeForLeg(
   from: Coordinates,
   to: Coordinates
 ): Promise<Coordinates[] | null> {
-  let lines: TanLine[]
+  let index: Map<string, TanLine>
   try {
-    lines = await getTanLines()
+    index = await getIndex()
   } catch {
     return null
   }
 
-  const route = lines.find((l) => l.shortName === routeShortName)
+  const route = index.get(routeShortName)
   if (!route) return null
 
   return extractSlice(route, from, to)
