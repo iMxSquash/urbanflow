@@ -1,14 +1,15 @@
 import type { Coordinates, TanLine } from '@shared/types/index.js'
 import { getTanLines } from './tan.service.js'
 
-// Built once from getTanLines() result; keyed by shortName for O(1) lookup per leg
-let _index: Map<string, TanLine> | null = null
+// Caching the promise (not the result) ensures concurrent callers await the
+// same in-flight build rather than each triggering a separate getTanLines() call.
+let _indexPromise: Promise<Map<string, TanLine>> | null = null
 
-async function getIndex(): Promise<Map<string, TanLine>> {
-  if (_index) return _index
-  const lines = await getTanLines()
-  _index = new Map(lines.map((l) => [l.shortName, l]))
-  return _index
+function getIndex(): Promise<Map<string, TanLine>> {
+  if (!_indexPromise) {
+    _indexPromise = getTanLines().then((lines) => new Map(lines.map((l) => [l.shortName, l])))
+  }
+  return _indexPromise
 }
 
 function haversineKm(a: Coordinates, b: Coordinates): number {
