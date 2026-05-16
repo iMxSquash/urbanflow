@@ -12,9 +12,11 @@ import LogoutButton from '../components/LogoutButton'
 import { UserLocationMarker } from '../components/UserLocationMarker'
 import { useGeolocation } from '../hooks/useGeolocation'
 import { useJourney } from '../hooks/useJourney'
+import { useWeather } from '../hooks/useWeather'
 import { useConsentStore } from '../stores/consent.store'
 import { useMapLayersStore } from '../stores/map-layers.store'
 import { useProfileStore } from '../stores/profile.store'
+import { WeatherBadge } from '../components/WeatherBadge'
 import type { Coordinates } from '@shared/types/index'
 
 const BiclooLayer = lazy(() => import('../components/BiclooLayer'))
@@ -40,6 +42,7 @@ export default function MapPage() {
   } = useJourney()
   const { layers } = useMapLayersStore()
   const { profile, fetchProfile } = useProfileStore()
+  const { weather } = useWeather()
   const locatedOnMount = useRef(false)
 
   useEffect(() => {
@@ -137,6 +140,13 @@ export default function MapPage() {
             ].join(' ')}
           >
             <AddressSearch onSelect={handleDestinationSelect} placeholder="Où allez-vous ?" />
+          </div>
+        )}
+
+        {/* Badge météo — top-right, visible en permanence */}
+        {weather && (
+          <div className="absolute top-3 right-3 z-[1100]">
+            <WeatherBadge weather={weather} variant="map" />
           </div>
         )}
 
@@ -265,7 +275,7 @@ export default function MapPage() {
         <MapLayerToggle hasJourney={!!journey} />
 
         {/* Panneau itinéraire */}
-        {journey && <JourneyPanel journey={journey} onClose={clearJourney} />}
+        {journey && <JourneyPanel journey={journey} onClose={clearJourney} weather={weather} />}
       </main>
 
       {/* Modale de consentement RGPD — portail dans <body> pour échapper au stacking context Leaflet */}

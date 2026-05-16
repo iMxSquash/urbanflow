@@ -1,4 +1,5 @@
-import type { Journey, TransportMode } from '@shared/types/index'
+import type { Journey, TransportMode, WeatherCondition } from '@shared/types/index'
+import { WeatherBadge } from './WeatherBadge'
 
 const MODE_COLORS: Record<TransportMode, string> = {
   walk: '#94a3b8',
@@ -44,9 +45,10 @@ function formatCo2(grams: number): string {
 interface JourneyPanelProps {
   journey: Journey
   onClose: () => void
+  weather?: WeatherCondition | null
 }
 
-export function JourneyPanel({ journey, onClose }: JourneyPanelProps) {
+export function JourneyPanel({ journey, onClose, weather }: JourneyPanelProps) {
   return (
     <div
       className={[
@@ -72,6 +74,11 @@ export function JourneyPanel({ journey, onClose }: JourneyPanelProps) {
           <div>
             <h2 className="text-h3 font-bold text-slate-900">{journey.label}</h2>
             <p className="text-caption text-slate-400 mt-0.5">Meilleur itinéraire</p>
+          {weather && (
+            <div className="mt-1.5">
+              <WeatherBadge weather={weather} variant="panel" />
+            </div>
+          )}
           </div>
           <button
             type="button"
