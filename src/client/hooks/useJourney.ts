@@ -4,36 +4,59 @@ import type { JourneyProfile } from '../services/routing.service'
 import { planJourney } from '../services/routing.service'
 
 interface JourneyState {
-  journey: Journey | null
+  journeys: Journey[]
+  selectedJourney: Journey | null
   loading: boolean
   error: string | null
 }
 
 export function useJourney() {
-  const [state, setState] = useState<JourneyState>({ journey: null, loading: false, error: null })
+  const [state, setState] = useState<JourneyState>({
+    journeys: [],
+    selectedJourney: null,
+    loading: false,
+    error: null,
+  })
 
   const calculate = useCallback(
     async (from: Coordinates, to: Coordinates, profile?: JourneyProfile) => {
-      setState({ journey: null, loading: true, error: null })
+      setState({ journeys: [], selectedJourney: null, loading: true, error: null })
       try {
         const journeys = await planJourney(from, to, profile)
         if (journeys.length === 0) {
-          setState({ journey: null, loading: false, error: 'Aucun itinéraire trouvé' })
+          setState({
+            journeys: [],
+            selectedJourney: null,
+            loading: false,
+            error: 'Aucun itinéraire trouvé',
+          })
         } else {
-          // Trier par score décroissant et prendre le meilleur
-          const sorted = [...journeys].sort((a, b) => b.score - a.score)
-          setState({ journey: sorted[0], loading: false, error: null })
+          setState({ journeys, selectedJourney: null, loading: false, error: null })
         }
       } catch (err) {
-        setState({ journey: null, loading: false, error: (err as Error).message })
+        setState({
+          journeys: [],
+          selectedJourney: null,
+          loading: false,
+          error: (err as Error).message,
+        })
       }
     },
     []
   )
 
-  const clear = useCallback(() => {
-    setState({ journey: null, loading: false, error: null })
+  const select = useCallback((journey: Journey) => {
+    setState((s) => ({ ...s, selectedJourney: journey }))
   }, [])
 
-  return { ...state, calculate, clear }
+  // Revient à la liste des résultats sans les effacer
+  const deselect = useCallback(() => {
+    setState((s) => ({ ...s, selectedJourney: null }))
+  }, [])
+
+  const clear = useCallback(() => {
+    setState({ journeys: [], selectedJourney: null, loading: false, error: null })
+  }, [])
+
+  return { ...state, calculate, select, deselect, clear }
 }

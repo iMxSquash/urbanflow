@@ -4,7 +4,7 @@ import { DemoProvider } from '../transport/providers/demo.provider.js'
 import { OsrmProvider } from '../transport/providers/osrm.provider.js'
 import { TransitousProvider } from '../transport/providers/transitous.provider.js'
 import { getCurrentWeather } from './weather.service.js'
-import { computeScore } from './scoring.service.js'
+import { computeScore, computeEstimatedCost, computeComfortScore } from './scoring.service.js'
 
 // Tous les providers disponibles (hors mode démo)
 const ALL_PROVIDERS: TransportProvider[] = [new TransitousProvider(), new OsrmProvider()]
@@ -114,6 +114,11 @@ export async function planJourney(
       )
     }
     console.log(`[routing] Re-scoring avec météo : ${weather.condition} ${weather.temperature}°C`)
+  }
+
+  for (const journey of withWalkFilter) {
+    journey.comfortScore = computeComfortScore(journey.segments, options, weather ?? undefined)
+    journey.estimatedCostEur = computeEstimatedCost(journey.segments)
   }
 
   return withWalkFilter.sort((a, b) => b.score - a.score)

@@ -1,7 +1,17 @@
 import { describe, it, expect } from 'vitest'
-import type { JourneySegment, JourneyOptions, WeatherCondition } from '../../../shared/types/index.js'
+import type {
+  JourneySegment,
+  JourneyOptions,
+  WeatherCondition,
+} from '../../../shared/types/index.js'
 import { CO2_FACTORS } from '../../../shared/constants/co2-factors.js'
-import { scoringWeights, computeComfortScore, computeScore } from './scoring.service.js'
+import {
+  scoringWeights,
+  computeComfortScore,
+  computeScore,
+  computeEstimatedCost,
+  NAOLIB_TICKET_EUR,
+} from './scoring.service.js'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -25,10 +35,7 @@ function seg(
 
 const BASE_OPTIONS: JourneyOptions = { preference: 'balanced' }
 
-function weather(
-  condition: WeatherCondition['condition'],
-  windSpeed = 10
-): WeatherCondition {
+function weather(condition: WeatherCondition['condition'], windSpeed = 10): WeatherCondition {
   return {
     city: 'Nantes',
     condition,
@@ -278,6 +285,60 @@ describe('computeComfortScore', () => {
     }
     // base=100, walk>5min → −60 → 40, bike → −50 → −10, plancher à 0
     expect(computeComfortScore(segments, options)).toBe(0)
+  })
+})
+
+// ─── computeEstimatedCost ─────────────────────────────────────────────────────
+
+describe('computeEstimatedCost', () => {
+  describe('modes TC → tarif Naolib', () => {
+    it('bus seul → 1.70 €', () => {
+      expect(computeEstimatedCost([seg('bus', 3, 15)])).toBe(NAOLIB_TICKET_EUR)
+    })
+
+    it('tramway seul → 1.70 €', () => {
+      expect(computeEstimatedCost([seg('tramway', 4, 20)])).toBe(NAOLIB_TICKET_EUR)
+    })
+
+    it('train seul → 1.70 €', () => {
+      expect(computeEstimatedCost([seg('train', 10, 25)])).toBe(NAOLIB_TICKET_EUR)
+    })
+
+    it('navibus seul → 1.70 €', () => {
+      expect(computeEstimatedCost([seg('navibus', 2, 10)])).toBe(NAOLIB_TICKET_EUR)
+    })
+
+    it('bus + marche → 1.70 € (ticket plat quel que soit le nombre de segments)', () => {
+      expect(computeEstimatedCost([seg('walk', 0.5, 6), seg('bus', 3, 15)])).toBe(NAOLIB_TICKET_EUR)
+    })
+
+    it('plusieurs modes TC → toujours 1.70 € (un seul ticket)', () => {
+      expect(computeEstimatedCost([seg('tramway', 3, 15), seg('bus', 2, 10)])).toBe(
+        NAOLIB_TICKET_EUR
+      )
+    })
+  })
+
+  describe('modes actifs seuls → gratuit', () => {
+    it('marche seule → 0 €', () => {
+      expect(computeEstimatedCost([seg('walk', 1, 12)])).toBe(0)
+    })
+
+    it('vélo seul → 0 €', () => {
+      expect(computeEstimatedCost([seg('bike', 5, 20)])).toBe(0)
+    })
+
+    it('trottinette seule → 0 €', () => {
+      expect(computeEstimatedCost([seg('scooter', 3, 9)])).toBe(0)
+    })
+
+    it('vélo + marche → 0 € (aucun TC)', () => {
+      expect(computeEstimatedCost([seg('bike', 4, 16), seg('walk', 0.5, 6)])).toBe(0)
+    })
+  })
+
+  it('NAOLIB_TICKET_EUR vaut 1.70', () => {
+    expect(NAOLIB_TICKET_EUR).toBe(1.7)
   })
 })
 

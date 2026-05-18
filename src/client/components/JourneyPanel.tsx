@@ -52,7 +52,7 @@ export function JourneyPanel({ journey, onClose, weather }: JourneyPanelProps) {
   return (
     <div
       className={[
-        'absolute z-[1100] bg-white overflow-y-auto',
+        'absolute z-1100 bg-white overflow-y-auto',
         // mobile : bottom sheet
         'bottom-0 left-0 right-0 max-h-[58vh] rounded-t-2xl',
         'shadow-[0_-8px_32px_rgba(0,0,0,0.12)]',
@@ -74,11 +74,11 @@ export function JourneyPanel({ journey, onClose, weather }: JourneyPanelProps) {
           <div>
             <h2 className="text-h3 font-bold text-slate-900">{journey.label}</h2>
             <p className="text-caption text-slate-400 mt-0.5">Meilleur itinéraire</p>
-          {weather && (
-            <div className="mt-1.5">
-              <WeatherBadge weather={weather} variant="panel" />
-            </div>
-          )}
+            {weather && (
+              <div className="mt-1.5">
+                <WeatherBadge weather={weather} variant="panel" />
+              </div>
+            )}
           </div>
           <button
             type="button"
@@ -128,7 +128,7 @@ export function JourneyPanel({ journey, onClose, weather }: JourneyPanelProps) {
               {idx < journey.segments.length - 1 && (
                 <div
                   aria-hidden="true"
-                  className="absolute left-[15px] top-9 bottom-0 w-0.5 opacity-25"
+                  className="absolute left-3.75 top-9 bottom-0 w-0.5 opacity-25"
                   style={{ background: MODE_COLORS[segment.mode] }}
                 />
               )}
