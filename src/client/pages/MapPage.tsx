@@ -86,6 +86,8 @@ export default function MapPage() {
   const showGeoError = !!geoError && !geoLoading && geolocationConsent !== 'denied'
   // Barre de destination : visible dès qu'on a une position de départ et pas de trajet actif
   const showDestSearch = !!userPosition && !journey && !journeyLoading
+  // Reserve right-edge space for the weather badge so search bars don't overlap it
+  const searchRight = weather ? 'right-24 sm:right-36' : 'right-3'
 
   return (
     <div className="flex flex-col h-screen">
@@ -126,7 +128,7 @@ export default function MapPage() {
       >
         {/* Barre de départ (consentement refusé, pas encore de position) */}
         {showAddressSearch && (
-          <div className="absolute top-3 left-3 right-3 z-[1100]">
+          <div className={`absolute top-3 left-3 ${searchRight} z-1100`}>
             <AddressSearch onSelect={setAddressPosition} />
           </div>
         )}
@@ -135,7 +137,7 @@ export default function MapPage() {
         {showDestSearch && (
           <div
             className={[
-              'absolute left-3 right-3 z-[1100]',
+              `absolute left-3 ${searchRight} z-1100`,
               showAddressSearch ? 'top-16' : 'top-3',
             ].join(' ')}
           >
@@ -145,7 +147,7 @@ export default function MapPage() {
 
         {/* Badge météo — top-right, visible en permanence */}
         {weather && (
-          <div className="absolute top-3 right-3 z-[1100]">
+          <div className="absolute top-3 right-3 z-1100">
             <WeatherBadge weather={weather} variant="map" />
           </div>
         )}
@@ -155,7 +157,7 @@ export default function MapPage() {
           <div
             role="status"
             aria-label="Calcul de l'itinéraire en cours"
-            className="absolute top-3 left-1/2 -translate-x-1/2 z-[1100] bg-white rounded-full px-4 py-2 shadow-card flex items-center gap-2 text-body-sm text-slate-600 whitespace-nowrap"
+            className="absolute top-3 left-1/2 -translate-x-1/2 z-1100 bg-white rounded-full px-4 py-2 shadow-card flex items-center gap-2 text-body-sm text-slate-600 whitespace-nowrap"
           >
             <div
               className="w-4 h-4 border-2 border-slate-200 border-t-eco-600 rounded-full animate-spin"
@@ -169,7 +171,7 @@ export default function MapPage() {
         {journeyError && !journeyLoading && (
           <div
             role="alert"
-            className="absolute top-3 left-3 right-3 z-[1100] bg-white rounded-card shadow-card-md border border-red-100 px-4 py-3 flex items-center justify-between gap-3"
+            className="absolute top-3 left-3 right-3 z-1100 bg-white rounded-card shadow-card-md border border-red-100 px-4 py-3 flex items-center justify-between gap-3"
           >
             <p className="text-body-sm text-red-600 truncate">{journeyError}</p>
             <button
@@ -188,7 +190,7 @@ export default function MapPage() {
           <div
             role="status"
             aria-label="Localisation en cours"
-            className="absolute top-3 left-1/2 -translate-x-1/2 z-[1100] bg-white rounded-full px-4 py-2 shadow-card flex items-center gap-2 text-body-sm text-slate-600 whitespace-nowrap"
+            className="absolute top-3 left-1/2 -translate-x-1/2 z-1100 bg-white rounded-full px-4 py-2 shadow-card flex items-center gap-2 text-body-sm text-slate-600 whitespace-nowrap"
           >
             <div
               className="w-4 h-4 border-2 border-slate-200 border-t-eco-600 rounded-full animate-spin"
@@ -202,7 +204,7 @@ export default function MapPage() {
         {showGeoError && (
           <div
             role="alert"
-            className="absolute top-3 left-3 right-3 z-[1100] bg-white rounded-card shadow-card-md border border-red-100 px-4 py-3 flex items-center justify-between gap-3"
+            className="absolute top-3 left-3 right-3 z-1100 bg-white rounded-card shadow-card-md border border-red-100 px-4 py-3 flex items-center justify-between gap-3"
           >
             <div className="flex items-center gap-2 text-body-sm text-red-600 min-w-0">
               <svg
