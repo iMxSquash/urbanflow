@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { JourneySegment, JourneyOptions } from '../../../shared/types/index.js'
+import type { JourneySegment, JourneyOptions, WeatherCondition } from '../../../shared/types/index.js'
 import { CO2_FACTORS } from '../../../shared/constants/co2-factors.js'
 import { scoringWeights, computeComfortScore, computeScore } from './scoring.service.js'
 
@@ -24,6 +24,22 @@ function seg(
 }
 
 const BASE_OPTIONS: JourneyOptions = { preference: 'balanced' }
+
+function weather(
+  condition: WeatherCondition['condition'],
+  windSpeed = 10
+): WeatherCondition {
+  return {
+    city: 'Nantes',
+    condition,
+    temperature: 15,
+    humidity: 70,
+    windSpeed,
+    description: '',
+    icon: '',
+    timestamp: '2026-05-18T10:00:00Z',
+  }
+}
 
 // ─── scoringWeights ───────────────────────────────────────────────────────────
 
@@ -141,6 +157,115 @@ describe('computeComfortScore', () => {
     }
     // base=100, pas de dépassement de marche, mais vélo → −50
     expect(computeComfortScore(segments, options)).toBe(50)
+  })
+
+  describe('météo — pénalités vélo', () => {
+    it('pluie + vélo → −30 sur la base', () => {
+      const segments = [seg('bike', 3, 12)]
+      const options: JourneyOptions = { preference: 'balanced', modes: ['bike'] }
+      // base = 100 (tout le trajet vélo correspond au mode préféré)
+      expect(computeComfortScore(segments, options, weather('rain'))).toBe(70)
+    })
+
+    it('neige + vélo → −30', () => {
+      const segments = [seg('bike', 3, 12)]
+      const options: JourneyOptions = { preference: 'balanced', modes: ['bike'] }
+      expect(computeComfortScore(segments, options, weather('snow'))).toBe(70)
+    })
+
+    it('orage + vélo → −30', () => {
+      const segments = [seg('bike', 3, 12)]
+      const options: JourneyOptions = { preference: 'balanced', modes: ['bike'] }
+      expect(computeComfortScore(segments, options, weather('thunderstorm'))).toBe(70)
+    })
+
+    it('vent > 40 km/h + vélo → −30 (même sans pluie)', () => {
+      const segments = [seg('bike', 3, 12)]
+      const options: JourneyOptions = { preference: 'balanced', modes: ['bike'] }
+      expect(computeComfortScore(segments, options, weather('clear', 50))).toBe(70)
+    })
+
+    it('ciel dégagé + vent ≤ 40 km/h + vélo → aucune pénalité météo', () => {
+      const segments = [seg('bike', 3, 12)]
+      const options: JourneyOptions = { preference: 'balanced', modes: ['bike'] }
+      expect(computeComfortScore(segments, options, weather('clear', 30))).toBe(100)
+    })
+
+    it('pluie + vent fort + vélo → −30 seulement (pénalité non cumulée)', () => {
+      const segments = [seg('bike', 3, 12)]
+      const options: JourneyOptions = { preference: 'balanced', modes: ['bike'] }
+      expect(computeComfortScore(segments, options, weather('rain', 50))).toBe(70)
+    })
+
+    it('pluie sans vélo (bus seul) → aucune pénalité vélo', () => {
+      const segments = [seg('bus', 3, 15)]
+      expect(computeComfortScore(segments, BASE_OPTIONS, weather('rain'))).not.toBeLessThan(50)
+    })
+  })
+
+  describe('météo — bonus TC couvert', () => {
+    it('pluie + TC seul → +10 sur la base', () => {
+      // BASE_OPTIONS sans modes préférés → base = 50 ; +10 → 60
+      const segments = [seg('bus', 3, 15)]
+      expect(computeComfortScore(segments, BASE_OPTIONS, weather('rain'))).toBe(60)
+    })
+
+    it('pluie + TC + marche → +10 (marche dans la limite, isPureTC vrai)', () => {
+      const segments = [seg('walk', 0.5, 5), seg('tramway', 4, 20)]
+      expect(computeComfortScore(segments, BASE_OPTIONS, weather('rain'))).toBe(60)
+    })
+
+    it('pluie + TC + vélo → pénalité vélo −30, pas de bonus TC', () => {
+      // base = 50, hasBike = true → −30 = 20 ; isPureTC = false → pas de +10
+      const segments = [seg('bus', 2, 10), seg('bike', 3, 12)]
+      expect(computeComfortScore(segments, BASE_OPTIONS, weather('rain'))).toBe(20)
+    })
+
+    it('ciel dégagé + TC seul → aucun bonus (pas de pluie)', () => {
+      const segments = [seg('bus', 3, 15)]
+      expect(computeComfortScore(segments, BASE_OPTIONS, weather('clear'))).toBe(50)
+    })
+
+    it('pluie + marche seule → aucun bonus (pas de TC couvert)', () => {
+      // Walk-only ne doit pas bénéficier du bonus abri TC
+      const segments = [seg('walk', 1, 12)]
+      expect(computeComfortScore(segments, BASE_OPTIONS, weather('rain'))).toBe(50)
+    })
+  })
+
+  describe('météo — cas limites', () => {
+    it('weather null → comportement identique sans météo', () => {
+      const segments = [seg('bike', 3, 12)]
+      const options: JourneyOptions = { preference: 'balanced', modes: ['bike'] }
+      expect(computeComfortScore(segments, options, null)).toBe(
+        computeComfortScore(segments, options)
+      )
+    })
+
+    it('weather undefined → comportement identique sans météo', () => {
+      const segments = [seg('bus', 3, 15)]
+      expect(computeComfortScore(segments, BASE_OPTIONS, undefined)).toBe(
+        computeComfortScore(segments, BASE_OPTIONS)
+      )
+    })
+
+    it('pluie + vélo + PMR → pénalités cumulées, plancher à 0', () => {
+      // base = 100 (bike = mode préféré), PMR + bike → −50 = 50, pluie + bike → −30 = 20
+      const segments = [seg('bike', 3, 12)]
+      const options: JourneyOptions = {
+        preference: 'balanced',
+        modes: ['bike'],
+        pmrAccessibility: true,
+      }
+      expect(computeComfortScore(segments, options, weather('rain'))).toBe(20)
+    })
+
+    it('bonus TC ne dépasse pas 100', () => {
+      // base déjà à 100 (tous modes TC préférés) → +10 plafonné à 100
+      const segments = [seg('tramway', 4, 20)]
+      const options: JourneyOptions = { preference: 'balanced', modes: ['tramway'] }
+      expect(computeComfortScore(segments, options, weather('rain'))).toBe(100)
+    })
   })
 
   it('PMR + marche longue + vélo → plancher à 0', () => {

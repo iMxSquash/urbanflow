@@ -63,7 +63,8 @@ export function computeComfortScore(
     const isWet = ['rain', 'snow', 'thunderstorm'].includes(weather.condition)
     const isWindy = weather.windSpeed > 40
     const hasBike = segments.some((s) => s.mode === 'bike')
-    const isPureTC = segments.every((s) => TC_MODES.includes(s.mode) || s.mode === 'walk')
+    // At least one covered TC segment required — walk-only does not qualify for shelter bonus
+    const isPureTC = segments.some((s) => TC_MODES.includes(s.mode)) && !hasBike
 
     if ((isWet || isWindy) && hasBike) base = Math.max(0, base - 30)
     if (isWet && isPureTC) base = Math.min(100, base + 10)
