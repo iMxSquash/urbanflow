@@ -103,7 +103,9 @@ export function getCurrentWeather(): Promise<WeatherCondition> {
   _inflight = (process.env.DEMO_MODE === 'true' ? fetchFromDemo() : fetchFromApi())
     .then((data) => {
       _cache = { data, expiresAt: now + TTL_MS }
-      console.log(`[weather] ${data.condition} ${data.temperature}°C vent ${data.windSpeed} km/h (cache TTL 10 min)`)
+      console.log(
+        `[weather] ${data.condition} ${data.temperature}°C vent ${data.windSpeed} km/h (cache TTL 10 min)`
+      )
       return data
     })
     .finally(() => {

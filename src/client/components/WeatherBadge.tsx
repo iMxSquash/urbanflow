@@ -29,15 +29,15 @@ export function WeatherBadge({ weather, variant = 'map' }: WeatherBadgeProps) {
 
   if (variant === 'panel') {
     return (
-      <div
-        className="flex items-center gap-2 text-caption text-slate-500"
-        aria-label={ariaLabel}
-      >
+      <div className="flex items-center gap-2 text-caption text-slate-500" aria-label={ariaLabel}>
         <span aria-hidden="true">{icon}</span>
         <span>
           {weather.temperature}°C · {weather.description}
           {weather.windSpeed > 40 && (
-            <span className="text-amber-600 font-medium"> · Vent fort {weather.windSpeed} km/h</span>
+            <span className="text-amber-600 font-medium">
+              {' '}
+              · Vent fort {weather.windSpeed} km/h
+            </span>
           )}
         </span>
       </div>

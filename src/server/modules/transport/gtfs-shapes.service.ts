@@ -85,7 +85,10 @@ export async function getShapeForLeg(
     if (!route) return null
     return extractSlice(route, from, to)
   } catch (err) {
-    console.warn(`[gtfs-shapes] fallback ignoré pour ${routeShortName} :`, err instanceof Error ? err.message : String(err))
+    console.warn(
+      `[gtfs-shapes] fallback ignoré pour ${routeShortName} :`,
+      err instanceof Error ? err.message : String(err)
+    )
     return null
   }
 }

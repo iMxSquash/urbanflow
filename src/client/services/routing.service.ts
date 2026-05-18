@@ -1,5 +1,11 @@
 import { apiFetch } from '../utils/api-client'
-import type { Coordinates, Journey, TransportMode, UserPreference, WeatherCondition } from '@shared/types/index'
+import type {
+  Coordinates,
+  Journey,
+  TransportMode,
+  UserPreference,
+  WeatherCondition,
+} from '@shared/types/index'
 
 export interface JourneyProfile {
   preference: UserPreference

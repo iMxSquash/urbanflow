@@ -89,7 +89,8 @@ export default function MapPage() {
   const showAddressSearch = geolocationConsent === 'denied' && !geoPosition
   const showGeoError = !!geoError && !geoLoading && geolocationConsent !== 'denied'
   // Barre de destination : visible dès qu'on a une position et qu'aucun résultat n'est affiché
-  const showDestSearch = !!userPosition && journeys.length === 0 && !selectedJourney && !journeyLoading
+  const showDestSearch =
+    !!userPosition && journeys.length === 0 && !selectedJourney && !journeyLoading
   // Reserve right-edge space for the weather badge so search bars don't overlap it
   const searchRight = weather ? 'right-24 sm:right-36' : 'right-3'
 
@@ -297,11 +298,7 @@ export default function MapPage() {
               <div className="w-8 h-1 bg-slate-200 rounded-full" />
             </div>
             <div className="p-4 lg:p-5">
-              <JourneyResults
-                journeys={journeys}
-                onSelect={selectJourney}
-                onClose={clearJourney}
-              />
+              <JourneyResults journeys={journeys} onSelect={selectJourney} onClose={clearJourney} />
             </div>
           </div>
         )}

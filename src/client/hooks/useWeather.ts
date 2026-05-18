@@ -16,7 +16,8 @@ export function useWeather(): WeatherState {
     getWeather(controller.signal)
       .then((weather) => setState({ weather, loading: false, error: null }))
       .catch((err: Error) => {
-        if (err.name !== 'AbortError') setState({ weather: null, loading: false, error: err.message })
+        if (err.name !== 'AbortError')
+          setState({ weather: null, loading: false, error: err.message })
       })
     return () => controller.abort()
   }, [])

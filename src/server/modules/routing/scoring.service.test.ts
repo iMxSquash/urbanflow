@@ -1,7 +1,17 @@
 import { describe, it, expect } from 'vitest'
-import type { JourneySegment, JourneyOptions, WeatherCondition } from '../../../shared/types/index.js'
+import type {
+  JourneySegment,
+  JourneyOptions,
+  WeatherCondition,
+} from '../../../shared/types/index.js'
 import { CO2_FACTORS } from '../../../shared/constants/co2-factors.js'
-import { scoringWeights, computeComfortScore, computeScore, computeEstimatedCost, NAOLIB_TICKET_EUR } from './scoring.service.js'
+import {
+  scoringWeights,
+  computeComfortScore,
+  computeScore,
+  computeEstimatedCost,
+  NAOLIB_TICKET_EUR,
+} from './scoring.service.js'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -25,10 +35,7 @@ function seg(
 
 const BASE_OPTIONS: JourneyOptions = { preference: 'balanced' }
 
-function weather(
-  condition: WeatherCondition['condition'],
-  windSpeed = 10
-): WeatherCondition {
+function weather(condition: WeatherCondition['condition'], windSpeed = 10): WeatherCondition {
   return {
     city: 'Nantes',
     condition,
@@ -306,9 +313,9 @@ describe('computeEstimatedCost', () => {
     })
 
     it('plusieurs modes TC → toujours 1.70 € (un seul ticket)', () => {
-      expect(
-        computeEstimatedCost([seg('tramway', 3, 15), seg('bus', 2, 10)])
-      ).toBe(NAOLIB_TICKET_EUR)
+      expect(computeEstimatedCost([seg('tramway', 3, 15), seg('bus', 2, 10)])).toBe(
+        NAOLIB_TICKET_EUR
+      )
     })
   })
 
@@ -331,7 +338,7 @@ describe('computeEstimatedCost', () => {
   })
 
   it('NAOLIB_TICKET_EUR vaut 1.70', () => {
-    expect(NAOLIB_TICKET_EUR).toBe(1.70)
+    expect(NAOLIB_TICKET_EUR).toBe(1.7)
   })
 })
 

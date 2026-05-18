@@ -24,24 +24,34 @@ export function useJourney() {
       try {
         const journeys = await planJourney(from, to, profile)
         if (journeys.length === 0) {
-          setState({ journeys: [], selectedJourney: null, loading: false, error: 'Aucun itinéraire trouvé' })
+          setState({
+            journeys: [],
+            selectedJourney: null,
+            loading: false,
+            error: 'Aucun itinéraire trouvé',
+          })
         } else {
           setState({ journeys, selectedJourney: null, loading: false, error: null })
         }
       } catch (err) {
-        setState({ journeys: [], selectedJourney: null, loading: false, error: (err as Error).message })
+        setState({
+          journeys: [],
+          selectedJourney: null,
+          loading: false,
+          error: (err as Error).message,
+        })
       }
     },
     []
   )
 
   const select = useCallback((journey: Journey) => {
-    setState(s => ({ ...s, selectedJourney: journey }))
+    setState((s) => ({ ...s, selectedJourney: journey }))
   }, [])
 
   // Revient à la liste des résultats sans les effacer
   const deselect = useCallback(() => {
-    setState(s => ({ ...s, selectedJourney: null }))
+    setState((s) => ({ ...s, selectedJourney: null }))
   }, [])
 
   const clear = useCallback(() => {
