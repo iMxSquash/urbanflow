@@ -45,15 +45,18 @@ export async function planJourney(
   to: Coordinates,
   options: JourneyOptions
 ): Promise<Journey[]> {
-  // Fetch weather in parallel with provider selection — failure is non-blocking
-  const [providers, weather] = await Promise.all([
-    Promise.resolve(selectProviders(options)),
-    getCurrentWeather().catch(() => null),
-  ])
+  // Start weather fetch immediately — providers run concurrently, not after it resolves.
+  // By the time providers complete (typically 1-3s), weather is usually already cached.
+  const weatherPromise = getCurrentWeather().catch(() => null)
+
+  const providers = selectProviders(options)
   const modeNames = providers.map((p) => p.supportedModes.join('/')).join(', ')
   console.log(`[routing] ${providers.length} provider(s) activé(s) : [${modeNames}]`)
 
   const results = await Promise.allSettled(providers.map((p) => p.getJourneys(from, to, options)))
+
+  // Await weather only after providers — likely already resolved, worst case waits remaining timeout
+  const weather = await weatherPromise
 
   const journeys: Journey[] = []
   for (const result of results) {
