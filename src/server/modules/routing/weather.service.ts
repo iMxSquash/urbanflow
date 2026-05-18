@@ -12,6 +12,8 @@ interface CacheEntry {
 
 // Single-entry cache — Nantes only, TTL 10 min (éco-conception)
 let _cache: CacheEntry | null = null
+// In-flight promise coalesces concurrent cache misses into one fetch
+let _inflight: Promise<WeatherCondition> | null = null
 
 // ─── OpenWeatherMap ───────────────────────────────────────────────────────────
 
@@ -93,14 +95,20 @@ async function fetchFromDemo(): Promise<WeatherCondition> {
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
-export async function getCurrentWeather(): Promise<WeatherCondition> {
+export function getCurrentWeather(): Promise<WeatherCondition> {
   const now = Date.now()
-  if (_cache && _cache.expiresAt > now) return _cache.data
+  if (_cache && _cache.expiresAt > now) return Promise.resolve(_cache.data)
+  if (_inflight) return _inflight
 
-  const data =
-    process.env.DEMO_MODE === 'true' ? await fetchFromDemo() : await fetchFromApi()
+  _inflight = (process.env.DEMO_MODE === 'true' ? fetchFromDemo() : fetchFromApi())
+    .then((data) => {
+      _cache = { data, expiresAt: now + TTL_MS }
+      console.log(`[weather] ${data.condition} ${data.temperature}°C vent ${data.windSpeed} km/h (cache TTL 10 min)`)
+      return data
+    })
+    .finally(() => {
+      _inflight = null
+    })
 
-  _cache = { data, expiresAt: now + TTL_MS }
-  console.log(`[weather] ${data.condition} ${data.temperature}°C vent ${data.windSpeed} km/h (cache TTL 10 min)`)
-  return data
+  return _inflight
 }
