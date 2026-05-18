@@ -100,7 +100,7 @@ const RANK_META: Record<RankLabel, RankMeta> = {
     ),
   },
   comfortable: {
-    label:     'Plus confort.',
+    label:     'Confortable',
     chipClass: 'bg-slate-100 text-slate-600 border border-slate-200',
     icon: (
       <svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -286,14 +286,14 @@ export function JourneyResults({ journeys, onSelect, onClose }: JourneyResultsPr
             type="button"
             onClick={onClose}
             aria-label="Fermer les résultats"
-            className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-600"
+            className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-600"
           >
             <svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M1 1l12 12M13 1L1 13" />
             </svg>
           </button>
         ) : count > 1 ? (
-          <span className="text-caption text-slate-400">Comparaison</span>
+          <span className="text-caption text-slate-500">Comparaison</span>
         ) : null}
       </div>
 
