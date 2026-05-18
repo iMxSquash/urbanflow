@@ -131,12 +131,13 @@ function computeRanks(journeys: Journey[]): Map<string, RankLabel[]> {
       push(journeys.reduce((b, j) => j.co2SavingG > b.co2SavingG ? j : b).id, 'greenest')
     }
 
-    // Comfortable: first journey that received no label yet
-    for (const j of journeys) {
-      if (map.get(j.id)!.length === 0) {
-        push(j.id, 'comfortable')
-        break
-      }
+    // Comfortable: unlabeled journey with the highest comfortScore
+    const unlabeled = journeys.filter(j => map.get(j.id)!.length === 0)
+    if (unlabeled.length > 0) {
+      const mostComfortable = unlabeled.reduce((best, j) =>
+        (j.comfortScore ?? 0) > (best.comfortScore ?? 0) ? j : best
+      )
+      push(mostComfortable.id, 'comfortable')
     }
   }
 

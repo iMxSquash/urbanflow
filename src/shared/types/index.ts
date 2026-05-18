@@ -48,6 +48,7 @@ export interface Journey {
   totalCo2g: number
   co2SavingG: number
   score: number
+  comfortScore?: number
   estimatedCostEur?: number
 }
 
