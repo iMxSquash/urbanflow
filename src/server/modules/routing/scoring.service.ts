@@ -3,6 +3,14 @@ import { CO2_FACTORS } from '@shared/constants/co2-factors.js'
 
 const TC_MODES: TransportMode[] = ['bus', 'tramway', 'navibus', 'train']
 
+export const NAOLIB_TICKET_EUR = 1.70
+
+// ─── Coût estimé ──────────────────────────────────────────────────────────────
+
+export function computeEstimatedCost(segments: JourneySegment[]): number {
+  return segments.some(s => TC_MODES.includes(s.mode)) ? NAOLIB_TICKET_EUR : 0
+}
+
 // ─── Pondérations ─────────────────────────────────────────────────────────────
 
 interface Weights {

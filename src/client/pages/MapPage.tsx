@@ -7,6 +7,7 @@ import { AddressSearch } from '../components/AddressSearch'
 import { GeolocationConsent } from '../components/GeolocationConsent'
 import { JourneyLayer } from '../components/JourneyLayer'
 import { JourneyPanel } from '../components/JourneyPanel'
+import { JourneyResults } from '../components/JourneyResults'
 import { MapLayerToggle } from '../components/MapLayerToggle'
 import LogoutButton from '../components/LogoutButton'
 import { UserLocationMarker } from '../components/UserLocationMarker'
@@ -34,10 +35,13 @@ export default function MapPage() {
   const { position: geoPosition, error: geoError, loading: geoLoading, locate } = useGeolocation()
   const [addressPosition, setAddressPosition] = useState<Coordinates | null>(null)
   const {
-    journey,
+    journeys,
+    selectedJourney,
     loading: journeyLoading,
     error: journeyError,
     calculate,
+    select: selectJourney,
+    deselect: deselectJourney,
     clear: clearJourney,
   } = useJourney()
   const { layers } = useMapLayersStore()
@@ -84,8 +88,8 @@ export default function MapPage() {
 
   const showAddressSearch = geolocationConsent === 'denied' && !geoPosition
   const showGeoError = !!geoError && !geoLoading && geolocationConsent !== 'denied'
-  // Barre de destination : visible dès qu'on a une position de départ et pas de trajet actif
-  const showDestSearch = !!userPosition && !journey && !journeyLoading
+  // Barre de destination : visible dès qu'on a une position et qu'aucun résultat n'est affiché
+  const showDestSearch = !!userPosition && journeys.length === 0 && !selectedJourney && !journeyLoading
   // Reserve right-edge space for the weather badge so search bars don't overlap it
   const searchRight = weather ? 'right-24 sm:right-36' : 'right-3'
 
@@ -270,14 +274,42 @@ export default function MapPage() {
             </Suspense>
           )}
           {userPosition && <UserLocationMarker position={userPosition} />}
-          {journey && <JourneyLayer journey={journey} />}
+          {selectedJourney && <JourneyLayer journey={selectedJourney} />}
         </MapContainer>
 
         {/* Sélecteur de calques */}
-        <MapLayerToggle hasJourney={!!journey} />
+        <MapLayerToggle hasJourney={journeys.length > 0 || !!selectedJourney} />
 
-        {/* Panneau itinéraire */}
-        {journey && <JourneyPanel journey={journey} onClose={clearJourney} weather={weather} />}
+        {/* Résultats — comparaison des itinéraires avant sélection */}
+        {journeys.length > 0 && !selectedJourney && (
+          <div
+            className={[
+              'absolute z-[1100] bg-white overflow-y-auto',
+              'bottom-0 left-0 right-0 max-h-[60vh] rounded-t-2xl',
+              'shadow-[0_-8px_32px_rgba(0,0,0,0.12)]',
+              'lg:top-0 lg:right-0 lg:bottom-0 lg:left-auto lg:w-80 lg:max-h-none lg:rounded-none',
+              'lg:shadow-[-8px_0_32px_rgba(0,0,0,0.08)]',
+            ].join(' ')}
+            role="complementary"
+            aria-label="Résultats des itinéraires"
+          >
+            <div className="flex justify-center pt-3 lg:hidden" aria-hidden="true">
+              <div className="w-8 h-1 bg-slate-200 rounded-full" />
+            </div>
+            <div className="p-4 lg:p-5">
+              <JourneyResults
+                journeys={journeys}
+                onSelect={selectJourney}
+                onClose={clearJourney}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Panneau détail — après sélection d'un itinéraire */}
+        {selectedJourney && (
+          <JourneyPanel journey={selectedJourney} onClose={deselectJourney} weather={weather} />
+        )}
       </main>
 
       {/* Modale de consentement RGPD — portail dans <body> pour échapper au stacking context Leaflet */}

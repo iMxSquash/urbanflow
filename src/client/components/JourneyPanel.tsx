@@ -52,7 +52,7 @@ export function JourneyPanel({ journey, onClose, weather }: JourneyPanelProps) {
   return (
     <div
       className={[
-        'absolute z-[1100] bg-white overflow-y-auto',
+        'absolute z-1100 bg-white overflow-y-auto',
         // mobile : bottom sheet
         'bottom-0 left-0 right-0 max-h-[58vh] rounded-t-2xl',
         'shadow-[0_-8px_32px_rgba(0,0,0,0.12)]',
@@ -128,7 +128,7 @@ export function JourneyPanel({ journey, onClose, weather }: JourneyPanelProps) {
               {idx < journey.segments.length - 1 && (
                 <div
                   aria-hidden="true"
-                  className="absolute left-[15px] top-9 bottom-0 w-0.5 opacity-25"
+                  className="absolute left-3.75 top-9 bottom-0 w-0.5 opacity-25"
                   style={{ background: MODE_COLORS[segment.mode] }}
                 />
               )}
