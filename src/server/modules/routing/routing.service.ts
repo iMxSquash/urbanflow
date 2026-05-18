@@ -3,6 +3,8 @@ import type { TransportProvider } from '../transport/transport-provider.interfac
 import { DemoProvider } from '../transport/providers/demo.provider.js'
 import { OsrmProvider } from '../transport/providers/osrm.provider.js'
 import { TransitousProvider } from '../transport/providers/transitous.provider.js'
+import { getCurrentWeather } from './weather.service.js'
+import { computeScore } from './scoring.service.js'
 
 // Tous les providers disponibles (hors mode démo)
 const ALL_PROVIDERS: TransportProvider[] = [new TransitousProvider(), new OsrmProvider()]
@@ -43,11 +45,18 @@ export async function planJourney(
   to: Coordinates,
   options: JourneyOptions
 ): Promise<Journey[]> {
+  // Start weather fetch immediately — providers run concurrently, not after it resolves.
+  // By the time providers complete (typically 1-3s), weather is usually already cached.
+  const weatherPromise = getCurrentWeather().catch(() => null)
+
   const providers = selectProviders(options)
   const modeNames = providers.map((p) => p.supportedModes.join('/')).join(', ')
   console.log(`[routing] ${providers.length} provider(s) activé(s) : [${modeNames}]`)
 
   const results = await Promise.allSettled(providers.map((p) => p.getJourneys(from, to, options)))
+
+  // Await weather only after providers — likely already resolved, worst case waits remaining timeout
+  const weather = await weatherPromise
 
   const journeys: Journey[] = []
   for (const result of results) {
@@ -89,6 +98,22 @@ export async function planJourney(
     console.log(
       `[routing] Filtre maxWalkMinutes=${maxWalk}min : ${filtered.length} → ${withWalkFilter.length} itinéraire(s)`
     )
+  }
+
+  // Re-score with weather now that all journeys are merged and filtered.
+  // Providers computed a preliminary score without weather context.
+  if (weather) {
+    for (const journey of withWalkFilter) {
+      journey.score = computeScore(
+        journey.segments,
+        journey.totalDurationMin,
+        journey.totalDistanceKm,
+        journey.totalCo2g,
+        options,
+        weather
+      )
+    }
+    console.log(`[routing] Re-scoring avec météo : ${weather.condition} ${weather.temperature}°C`)
   }
 
   return withWalkFilter.sort((a, b) => b.score - a.score)
