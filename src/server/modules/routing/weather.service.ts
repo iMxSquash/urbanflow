@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import type { WeatherCondition } from '@shared/types/index.js'
-import { isDemoMode, getDemoWeather } from '../demo/demo-config.js'
+import { isWeatherDemoMode, getDemoWeather } from '../demo/demo-config.js'
 
 const NANTES = { lat: 47.218, lng: -1.553 }
 const TTL_MS = 10 * 60 * 1000 // 10 minutes
@@ -102,7 +102,7 @@ export function getCurrentWeather(): Promise<WeatherCondition> {
   if (_cache && _cache.expiresAt > now) return Promise.resolve(_cache.data)
   if (_inflight) return _inflight
 
-  _inflight = (isDemoMode() ? fetchFromDemo() : fetchFromApi())
+  _inflight = (isWeatherDemoMode() ? fetchFromDemo() : fetchFromApi())
     .then((data) => {
       _cache = { data, expiresAt: now + TTL_MS }
       console.log(

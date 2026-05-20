@@ -1,14 +1,27 @@
 // Runtime overrides — changed without server restart via PATCH /api/demo/mode
-let _demoOverride: boolean | null = null
+let _weatherDemo: boolean | null = null   // météo simulée seulement
+let _providersDemo: boolean | null = null // trajets + bicloo + tan simulés
 let _weatherOverride: 'sunny' | 'rainy' | null = null
 
-export function isDemoMode(): boolean {
-  if (_demoOverride !== null) return _demoOverride
+/** Météo simulée : actif si weather demo OU providers demo est activé */
+export function isWeatherDemoMode(): boolean {
+  if (_providersDemo) return true
+  if (_weatherDemo !== null) return _weatherDemo
   return process.env.DEMO_MODE === 'true'
 }
 
-export function setDemoMode(enabled: boolean): void {
-  _demoOverride = enabled
+/** Providers simulés (DemoProvider, Bicloo, TAN fixtures) */
+export function isDemoMode(): boolean {
+  if (_providersDemo !== null) return _providersDemo
+  return process.env.DEMO_MODE === 'true'
+}
+
+export function setWeatherDemoMode(enabled: boolean): void {
+  _weatherDemo = enabled
+}
+
+export function setProvidersDemo(enabled: boolean): void {
+  _providersDemo = enabled
 }
 
 export function getDemoWeather(): 'sunny' | 'rainy' {

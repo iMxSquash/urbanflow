@@ -2,7 +2,7 @@ import 'leaflet/dist/leaflet.css'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MapContainer, TileLayer } from 'react-leaflet'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { AddressSearch } from '../components/AddressSearch'
 import { GeolocationConsent } from '../components/GeolocationConsent'
 import { JourneyLayer } from '../components/JourneyLayer'
@@ -30,6 +30,13 @@ const CARTO_ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors ' +
   '&copy; <a href="https://carto.com/attributions">CARTO</a>'
 
+interface DemoScenarioState {
+  from: Coordinates
+  to: Coordinates
+  fromLabel: string
+  toLabel: string
+}
+
 export default function MapPage() {
   const { geolocationConsent, grantGeolocation, denyGeolocation } = useConsentStore()
   const { position: geoPosition, error: geoError, loading: geoLoading, locate } = useGeolocation()
@@ -47,7 +54,9 @@ export default function MapPage() {
   const { layers } = useMapLayersStore()
   const { profile, fetchProfile } = useProfileStore()
   const { weather } = useWeather()
+  const location = useLocation()
   const locatedOnMount = useRef(false)
+  const scenarioApplied = useRef(false)
 
   useEffect(() => {
     void fetchProfile()
@@ -60,6 +69,26 @@ export default function MapPage() {
       locate()
     }
   }, [geolocationConsent, locate])
+
+  // Scénario démo : pré-remplit origine + destination et déclenche le calcul
+  useEffect(() => {
+    const state = (location.state as { demoScenario?: DemoScenarioState } | null)?.demoScenario
+    if (!state || scenarioApplied.current) return
+    scenarioApplied.current = true
+    setAddressPosition(state.from)
+    void calculate(
+      state.from,
+      state.to,
+      profile
+        ? {
+            preference: profile.preference,
+            preferredModes: profile.preferredModes,
+            maxWalkMinutes: profile.maxWalkMinutes,
+            pmrAccessibility: profile.pmrAccessibility,
+          }
+        : undefined
+    )
+  }, [location.state, calculate, profile])
 
   function handleGrant() {
     locatedOnMount.current = true // empêche le useEffect de rappeler locate()

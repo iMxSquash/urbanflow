@@ -1,5 +1,12 @@
 import { Router, type Request, type Response } from 'express'
-import { isDemoMode, setDemoMode, getDemoWeather, setDemoWeather } from './demo-config.js'
+import {
+  isWeatherDemoMode,
+  isDemoMode,
+  setWeatherDemoMode,
+  setProvidersDemo,
+  getDemoWeather,
+  setDemoWeather,
+} from './demo-config.js'
 import { clearWeatherCache } from '../routing/weather.service.js'
 
 const router = Router()
@@ -12,7 +19,7 @@ const router = Router()
  *     tags: [Demo]
  */
 router.get('/mode', (_req: Request, res: Response) => {
-  res.json({ demoMode: isDemoMode(), weather: getDemoWeather() })
+  res.json({ demoMode: isWeatherDemoMode(), providersDemo: isDemoMode(), weather: getDemoWeather() })
 })
 
 /**
@@ -30,17 +37,29 @@ router.get('/mode', (_req: Request, res: Response) => {
  *             properties:
  *               enabled:
  *                 type: boolean
+ *               providersDemo:
+ *                 type: boolean
  *               weather:
  *                 type: string
  *                 enum: [sunny, rainy]
  */
 router.patch('/mode', (req: Request, res: Response) => {
-  const { enabled, weather } = req.body as { enabled?: boolean; weather?: string }
+  const { enabled, providersDemo, weather } = req.body as {
+    enabled?: boolean
+    providersDemo?: boolean
+    weather?: string
+  }
 
   if (typeof enabled === 'boolean') {
-    setDemoMode(enabled)
+    setWeatherDemoMode(enabled)
     clearWeatherCache()
-    console.log(`[demo] mode démo → ${enabled ? 'activé' : 'désactivé'}`)
+    console.log(`[demo] météo démo → ${enabled ? 'activée' : 'désactivée'}`)
+  }
+
+  if (typeof providersDemo === 'boolean') {
+    setProvidersDemo(providersDemo)
+    clearWeatherCache()
+    console.log(`[demo] providers démo → ${providersDemo ? 'activés' : 'désactivés'}`)
   }
 
   if (weather && ['sunny', 'rainy'].includes(weather)) {
@@ -49,7 +68,7 @@ router.patch('/mode', (req: Request, res: Response) => {
     console.log(`[demo] météo simulée → ${weather}`)
   }
 
-  res.json({ demoMode: isDemoMode(), weather: getDemoWeather() })
+  res.json({ demoMode: isWeatherDemoMode(), providersDemo: isDemoMode(), weather: getDemoWeather() })
 })
 
 export default router
