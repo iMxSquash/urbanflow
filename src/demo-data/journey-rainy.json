@@ -2,96 +2,174 @@
   "journeys": [
     {
       "id": "rainy-1",
-      "label": "Tramway + Marche",
+      "label": "Tramway T2",
       "segments": [
         {
           "mode": "walk",
-          "from": { "lat": 47.2134, "lng": -1.5541 },
-          "to": { "lat": 47.2148, "lng": -1.5538 },
+          "from": { "lat": 47.2181, "lng": -1.5418 },
+          "to": { "lat": 47.2192, "lng": -1.5427 },
           "distanceKm": 0.15,
           "durationMin": 2,
-          "co2g": 0
+          "co2g": 0,
+          "shape": [
+            { "lat": 47.2181, "lng": -1.5418 },
+            { "lat": 47.2192, "lng": -1.5427 }
+          ]
         },
         {
           "mode": "tramway",
-          "from": { "lat": 47.2148, "lng": -1.5538 },
-          "to": { "lat": 47.2489, "lng": -1.5497 },
-          "distanceKm": 3.8,
-          "durationMin": 14,
-          "co2g": 15,
+          "from": { "lat": 47.2192, "lng": -1.5427 },
+          "to": { "lat": 47.2580, "lng": -1.5502 },
+          "distanceKm": 5.2,
+          "durationMin": 20,
+          "co2g": 21,
           "lineRef": "T2",
-          "lineName": "Tramway 2 — Orvault Grand Val"
+          "lineName": "Tramway 2 — Haluchère-Batignolles",
+          "shape": [
+            { "lat": 47.2192, "lng": -1.5427 },
+            { "lat": 47.2218, "lng": -1.5462 },
+            { "lat": 47.2248, "lng": -1.5489 },
+            { "lat": 47.2275, "lng": -1.5490 },
+            { "lat": 47.2322, "lng": -1.5495 },
+            { "lat": 47.2386, "lng": -1.5510 },
+            { "lat": 47.2432, "lng": -1.5506 },
+            { "lat": 47.2475, "lng": -1.5509 },
+            { "lat": 47.2528, "lng": -1.5511 },
+            { "lat": 47.2580, "lng": -1.5502 }
+          ]
         },
         {
           "mode": "walk",
-          "from": { "lat": 47.2489, "lng": -1.5497 },
-          "to": { "lat": 47.2536, "lng": -1.5502 },
-          "distanceKm": 0.5,
+          "from": { "lat": 47.2580, "lng": -1.5502 },
+          "to": { "lat": 47.2628, "lng": -1.5487 },
+          "distanceKm": 0.54,
           "durationMin": 7,
-          "co2g": 0
-        }
-      ],
-      "totalDurationMin": 23,
-      "totalDistanceKm": 4.45,
-      "totalCo2g": 15,
-      "co2SavingG": 1112,
-      "score": 96
-    },
-    {
-      "id": "rainy-2",
-      "label": "Bus direct",
-      "segments": [
-        {
-          "mode": "walk",
-          "from": { "lat": 47.2134, "lng": -1.5541 },
-          "to": { "lat": 47.2141, "lng": -1.5529 },
-          "distanceKm": 0.1,
-          "durationMin": 2,
-          "co2g": 0
-        },
-        {
-          "mode": "bus",
-          "from": { "lat": 47.2141, "lng": -1.5529 },
-          "to": { "lat": 47.2501, "lng": -1.5498 },
-          "distanceKm": 4.2,
-          "durationMin": 22,
-          "co2g": 458,
-          "lineRef": "C1",
-          "lineName": "Chronobus C1"
-        },
-        {
-          "mode": "walk",
-          "from": { "lat": 47.2501, "lng": -1.5498 },
-          "to": { "lat": 47.2536, "lng": -1.5502 },
-          "distanceKm": 0.4,
-          "durationMin": 5,
-          "co2g": 0
+          "co2g": 0,
+          "shape": [
+            { "lat": 47.2580, "lng": -1.5502 },
+            { "lat": 47.2604, "lng": -1.5496 },
+            { "lat": 47.2628, "lng": -1.5487 }
+          ]
         }
       ],
       "totalDurationMin": 29,
-      "totalDistanceKm": 4.7,
-      "totalCo2g": 458,
-      "co2SavingG": 753,
-      "score": 80
+      "totalDistanceKm": 5.89,
+      "totalCo2g": 21,
+      "co2SavingG": 1469,
+      "score": 92,
+      "comfortScore": 85,
+      "estimatedCostEur": 1.70
+    },
+    {
+      "id": "rainy-2",
+      "label": "Bus 23",
+      "segments": [
+        {
+          "mode": "walk",
+          "from": { "lat": 47.2181, "lng": -1.5418 },
+          "to": { "lat": 47.2168, "lng": -1.5399 },
+          "distanceKm": 0.2,
+          "durationMin": 2,
+          "co2g": 0,
+          "shape": [
+            { "lat": 47.2181, "lng": -1.5418 },
+            { "lat": 47.2168, "lng": -1.5399 }
+          ]
+        },
+        {
+          "mode": "bus",
+          "from": { "lat": 47.2168, "lng": -1.5399 },
+          "to": { "lat": 47.2595, "lng": -1.5482 },
+          "distanceKm": 4.9,
+          "durationMin": 24,
+          "co2g": 534,
+          "lineRef": "23",
+          "lineName": "Bus 23 — Petit-Port / Faculté",
+          "shape": [
+            { "lat": 47.2168, "lng": -1.5399 },
+            { "lat": 47.2210, "lng": -1.5430 },
+            { "lat": 47.2265, "lng": -1.5454 },
+            { "lat": 47.2330, "lng": -1.5467 },
+            { "lat": 47.2410, "lng": -1.5475 },
+            { "lat": 47.2485, "lng": -1.5479 },
+            { "lat": 47.2540, "lng": -1.5481 },
+            { "lat": 47.2595, "lng": -1.5482 }
+          ]
+        },
+        {
+          "mode": "walk",
+          "from": { "lat": 47.2595, "lng": -1.5482 },
+          "to": { "lat": 47.2628, "lng": -1.5487 },
+          "distanceKm": 0.4,
+          "durationMin": 5,
+          "co2g": 0,
+          "shape": [
+            { "lat": 47.2595, "lng": -1.5482 },
+            { "lat": 47.2628, "lng": -1.5487 }
+          ]
+        }
+      ],
+      "totalDurationMin": 31,
+      "totalDistanceKm": 5.5,
+      "totalCo2g": 534,
+      "co2SavingG": 858,
+      "score": 71,
+      "comfortScore": 65,
+      "estimatedCostEur": 1.70
     },
     {
       "id": "rainy-3",
       "label": "Vélo Bicloo",
       "segments": [
         {
+          "mode": "walk",
+          "from": { "lat": 47.2181, "lng": -1.5418 },
+          "to": { "lat": 47.2178, "lng": -1.5412 },
+          "distanceKm": 0.1,
+          "durationMin": 1,
+          "co2g": 0,
+          "shape": [
+            { "lat": 47.2181, "lng": -1.5418 },
+            { "lat": 47.2178, "lng": -1.5412 }
+          ]
+        },
+        {
           "mode": "bike",
-          "from": { "lat": 47.2134, "lng": -1.5541 },
-          "to": { "lat": 47.2536, "lng": -1.5502 },
-          "distanceKm": 4.8,
-          "durationMin": 20,
-          "co2g": 0
+          "from": { "lat": 47.2178, "lng": -1.5412 },
+          "to": { "lat": 47.2618, "lng": -1.5488 },
+          "distanceKm": 5.6,
+          "durationMin": 24,
+          "co2g": 0,
+          "shape": [
+            { "lat": 47.2178, "lng": -1.5412 },
+            { "lat": 47.2240, "lng": -1.5440 },
+            { "lat": 47.2305, "lng": -1.5458 },
+            { "lat": 47.2380, "lng": -1.5468 },
+            { "lat": 47.2460, "lng": -1.5474 },
+            { "lat": 47.2540, "lng": -1.5480 },
+            { "lat": 47.2618, "lng": -1.5488 }
+          ]
+        },
+        {
+          "mode": "walk",
+          "from": { "lat": 47.2618, "lng": -1.5488 },
+          "to": { "lat": 47.2628, "lng": -1.5487 },
+          "distanceKm": 0.2,
+          "durationMin": 3,
+          "co2g": 0,
+          "shape": [
+            { "lat": 47.2618, "lng": -1.5488 },
+            { "lat": 47.2628, "lng": -1.5487 }
+          ]
         }
       ],
-      "totalDurationMin": 20,
-      "totalDistanceKm": 4.8,
+      "totalDurationMin": 28,
+      "totalDistanceKm": 5.9,
       "totalCo2g": 0,
-      "co2SavingG": 1214,
-      "score": 44
+      "co2SavingG": 1493,
+      "score": 38,
+      "comfortScore": 15,
+      "estimatedCostEur": 0
     }
   ]
 }
