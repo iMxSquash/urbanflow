@@ -23,7 +23,7 @@ function ConsentBadge({ granted }: { granted: boolean }) {
 export default function ParametresPage() {
   const { geolocationConsent, denyGeolocation, resetGeolocation } = useConsentStore()
   const navigate = useNavigate()
-  const { demoMode, loading: demoLoading, fetch: fetchDemo, toggle } = useDemoStore()
+  const { demoMode, weather, loading: demoLoading, fetch: fetchDemo, toggle, setWeather } = useDemoStore()
 
   const geoGranted = geolocationConsent === 'granted'
 
@@ -109,6 +109,42 @@ export default function ParametresPage() {
                 />
               </button>
             </div>
+
+            {demoMode && (
+              <div className="mt-5 pt-4 border-t border-amber-200">
+                <p className="text-body-sm font-medium text-slate-700 mb-2">Météo simulée</p>
+                <div className="flex gap-2" role="group" aria-label="Choisir la météo simulée">
+                  <button
+                    type="button"
+                    onClick={() => void setWeather('sunny')}
+                    disabled={demoLoading}
+                    aria-pressed={weather === 'sunny'}
+                    className={[
+                      'flex items-center gap-2 px-4 py-2 rounded-button text-body-sm font-medium transition-colors duration-fast border',
+                      weather === 'sunny'
+                        ? 'bg-amber-100 border-amber-400 text-amber-800'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50',
+                    ].join(' ')}
+                  >
+                    <span aria-hidden="true">☀️</span> Soleil
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void setWeather('rainy')}
+                    disabled={demoLoading}
+                    aria-pressed={weather === 'rainy'}
+                    className={[
+                      'flex items-center gap-2 px-4 py-2 rounded-button text-body-sm font-medium transition-colors duration-fast border',
+                      weather === 'rainy'
+                        ? 'bg-sky-100 border-sky-400 text-sky-800'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50',
+                    ].join(' ')}
+                  >
+                    <span aria-hidden="true">🌧️</span> Pluie
+                  </button>
+                </div>
+              </div>
+            )}
           </section>
         )}
 

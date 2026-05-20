@@ -20,3 +20,13 @@ export async function patchDemoMode(enabled: boolean): Promise<DemoStatus> {
   if (!res.ok) throw new Error('Impossible de changer le mode démo')
   return res.json() as Promise<DemoStatus>
 }
+
+export async function patchDemoWeather(weather: 'sunny' | 'rainy'): Promise<DemoStatus> {
+  const res = await apiFetch('/api/demo/mode', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ weather }),
+  })
+  if (!res.ok) throw new Error('Impossible de changer la météo démo')
+  return res.json() as Promise<DemoStatus>
+}
