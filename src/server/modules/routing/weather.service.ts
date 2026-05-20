@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import type { WeatherCondition } from '@shared/types/index.js'
+import { isDemoMode, getDemoWeather } from '../demo/demo-config.js'
 
 const NANTES = { lat: 47.218, lng: -1.553 }
 const TTL_MS = 10 * 60 * 1000 // 10 minutes
@@ -80,11 +81,7 @@ async function fetchFromApi(): Promise<WeatherCondition> {
 // ─── Demo ─────────────────────────────────────────────────────────────────────
 
 function demoWeatherFile(): string {
-  if (process.env.DEMO_WEATHER === 'rainy') return 'weather-rainy.json'
-  if (process.env.DEMO_WEATHER === 'sunny') return 'weather-sunny.json'
-  // Heuristique saisonnière : oct–mars = pluie, avr–sept = soleil
-  const month = new Date().getMonth()
-  return month >= 9 || month <= 2 ? 'weather-rainy.json' : 'weather-sunny.json'
+  return `weather-${getDemoWeather()}.json`
 }
 
 async function fetchFromDemo(): Promise<WeatherCondition> {
@@ -95,12 +92,17 @@ async function fetchFromDemo(): Promise<WeatherCondition> {
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
+export function clearWeatherCache(): void {
+  _cache = null
+  _inflight = null
+}
+
 export function getCurrentWeather(): Promise<WeatherCondition> {
   const now = Date.now()
   if (_cache && _cache.expiresAt > now) return Promise.resolve(_cache.data)
   if (_inflight) return _inflight
 
-  _inflight = (process.env.DEMO_MODE === 'true' ? fetchFromDemo() : fetchFromApi())
+  _inflight = (isDemoMode() ? fetchFromDemo() : fetchFromApi())
     .then((data) => {
       _cache = { data, expiresAt: now + TTL_MS }
       console.log(

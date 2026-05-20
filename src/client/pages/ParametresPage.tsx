@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useConsentStore } from '../stores/consent.store'
+import { useDemoStore } from '../stores/demo.store'
 
 function ConsentBadge({ granted }: { granted: boolean }) {
   return (
@@ -21,8 +23,13 @@ function ConsentBadge({ granted }: { granted: boolean }) {
 export default function ParametresPage() {
   const { geolocationConsent, denyGeolocation, resetGeolocation } = useConsentStore()
   const navigate = useNavigate()
+  const { demoMode, loading: demoLoading, fetch: fetchDemo, toggle } = useDemoStore()
 
   const geoGranted = geolocationConsent === 'granted'
+
+  useEffect(() => {
+    void fetchDemo()
+  }, [fetchDemo])
 
   function handleRevokeGeo() {
     denyGeolocation()
@@ -61,6 +68,50 @@ export default function ParametresPage() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6 lg:px-6 space-y-6">
+        {/* ── Mode démo ────────────────────────────────────────────────── */}
+        {demoMode !== null && (
+          <section
+            className={[
+              'card p-4 lg:p-6 border',
+              demoMode ? 'border-amber-200 bg-amber-50' : 'border-slate-200',
+            ].join(' ')}
+            aria-labelledby="demo-heading"
+          >
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 id="demo-heading" className="text-h3 font-semibold text-slate-900">
+                  Mode démo
+                </h2>
+                <p className="text-body-sm text-slate-500 mt-0.5">
+                  {demoMode
+                    ? 'Données simulées — aucun appel réseau externe'
+                    : 'APIs réelles (Transitous, OpenWeather, Bicloo)'}
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={demoMode}
+                aria-label="Activer ou désactiver le mode démo"
+                disabled={demoLoading}
+                onClick={() => void toggle(!demoMode)}
+                className={[
+                  'relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-eco-500 disabled:opacity-50',
+                  demoMode ? 'bg-amber-400' : 'bg-slate-300',
+                ].join(' ')}
+              >
+                <span
+                  aria-hidden="true"
+                  className={[
+                    'pointer-events-none inline-block h-6 w-6 rounded-full bg-white shadow-sm ring-0 transition-transform duration-200',
+                    demoMode ? 'translate-x-5' : 'translate-x-0',
+                  ].join(' ')}
+                />
+              </button>
+            </div>
+          </section>
+        )}
+
         {/* ── Confidentialité ───────────────────────────────────────────── */}
         <section className="card p-4 lg:p-6" aria-labelledby="privacy-heading">
           <h2 id="privacy-heading" className="text-h3 font-semibold text-slate-900">

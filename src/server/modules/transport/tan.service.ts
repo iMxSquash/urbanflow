@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import type { TanLine, TanStop } from '@shared/types/index.js'
+import { isDemoMode } from '../demo/demo-config.js'
 
 const NANTES_BASE = (
   process.env.NANTES_API_URL ?? 'https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets'
@@ -106,14 +107,14 @@ async function readDemoStops(): Promise<TanStop[]> {
 
 export async function getTanLines(): Promise<TanLine[]> {
   if (linesCache) return linesCache
-  const lines = process.env.DEMO_MODE === 'true' ? await readDemoLines() : await fetchAllLines()
+  const lines = isDemoMode() ? await readDemoLines() : await fetchAllLines()
   linesCache = lines
   return lines
 }
 
 export async function getTanStops(): Promise<TanStop[]> {
   if (stopsCache) return stopsCache
-  const stops = process.env.DEMO_MODE === 'true' ? await readDemoStops() : await fetchAllStops()
+  const stops = isDemoMode() ? await readDemoStops() : await fetchAllStops()
   stopsCache = stops
   return stops
 }

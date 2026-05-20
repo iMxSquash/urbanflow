@@ -21,8 +21,10 @@ interface NantesResponse {
   results: NantesStation[]
 }
 
+import { isDemoMode } from '../demo/demo-config.js'
+
 export async function getBiclooStations(): Promise<BiclooStation[]> {
-  if (process.env.DEMO_MODE === 'true') {
+  if (isDemoMode()) {
     return readDemoStations()
   }
   return fetchFromNantes()

@@ -5,6 +5,7 @@ import { OsrmProvider } from '../transport/providers/osrm.provider.js'
 import { TransitousProvider } from '../transport/providers/transitous.provider.js'
 import { getCurrentWeather } from './weather.service.js'
 import { computeScore, computeEstimatedCost, computeComfortScore } from './scoring.service.js'
+import { isDemoMode } from '../demo/demo-config.js'
 
 // Tous les providers disponibles (hors mode démo)
 const ALL_PROVIDERS: TransportProvider[] = [new TransitousProvider(), new OsrmProvider()]
@@ -14,7 +15,7 @@ const DEMO_PROVIDER = new DemoProvider()
 const TC_PROVIDER = ALL_PROVIDERS.find((p) => p.supportedModes.includes('bus'))! // TransitousProvider
 
 function selectProviders(options: JourneyOptions): TransportProvider[] {
-  if (process.env.DEMO_MODE === 'true') return [DEMO_PROVIDER]
+  if (isDemoMode()) return [DEMO_PROVIDER]
 
   const requestedModes: TransportMode[] = options.modes ?? []
 

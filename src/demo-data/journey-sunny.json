@@ -7,139 +7,95 @@
         {
           "mode": "walk",
           "from": { "lat": 47.2134, "lng": -1.5541 },
-          "to": { "lat": 47.2131, "lng": -1.5544 },
-          "distanceKm": 0.1,
-          "durationMin": 1,
-          "co2g": 0,
-          "shape": [
-            { "lat": 47.2134, "lng": -1.5541 },
-            { "lat": 47.2131, "lng": -1.5544 }
-          ]
+          "to": { "lat": 47.2143, "lng": -1.5557 },
+          "distanceKm": 0.15,
+          "durationMin": 2,
+          "co2g": 0
         },
         {
           "mode": "bike",
-          "from": { "lat": 47.2131, "lng": -1.5544 },
-          "to": { "lat": 47.2025, "lng": -1.5542 },
-          "distanceKm": 2.1,
+          "from": { "lat": 47.2143, "lng": -1.5557 },
+          "to": { "lat": 47.2015, "lng": -1.5545 },
+          "distanceKm": 2.2,
           "durationMin": 10,
-          "co2g": 0,
-          "shape": [
-            { "lat": 47.2131, "lng": -1.5544 },
-            { "lat": 47.2115, "lng": -1.5543 },
-            { "lat": 47.2100, "lng": -1.5541 },
-            { "lat": 47.2088, "lng": -1.5538 },
-            { "lat": 47.2070, "lng": -1.5537 },
-            { "lat": 47.2055, "lng": -1.5536 },
-            { "lat": 47.2040, "lng": -1.5538 },
-            { "lat": 47.2025, "lng": -1.5542 }
-          ]
+          "co2g": 0
         },
         {
           "mode": "walk",
-          "from": { "lat": 47.2025, "lng": -1.5542 },
-          "to": { "lat": 47.2015, "lng": -1.5545 },
-          "distanceKm": 0.2,
-          "durationMin": 3,
-          "co2g": 0,
-          "shape": [
-            { "lat": 47.2025, "lng": -1.5542 },
-            { "lat": 47.2015, "lng": -1.5545 }
-          ]
+          "from": { "lat": 47.2015, "lng": -1.5545 },
+          "to": { "lat": 47.2005, "lng": -1.5540 },
+          "distanceKm": 0.12,
+          "durationMin": 2,
+          "co2g": 0
         }
       ],
       "totalDurationMin": 14,
-      "totalDistanceKm": 2.4,
+      "totalDistanceKm": 2.47,
       "totalCo2g": 0,
-      "co2SavingG": 607,
+      "co2SavingG": 625,
       "score": 94,
       "comfortScore": 85,
       "estimatedCostEur": 0
     },
     {
       "id": "sunny-2",
+      "label": "Bus NN",
+      "segments": [
+        {
+          "mode": "walk",
+          "from": { "lat": 47.2134, "lng": -1.5541 },
+          "to": { "lat": 47.2145, "lng": -1.5557 },
+          "distanceKm": 0.2,
+          "durationMin": 2,
+          "co2g": 0
+        },
+        {
+          "mode": "bus",
+          "from": { "lat": 47.2145, "lng": -1.5557 },
+          "to": { "lat": 47.2051, "lng": -1.5558 },
+          "distanceKm": 1.5,
+          "durationMin": 8,
+          "co2g": 164,
+          "lineRef": "NN",
+          "lineName": "NN — Hangar à Bananes"
+        },
+        {
+          "mode": "walk",
+          "from": { "lat": 47.2051, "lng": -1.5558 },
+          "to": { "lat": 47.2005, "lng": -1.5540 },
+          "distanceKm": 0.55,
+          "durationMin": 7,
+          "co2g": 0
+        }
+      ],
+      "totalDurationMin": 17,
+      "totalDistanceKm": 2.25,
+      "totalCo2g": 164,
+      "co2SavingG": 405,
+      "score": 76,
+      "comfortScore": 78,
+      "estimatedCostEur": 1.70
+    },
+    {
+      "id": "sunny-3",
       "label": "Marche",
       "segments": [
         {
           "mode": "walk",
           "from": { "lat": 47.2134, "lng": -1.5541 },
-          "to": { "lat": 47.2015, "lng": -1.5545 },
-          "distanceKm": 1.7,
+          "to": { "lat": 47.2005, "lng": -1.5540 },
+          "distanceKm": 1.65,
           "durationMin": 21,
-          "co2g": 0,
-          "shape": [
-            { "lat": 47.2134, "lng": -1.5541 },
-            { "lat": 47.2115, "lng": -1.5520 },
-            { "lat": 47.2099, "lng": -1.5498 },
-            { "lat": 47.2072, "lng": -1.5495 },
-            { "lat": 47.2050, "lng": -1.5494 },
-            { "lat": 47.2035, "lng": -1.5510 },
-            { "lat": 47.2015, "lng": -1.5545 }
-          ]
+          "co2g": 0
         }
       ],
       "totalDurationMin": 21,
-      "totalDistanceKm": 1.7,
+      "totalDistanceKm": 1.65,
       "totalCo2g": 0,
-      "co2SavingG": 430,
-      "score": 90,
-      "comfortScore": 72,
+      "co2SavingG": 418,
+      "score": 88,
+      "comfortScore": 70,
       "estimatedCostEur": 0
-    },
-    {
-      "id": "sunny-3",
-      "label": "Bus C5",
-      "segments": [
-        {
-          "mode": "walk",
-          "from": { "lat": 47.2134, "lng": -1.5541 },
-          "to": { "lat": 47.2126, "lng": -1.5524 },
-          "distanceKm": 0.15,
-          "durationMin": 2,
-          "co2g": 0,
-          "shape": [
-            { "lat": 47.2134, "lng": -1.5541 },
-            { "lat": 47.2126, "lng": -1.5524 }
-          ]
-        },
-        {
-          "mode": "bus",
-          "from": { "lat": 47.2126, "lng": -1.5524 },
-          "to": { "lat": 47.2048, "lng": -1.5523 },
-          "distanceKm": 1.5,
-          "durationMin": 9,
-          "co2g": 164,
-          "lineRef": "C5",
-          "lineName": "Chronobus C5 — Île de Nantes",
-          "shape": [
-            { "lat": 47.2126, "lng": -1.5524 },
-            { "lat": 47.2110, "lng": -1.5518 },
-            { "lat": 47.2095, "lng": -1.5508 },
-            { "lat": 47.2075, "lng": -1.5514 },
-            { "lat": 47.2060, "lng": -1.5517 },
-            { "lat": 47.2048, "lng": -1.5523 }
-          ]
-        },
-        {
-          "mode": "walk",
-          "from": { "lat": 47.2048, "lng": -1.5523 },
-          "to": { "lat": 47.2015, "lng": -1.5545 },
-          "distanceKm": 0.45,
-          "durationMin": 5,
-          "co2g": 0,
-          "shape": [
-            { "lat": 47.2048, "lng": -1.5523 },
-            { "lat": 47.2030, "lng": -1.5530 },
-            { "lat": 47.2015, "lng": -1.5545 }
-          ]
-        }
-      ],
-      "totalDurationMin": 16,
-      "totalDistanceKm": 2.1,
-      "totalCo2g": 164,
-      "co2SavingG": 368,
-      "score": 76,
-      "comfortScore": 82,
-      "estimatedCostEur": 1.70
     }
   ]
 }
