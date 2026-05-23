@@ -86,10 +86,12 @@ function haversineKm(a: { lat: number; lon: number }, b: { lat: number; lon: num
   return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h))
 }
 
-// Transitous retourne des ISO strings ("2026-05-23T12:35:00Z"), pas des Unix ms.
-// Cette fonction normalise les deux formats en timestamp ms.
-function toMs(t: string | number): number {
-  return typeof t === 'number' ? t : new Date(t).getTime()
+// Normalise un timestamp OTP (ISO string ou Unix ms) en ms epoch.
+// Retourne null si la valeur est NaN ou non finie pour éviter une RangeError
+// dans new Date().toISOString() en aval.
+function toMs(t: string | number): number | null {
+  const ms = typeof t === 'number' ? t : new Date(t).getTime()
+  return Number.isFinite(ms) ? ms : null
 }
 
 function otpModeToTransportMode(mode: string): TransportMode {
@@ -203,19 +205,24 @@ async function mapItinerary(
       if (isTransitLeg) {
         if (leg.startTime !== undefined) {
           const startMs = toMs(leg.startTime)
-          scheduledDeparture = new Date(startMs).toISOString()
+          if (startMs !== null) {
+            scheduledDeparture = new Date(startMs).toISOString()
 
-          const prevLeg = legIdx > 0 ? itin.legs[legIdx - 1] : undefined
-          if (prevLeg?.endTime !== undefined) {
-            // Méthode 1a : gap exact entre endTime du leg précédent et startTime de ce leg
-            const gapMin = Math.round((startMs - toMs(prevLeg.endTime)) / 60_000)
-            if (gapMin > 0) waitTimeMin = gapMin
-          } else {
-            // Méthode 1b : startTime connu, endTime précédent absent.
-            // Attente = heure de départ TC − (maintenant + temps de trajet cumulé avant ce leg).
-            const expectedArrivalAtStopMs = nowMs + cumulativeTravelMs[legIdx]
-            const waitMs = startMs - expectedArrivalAtStopMs
-            if (waitMs > 60_000) waitTimeMin = Math.round(waitMs / 60_000)
+            const prevLeg = legIdx > 0 ? itin.legs[legIdx - 1] : undefined
+            if (prevLeg?.endTime !== undefined) {
+              // Méthode 1a : gap exact entre endTime du leg précédent et startTime de ce leg
+              const endMs = toMs(prevLeg.endTime)
+              if (endMs !== null) {
+                const gapMin = Math.round((startMs - endMs) / 60_000)
+                if (gapMin > 0) waitTimeMin = gapMin
+              }
+            } else {
+              // Méthode 1b : startTime connu, endTime précédent absent.
+              // Attente = heure de départ TC − (maintenant + temps de trajet cumulé avant ce leg).
+              const expectedArrivalAtStopMs = nowMs + cumulativeTravelMs[legIdx]
+              const waitMs = startMs - expectedArrivalAtStopMs
+              if (waitMs > 60_000) waitTimeMin = Math.round(waitMs / 60_000)
+            }
           }
         } else if (waitPerTcLegSec > 0) {
           // Méthode 2 : startTime absent — répartition de l'attente totale de l'itinéraire
@@ -251,9 +258,8 @@ async function mapItinerary(
   const label = usedModes.map(modeLabel).join(' + ')
 
   const firstLeg = itin.legs[0]
-  const departureTime = firstLeg?.startTime !== undefined
-    ? new Date(toMs(firstLeg.startTime)).toISOString()
-    : undefined
+  const firstLegStartMs = firstLeg?.startTime !== undefined ? toMs(firstLeg.startTime) : null
+  const departureTime = firstLegStartMs !== null ? new Date(firstLegStartMs).toISOString() : undefined
 
   return {
     id: `transitous-${idx}`,
