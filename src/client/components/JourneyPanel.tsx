@@ -42,6 +42,10 @@ function formatCo2(grams: number): string {
   return grams >= 1000 ? `${(grams / 1000).toFixed(1)} kg` : `${grams} g`
 }
 
+function formatTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+}
+
 interface JourneyPanelProps {
   journey: Journey
   onClose: () => void
@@ -123,38 +127,72 @@ export function JourneyPanel({ journey, onClose, weather }: JourneyPanelProps) {
         </p>
         <ol className="space-y-0">
           {journey.segments.map((segment, idx) => (
-            <li key={idx} className="flex gap-3 relative">
-              {/* Ligne verticale entre segments */}
-              {idx < journey.segments.length - 1 && (
-                <div
-                  aria-hidden="true"
-                  className="absolute left-3.75 top-9 bottom-0 w-0.5 opacity-25"
-                  style={{ background: MODE_COLORS[segment.mode] }}
-                />
+            <li key={idx}>
+              {/* Bloc d'attente — affiché uniquement si waitTimeMin > 0 */}
+              {segment.waitTimeMin !== undefined && segment.waitTimeMin > 0 && (
+                <div className="flex gap-3 items-center py-1 ml-0.5" aria-label={`Attente ${formatDuration(segment.waitTimeMin)}`}>
+                  <div className="shrink-0 w-7 flex flex-col items-center">
+                    <div
+                      aria-hidden="true"
+                      className="w-0.5 h-5 border-l-2 border-dashed border-slate-300"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1.5 flex-1">
+                    <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500 shrink-0">
+                      <circle cx="12" cy="12" r="10" />
+                      <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                    <span className="text-caption text-amber-700 font-medium">
+                      Attente : {formatDuration(segment.waitTimeMin)}
+                    </span>
+                  </div>
+                </div>
               )}
 
-              {/* Icône mode */}
-              <div
-                aria-hidden="true"
-                className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm z-10 mt-0.5"
-                style={{
-                  background: MODE_COLORS[segment.mode] + '20',
-                  border: `2px solid ${MODE_COLORS[segment.mode]}`,
-                }}
-              >
-                {MODE_ICONS[segment.mode]}
-              </div>
+              {/* Segment de trajet */}
+              <div className="flex gap-3 relative">
+                {idx < journey.segments.length - 1 && (
+                  <div
+                    aria-hidden="true"
+                    className="absolute left-3.75 top-9 bottom-0 w-0.5 opacity-25"
+                    style={{ background: MODE_COLORS[segment.mode] }}
+                  />
+                )}
 
-              {/* Contenu */}
-              <div className="pb-4 min-w-0 flex-1">
-                <p className="text-body-sm font-medium text-slate-800 leading-snug truncate">
-                  {segment.lineName ?? MODE_LABELS[segment.mode]}
-                </p>
-                <p className="text-caption text-slate-400 mt-0.5">
-                  {formatDuration(segment.durationMin)}
-                  {segment.distanceKm > 0 && ` · ${segment.distanceKm} km`}
-                  {segment.co2g > 0 && ` · ${segment.co2g} g CO₂`}
-                </p>
+                <div
+                  aria-hidden="true"
+                  className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm z-10 mt-0.5"
+                  style={{
+                    background: MODE_COLORS[segment.mode] + '20',
+                    border: `2px solid ${MODE_COLORS[segment.mode]}`,
+                  }}
+                >
+                  {MODE_ICONS[segment.mode]}
+                </div>
+
+                <div className="pb-4 min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-body-sm font-medium text-slate-800 leading-snug truncate">
+                      {segment.lineName ?? MODE_LABELS[segment.mode]}
+                    </p>
+                    {/* Heure de départ TC — affiché dès que disponible, indépendamment de l'attente */}
+                    {segment.scheduledDeparture && (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-caption font-medium bg-slate-100 text-slate-600 shrink-0">
+                        <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10" />
+                          <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                        {formatTime(segment.scheduledDeparture)}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-caption text-slate-400 mt-0.5">
+                    {formatDuration(segment.durationMin)}
+                    {segment.waitTimeMin !== undefined && ' en véhicule'}
+                    {segment.distanceKm > 0 && ` · ${segment.distanceKm} km`}
+                    {segment.co2g > 0 && ` · ${segment.co2g} g CO₂`}
+                  </p>
+                </div>
               </div>
             </li>
           ))}

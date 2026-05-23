@@ -32,11 +32,13 @@ export interface JourneySegment {
   from: Coordinates
   to: Coordinates
   distanceKm: number
-  durationMin: number
+  durationMin: number   // durée du trajet sur le véhicule uniquement (sans attente)
   co2g: number
   lineRef?: string
   lineName?: string
   shape?: Coordinates[] // tracé réel décodé depuis legGeometry
+  waitTimeMin?: number        // attente à l'arrêt avant montée (TC uniquement)
+  scheduledDeparture?: string // ISO — heure de départ prévue du véhicule
 }
 
 export interface Journey {

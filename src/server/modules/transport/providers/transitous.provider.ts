@@ -20,8 +20,10 @@ interface OtpPlace {
 
 interface OtpLeg {
   mode: string
-  duration: number // secondes
-  distance?: number // mètres — absent sur les legs transit
+  duration: number              // secondes — durée trajet seul (sans attente)
+  startTime?: string | number   // ISO string ou Unix ms selon la version OTP/MOTIS
+  endTime?: string | number     // ISO string ou Unix ms selon la version OTP/MOTIS
+  distance?: number             // mètres — absent sur les legs transit
   from: OtpPlace
   to: OtpPlace
   routeShortName?: string
@@ -84,6 +86,12 @@ function haversineKm(a: { lat: number; lon: number }, b: { lat: number; lon: num
   return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h))
 }
 
+// Transitous retourne des ISO strings ("2026-05-23T12:35:00Z"), pas des Unix ms.
+// Cette fonction normalise les deux formats en timestamp ms.
+function toMs(t: string | number): number {
+  return typeof t === 'number' ? t : new Date(t).getTime()
+}
+
 function otpModeToTransportMode(mode: string): TransportMode {
   switch (mode.toUpperCase()) {
     case 'WALK':
@@ -128,8 +136,37 @@ async function mapItinerary(
   idx: number,
   options: JourneyOptions
 ): Promise<Journey> {
+  const nowMs = Date.now()
+  const TC_MODES_OTP = new Set(['BUS', 'TRAM', 'RAIL', 'FERRY', 'SUBWAY'])
+
+  // Pré-calcul du temps de trajet pur cumulé avant chaque leg (sans attente).
+  // Utilisé pour déduire l'attente quand startTime est disponible mais endTime du leg
+  // précédent est absent : waitMs = leg.startTime − (nowMs + cumulativeTravelMs[legIdx]).
+  const cumulativeTravelMs: number[] = []
+  let travelAcc = 0
+  for (const leg of itin.legs) {
+    cumulativeTravelMs.push(travelAcc)
+    travelAcc += leg.duration * 1_000
+  }
+
+  // Méthode de secours complète : distribuer le temps d'attente total de l'itinéraire
+  // quand startTime est absent de la réponse OTP.
+  const totalLegDurationSec = itin.legs.reduce((s, l) => s + l.duration, 0)
+  const totalWaitSec = Math.max(0, itin.duration - totalLegDurationSec)
+  const tcLegCount = itin.legs.filter((l) => TC_MODES_OTP.has(l.mode.toUpperCase())).length
+  const waitPerTcLegSec = tcLegCount > 0 ? Math.round(totalWaitSec / tcLegCount) : 0
+
+  const legScheduledOffsetMs: number[] = []
+  let elapsedMs = 0
+  for (const leg of itin.legs) {
+    const isTC = TC_MODES_OTP.has(leg.mode.toUpperCase())
+    const thisWaitMs = isTC ? waitPerTcLegSec * 1_000 : 0
+    legScheduledOffsetMs.push(elapsedMs + thisWaitMs)
+    elapsedMs += thisWaitMs + leg.duration * 1_000
+  }
+
   const segments: JourneySegment[] = await Promise.all(
-    itin.legs.map(async (leg): Promise<JourneySegment> => {
+    itin.legs.map(async (leg, legIdx): Promise<JourneySegment> => {
       const mode = otpModeToTransportMode(leg.mode)
       const distKm =
         Math.round(
@@ -144,9 +181,7 @@ async function mapItinerary(
 
       // Transitous (MOTIS) encodes legGeometry at precision 7; fall back to GTFS
       // shape data when the decoded polyline is absent or too sparse (< 3 points).
-      const isTransitLeg = ['BUS', 'TRAM', 'RAIL', 'FERRY', 'SUBWAY'].includes(
-        leg.mode.toUpperCase()
-      )
+      const isTransitLeg = TC_MODES_OTP.has(leg.mode.toUpperCase())
       let shape: Coordinates[] | undefined
       if (leg.legGeometry?.points) {
         const decoded = decodePolyline(leg.legGeometry.points, leg.legGeometry.precision ?? 7)
@@ -161,6 +196,34 @@ async function mapItinerary(
         if (gtfsShape) shape = gtfsShape
       }
 
+      // Calcul du temps d'attente et de l'horaire de départ du véhicule TC.
+      let waitTimeMin: number | undefined
+      let scheduledDeparture: string | undefined
+
+      if (isTransitLeg) {
+        if (leg.startTime !== undefined) {
+          const startMs = toMs(leg.startTime)
+          scheduledDeparture = new Date(startMs).toISOString()
+
+          const prevLeg = legIdx > 0 ? itin.legs[legIdx - 1] : undefined
+          if (prevLeg?.endTime !== undefined) {
+            // Méthode 1a : gap exact entre endTime du leg précédent et startTime de ce leg
+            const gapMin = Math.round((startMs - toMs(prevLeg.endTime)) / 60_000)
+            if (gapMin > 0) waitTimeMin = gapMin
+          } else {
+            // Méthode 1b : startTime connu, endTime précédent absent.
+            // Attente = heure de départ TC − (maintenant + temps de trajet cumulé avant ce leg).
+            const expectedArrivalAtStopMs = nowMs + cumulativeTravelMs[legIdx]
+            const waitMs = startMs - expectedArrivalAtStopMs
+            if (waitMs > 60_000) waitTimeMin = Math.round(waitMs / 60_000)
+          }
+        } else if (waitPerTcLegSec > 0) {
+          // Méthode 2 : startTime absent — répartition de l'attente totale de l'itinéraire
+          waitTimeMin = Math.round(waitPerTcLegSec / 60) || undefined
+          scheduledDeparture = new Date(nowMs + legScheduledOffsetMs[legIdx]).toISOString()
+        }
+      }
+
       return {
         mode,
         from: { lat: leg.from.lat, lng: leg.from.lon },
@@ -171,6 +234,8 @@ async function mapItinerary(
         ...(leg.routeShortName ? { lineRef: leg.routeShortName } : {}),
         ...(lineName ? { lineName } : {}),
         ...(shape ? { shape } : {}),
+        ...(waitTimeMin !== undefined ? { waitTimeMin } : {}),
+        ...(scheduledDeparture ? { scheduledDeparture } : {}),
       }
     })
   )
@@ -254,8 +319,14 @@ export class TransitousProvider implements TransportProvider {
       throw new Error(`Transitous indisponible : ${(err as Error).message}`, { cause: err })
     }
 
-    console.log('[routing] Transitous réponse brute :')
-    console.log(JSON.stringify(raw, null, 2))
+    // Log de diagnostic timing — à supprimer après validation
+    if (raw.itineraries?.length) {
+      const firstItin = raw.itineraries[0]
+      console.log(`[routing] Transitous — itin.duration=${firstItin.duration}s, legs.sum=${firstItin.legs.reduce((s, l) => s + l.duration, 0)}s`)
+      firstItin.legs.forEach((l, i) => {
+        console.log(`[routing]   leg[${i}] mode=${l.mode} duration=${l.duration}s startTime=${l.startTime ?? 'absent'} endTime=${l.endTime ?? 'absent'}`)
+      })
+    }
 
     if (raw.error) {
       throw new Error(`Transitous erreur : ${raw.error.message}`)
