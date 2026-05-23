@@ -13,10 +13,17 @@ const MODE_COLORS: Record<TransportMode, string> = {
   train: '#7c3aed',
 }
 
-export function JourneyLayer({ journey }: { journey: Journey }) {
+interface JourneyLayerProps {
+  journey: Journey
+  activeSegmentIdx?: number | null
+}
+
+export function JourneyLayer({ journey, activeSegmentIdx }: JourneyLayerProps) {
   const map = useMap()
 
+  // Cadrage initial sur tout l'itinéraire
   useEffect(() => {
+    if (activeSegmentIdx != null) return
     const points = journey.segments.flatMap((s) =>
       s.shape && s.shape.length >= 2
         ? s.shape.map((c) => L.latLng(c.lat, c.lng))
@@ -25,7 +32,19 @@ export function JourneyLayer({ journey }: { journey: Journey }) {
     if (points.length > 0) {
       map.fitBounds(L.latLngBounds(points), { padding: [48, 48] })
     }
-  }, [journey, map])
+  }, [journey, map, activeSegmentIdx])
+
+  // Recentrage sur le segment actif
+  useEffect(() => {
+    if (activeSegmentIdx == null) return
+    const seg = journey.segments[activeSegmentIdx]
+    if (!seg) return
+    const points =
+      seg.shape && seg.shape.length >= 2
+        ? seg.shape.map((c) => L.latLng(c.lat, c.lng))
+        : [L.latLng(seg.from.lat, seg.from.lng), L.latLng(seg.to.lat, seg.to.lng)]
+    map.fitBounds(L.latLngBounds(points), { padding: [60, 60], maxZoom: 16 })
+  }, [activeSegmentIdx, journey, map])
 
   return (
     <>
@@ -38,14 +57,16 @@ export function JourneyLayer({ journey }: { journey: Journey }) {
                 [segment.to.lat, segment.to.lng],
               ]
 
+        const isActive = activeSegmentIdx == null || activeSegmentIdx === idx
+
         return (
           <Polyline
             key={idx}
             positions={positions}
             pathOptions={{
               color: MODE_COLORS[segment.mode],
-              weight: segment.mode === 'walk' ? 3 : 5,
-              opacity: 0.9,
+              weight: activeSegmentIdx === idx ? 7 : segment.mode === 'walk' ? 3 : 5,
+              opacity: isActive ? 0.9 : 0.2,
               dashArray: segment.mode === 'walk' ? '5 9' : undefined,
               lineCap: 'round',
               lineJoin: 'round',

@@ -54,6 +54,7 @@ export default function MapPage() {
   const { layers } = useMapLayersStore()
   const { profile, fetchProfile } = useProfileStore()
   const { weather } = useWeather()
+  const [activeSegmentIdx, setActiveSegmentIdx] = useState<number | null>(null)
   const location = useLocation()
   const locatedOnMount = useRef(false)
   const scenarioApplied = useRef(false)
@@ -304,7 +305,9 @@ export default function MapPage() {
             </Suspense>
           )}
           {userPosition && <UserLocationMarker position={userPosition} />}
-          {selectedJourney && <JourneyLayer journey={selectedJourney} />}
+          {selectedJourney && (
+            <JourneyLayer journey={selectedJourney} activeSegmentIdx={activeSegmentIdx} />
+          )}
         </MapContainer>
 
         {/* Sélecteur de calques */}
@@ -334,7 +337,13 @@ export default function MapPage() {
 
         {/* Panneau détail — après sélection d'un itinéraire */}
         {selectedJourney && (
-          <JourneyPanel journey={selectedJourney} onClose={deselectJourney} weather={weather} />
+          <JourneyPanel
+            journey={selectedJourney}
+            onClose={() => { setActiveSegmentIdx(null); deselectJourney() }}
+            weather={weather}
+            activeSegmentIdx={activeSegmentIdx}
+            onSegmentSelect={setActiveSegmentIdx}
+          />
         )}
       </main>
 
