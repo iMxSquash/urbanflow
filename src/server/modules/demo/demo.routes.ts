@@ -8,6 +8,7 @@ import {
   setDemoWeather,
 } from './demo-config.js'
 import { clearWeatherCache } from '../routing/weather.service.js'
+import { clearTanCache } from '../transport/tan.service.js'
 import { authGuard } from '../../middleware/auth-guard.js'
 import { validate } from '../../middleware/validate.js'
 import { demoPatchSchema } from './demo.schema.js'
@@ -65,12 +66,14 @@ router.patch('/mode', validate(demoPatchSchema), (req: Request, res: Response) =
     setWeatherDemoMode(enabled)
     if (!enabled) setProvidersDemo(false)
     clearWeatherCache()
+    clearTanCache()
     console.log(`[demo] météo démo → ${enabled ? 'activée' : 'désactivée'}`)
   }
 
   if (enabled !== false && typeof providersDemo === 'boolean') {
     setProvidersDemo(providersDemo)
     clearWeatherCache()
+    clearTanCache()
     console.log(`[demo] providers démo → ${providersDemo ? 'activés' : 'désactivés'}`)
   }
 

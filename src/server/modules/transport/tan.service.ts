@@ -105,6 +105,11 @@ async function readDemoStops(): Promise<TanStop[]> {
   return (JSON.parse(raw) as { stops: TanStop[] }).stops
 }
 
+export function clearTanCache(): void {
+  linesCache = null
+  stopsCache = null
+}
+
 export async function getTanLines(): Promise<TanLine[]> {
   if (linesCache) return linesCache
   const lines = isDemoMode() ? await readDemoLines() : await fetchAllLines()

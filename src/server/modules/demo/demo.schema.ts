@@ -10,5 +10,5 @@ export const demoPatchSchema = z
   .refine(
     ({ enabled, providersDemo, weather }) =>
       enabled !== undefined || providersDemo !== undefined || weather !== undefined,
-    { message: 'Au moins un champ requis : enabled, providersDemo ou weather' },
+    { message: 'Au moins un champ requis : enabled, providersDemo ou weather' }
   )
