@@ -26,7 +26,11 @@ export const useDemoStore = create<DemoState>((set) => ({
   fetch: async () => {
     try {
       const status = await getDemoStatus()
-      set({ demoMode: status.demoMode, providersDemo: status.providersDemo, weather: status.weather })
+      set({
+        demoMode: status.demoMode,
+        providersDemo: status.providersDemo,
+        weather: status.weather,
+      })
     } catch {
       set({ demoMode: null, providersDemo: null, weather: null })
     }

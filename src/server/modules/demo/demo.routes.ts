@@ -19,7 +19,11 @@ const router = Router()
  *     tags: [Demo]
  */
 router.get('/mode', (_req: Request, res: Response) => {
-  res.json({ demoMode: isWeatherDemoMode(), providersDemo: isDemoMode(), weather: getDemoWeather() })
+  res.json({
+    demoMode: isWeatherDemoMode(),
+    providersDemo: isDemoMode(),
+    weather: getDemoWeather(),
+  })
 })
 
 /**
@@ -68,7 +72,11 @@ router.patch('/mode', (req: Request, res: Response) => {
     console.log(`[demo] météo simulée → ${weather}`)
   }
 
-  res.json({ demoMode: isWeatherDemoMode(), providersDemo: isDemoMode(), weather: getDemoWeather() })
+  res.json({
+    demoMode: isWeatherDemoMode(),
+    providersDemo: isDemoMode(),
+    weather: getDemoWeather(),
+  })
 })
 
 export default router

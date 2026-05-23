@@ -1,6 +1,12 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
-import type { Coordinates, Journey, JourneyOptions, JourneySegment, TransportMode } from '@shared/types/index.js'
+import type {
+  Coordinates,
+  Journey,
+  JourneyOptions,
+  JourneySegment,
+  TransportMode,
+} from '@shared/types/index.js'
 import type { TransportProvider } from '../transport-provider.interface.js'
 import { getDemoWeather } from '../../demo/demo-config.js'
 import { getShapeForLeg } from '../gtfs-shapes.service.js'

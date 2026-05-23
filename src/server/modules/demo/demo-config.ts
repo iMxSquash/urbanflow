@@ -1,5 +1,5 @@
 // Runtime overrides — changed without server restart via PATCH /api/demo/mode
-let _weatherDemo: boolean | null = null   // météo simulée seulement
+let _weatherDemo: boolean | null = null // météo simulée seulement
 let _providersDemo: boolean | null = null // trajets + bicloo + tan simulés
 let _weatherOverride: 'sunny' | 'rainy' | null = null
 

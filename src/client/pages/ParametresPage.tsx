@@ -219,7 +219,9 @@ export default function ParametresPage() {
                 {/* Scénarios — visibles uniquement si providers démo actif */}
                 {providersDemo && (
                   <div>
-                    <p className="text-body-sm font-medium text-slate-700 mb-2">Lancer un scénario</p>
+                    <p className="text-body-sm font-medium text-slate-700 mb-2">
+                      Lancer un scénario
+                    </p>
                     <div className="flex flex-col gap-2">
                       {DEMO_SCENARIOS.map((scenario) => (
                         <button
@@ -245,10 +247,14 @@ export default function ParametresPage() {
                           <div className="min-w-0">
                             <p className="text-body-sm font-medium text-slate-800 truncate">
                               {scenario.fromLabel}
-                              <span className="text-slate-400 mx-1" aria-hidden="true">→</span>
+                              <span className="text-slate-400 mx-1" aria-hidden="true">
+                                →
+                              </span>
                               {scenario.toLabel}
                             </p>
-                            <p className="text-caption text-slate-500 mt-0.5">{scenario.description}</p>
+                            <p className="text-caption text-slate-500 mt-0.5">
+                              {scenario.description}
+                            </p>
                           </div>
                           <svg
                             aria-hidden="true"
