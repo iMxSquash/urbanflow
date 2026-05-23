@@ -63,11 +63,12 @@ router.patch('/mode', validate(demoPatchSchema), (req: Request, res: Response) =
 
   if (typeof enabled === 'boolean') {
     setWeatherDemoMode(enabled)
+    if (!enabled) setProvidersDemo(false)
     clearWeatherCache()
     console.log(`[demo] météo démo → ${enabled ? 'activée' : 'désactivée'}`)
   }
 
-  if (typeof providersDemo === 'boolean') {
+  if (enabled !== false && typeof providersDemo === 'boolean') {
     setProvidersDemo(providersDemo)
     clearWeatherCache()
     console.log(`[demo] providers démo → ${providersDemo ? 'activés' : 'désactivés'}`)
