@@ -17,7 +17,7 @@ const router = Router()
 router.use(authGuard)
 
 /**
- * @openapi
+ * @swagger
  * /api/demo/mode:
  *   get:
  *     summary: État du mode démo
@@ -34,7 +34,7 @@ router.get('/mode', (_req: Request, res: Response) => {
 })
 
 /**
- * @openapi
+ * @swagger
  * /api/demo/mode:
  *   patch:
  *     summary: Active ou désactive le mode démo à chaud
