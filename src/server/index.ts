@@ -48,7 +48,9 @@ app.use('/api/auth', authRouter)
 app.use('/api/profile', profileRouter)
 app.use('/api/transport', transportRouter)
 app.use('/api/routing', routingRouter)
-app.use('/api/demo', demoRouter)
+if (process.env.NODE_ENV !== 'production' || process.env.DEMO_MODE) {
+  app.use('/api/demo', demoRouter)
+}
 
 app.get(['/health', '/api/health'], (_req, res) => {
   res.json({ status: 'ok' })

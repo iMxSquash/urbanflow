@@ -8,8 +8,13 @@ import {
   setDemoWeather,
 } from './demo-config.js'
 import { clearWeatherCache } from '../routing/weather.service.js'
+import { authGuard } from '../../middleware/auth-guard.js'
+import { validate } from '../../middleware/validate.js'
+import { demoPatchSchema } from './demo.schema.js'
 
 const router = Router()
+
+router.use(authGuard)
 
 /**
  * @openapi
@@ -17,6 +22,8 @@ const router = Router()
  *   get:
  *     summary: État du mode démo
  *     tags: [Demo]
+ *     security:
+ *       - bearerAuth: []
  */
 router.get('/mode', (_req: Request, res: Response) => {
   res.json({
@@ -47,11 +54,11 @@ router.get('/mode', (_req: Request, res: Response) => {
  *                 type: string
  *                 enum: [sunny, rainy]
  */
-router.patch('/mode', (req: Request, res: Response) => {
+router.patch('/mode', validate(demoPatchSchema), (req: Request, res: Response) => {
   const { enabled, providersDemo, weather } = req.body as {
     enabled?: boolean
     providersDemo?: boolean
-    weather?: string
+    weather?: 'sunny' | 'rainy'
   }
 
   if (typeof enabled === 'boolean') {
@@ -66,8 +73,8 @@ router.patch('/mode', (req: Request, res: Response) => {
     console.log(`[demo] providers démo → ${providersDemo ? 'activés' : 'désactivés'}`)
   }
 
-  if (weather && ['sunny', 'rainy'].includes(weather)) {
-    setDemoWeather(weather as 'sunny' | 'rainy')
+  if (weather) {
+    setDemoWeather(weather)
     clearWeatherCache()
     console.log(`[demo] météo simulée → ${weather}`)
   }
