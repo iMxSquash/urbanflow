@@ -28,7 +28,7 @@ async function applyGtfsShapes(journeys: Journey[]): Promise<Journey[]> {
   )
 }
 
-// Injecte departureTime sur le journey et scheduledDeparture sur les segments TC.
+// Injecte departureTime sur le journey et scheduledDeparture sur tous les segments TC.
 function injectScheduledDepartures(journeys: Journey[]): Journey[] {
   const now = Date.now()
   return journeys.map((journey) => {
@@ -36,10 +36,9 @@ function injectScheduledDepartures(journeys: Journey[]): Journey[] {
     const segments = journey.segments.map((seg) => {
       const waitMs = (seg.waitTimeMin ?? 0) * 60_000
       accumulatedMs += waitMs
-      const withDeparture: JourneySegment =
-        TC_MODES.includes(seg.mode) && seg.waitTimeMin !== undefined
-          ? { ...seg, scheduledDeparture: new Date(now + accumulatedMs).toISOString() }
-          : seg
+      const withDeparture: JourneySegment = TC_MODES.includes(seg.mode)
+        ? { ...seg, scheduledDeparture: new Date(now + accumulatedMs).toISOString() }
+        : seg
       accumulatedMs += seg.durationMin * 60_000
       return withDeparture
     })
