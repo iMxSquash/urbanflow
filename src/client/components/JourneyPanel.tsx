@@ -161,7 +161,17 @@ function SegmentDetail({ segment }: { segment: JourneySegment }) {
       <div className="flex items-center justify-between flex-wrap gap-2">
         {calories !== undefined && calories > 0 && (
           <span className="inline-flex items-center gap-1 text-caption text-slate-500">
-            <svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              aria-hidden="true"
+              width="11"
+              height="11"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
             </svg>
             ~{calories} kcal
@@ -169,7 +179,17 @@ function SegmentDetail({ segment }: { segment: JourneySegment }) {
         )}
         {co2SavedG > 0 && (
           <span className="inline-flex items-center gap-1 text-caption text-eco-700 font-medium">
-            <svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              aria-hidden="true"
+              width="11"
+              height="11"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M17 8C8 10 5.9 16.17 3.82 22c2 0 7.68-1 13-6 2-2 3-5 3-8s-1-5-1-5l-1.82 5z" />
             </svg>
             -{formatCo2(co2SavedG)} CO₂ vs voiture
@@ -240,7 +260,16 @@ export function JourneyPanel({
             aria-label="Fermer le panneau itinéraire"
             className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-600"
           >
-            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <svg
+              aria-hidden="true"
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            >
               <path d="M1 1l12 12M13 1L1 13" />
             </svg>
           </button>
@@ -265,7 +294,9 @@ export function JourneyPanel({
         {/* Segments */}
         <p className="text-caption font-semibold text-slate-400 uppercase tracking-wide mb-3">
           Détail du trajet
-          <span className="ml-1 normal-case font-normal text-slate-300">· tap pour les détails</span>
+          <span className="ml-1 normal-case font-normal text-slate-300">
+            · tap pour les détails
+          </span>
         </p>
 
         <ol className="space-y-0">
@@ -287,7 +318,18 @@ export function JourneyPanel({
                       />
                     </div>
                     <div className="flex items-center gap-2 bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1.5 flex-1">
-                      <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-500 shrink-0">
+                      <svg
+                        aria-hidden="true"
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="text-amber-500 shrink-0"
+                      >
                         <circle cx="12" cy="12" r="10" />
                         <polyline points="12 6 12 12 16 14" />
                       </svg>
@@ -308,7 +350,14 @@ export function JourneyPanel({
                     'flex gap-3 relative w-full text-left rounded-lg transition-colors duration-150 cursor-pointer',
                     isActive ? 'bg-slate-50' : 'hover:bg-slate-50/70',
                   ].join(' ')}
-                  style={isActive ? { borderLeft: `3px solid ${MODE_COLORS[segment.mode]}`, paddingLeft: '0.375rem' } : {}}
+                  style={
+                    isActive
+                      ? {
+                          borderLeft: `3px solid ${MODE_COLORS[segment.mode]}`,
+                          paddingLeft: '0.375rem',
+                        }
+                      : {}
+                  }
                 >
                   {/* Ligne verticale entre segments */}
                   {idx < journey.segments.length - 1 && (
@@ -343,7 +392,17 @@ export function JourneyPanel({
                       </p>
                       {segment.scheduledDeparture && (
                         <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-caption font-medium bg-slate-100 text-slate-600 shrink-0">
-                          <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <svg
+                            aria-hidden="true"
+                            width="10"
+                            height="10"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
                             <circle cx="12" cy="12" r="10" />
                             <polyline points="12 6 12 12 16 14" />
                           </svg>
@@ -396,7 +455,6 @@ export function JourneyPanel({
           </div>
         )}
       </div>
-
     </div>
   )
 }

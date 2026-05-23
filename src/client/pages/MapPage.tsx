@@ -339,7 +339,10 @@ export default function MapPage() {
         {selectedJourney && (
           <JourneyPanel
             journey={selectedJourney}
-            onClose={() => { setActiveSegmentIdx(null); deselectJourney() }}
+            onClose={() => {
+              setActiveSegmentIdx(null)
+              deselectJourney()
+            }}
             weather={weather}
             activeSegmentIdx={activeSegmentIdx}
             onSegmentSelect={setActiveSegmentIdx}

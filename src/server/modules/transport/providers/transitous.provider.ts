@@ -20,10 +20,10 @@ interface OtpPlace {
 
 interface OtpLeg {
   mode: string
-  duration: number              // secondes — durée trajet seul (sans attente)
-  startTime?: string | number   // ISO string ou Unix ms selon la version OTP/MOTIS
-  endTime?: string | number     // ISO string ou Unix ms selon la version OTP/MOTIS
-  distance?: number             // mètres — absent sur les legs transit
+  duration: number // secondes — durée trajet seul (sans attente)
+  startTime?: string | number // ISO string ou Unix ms selon la version OTP/MOTIS
+  endTime?: string | number // ISO string ou Unix ms selon la version OTP/MOTIS
+  distance?: number // mètres — absent sur les legs transit
   from: OtpPlace
   to: OtpPlace
   routeShortName?: string
@@ -259,7 +259,8 @@ async function mapItinerary(
 
   const firstLeg = itin.legs[0]
   const firstLegStartMs = firstLeg?.startTime !== undefined ? toMs(firstLeg.startTime) : null
-  const departureTime = firstLegStartMs !== null ? new Date(firstLegStartMs).toISOString() : undefined
+  const departureTime =
+    firstLegStartMs !== null ? new Date(firstLegStartMs).toISOString() : undefined
 
   return {
     id: `transitous-${idx}`,
