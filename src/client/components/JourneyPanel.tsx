@@ -100,7 +100,7 @@ function SegmentDetail({ segment }: { segment: JourneySegment }) {
   return (
     <div
       className="ml-11 mb-2 rounded-xl border border-slate-100 bg-slate-50 p-3 space-y-3"
-      style={{ animation: 'slideDown 150ms ease-out both' }}
+      style={{ animation: 'var(--animate-slide-up)' }}
     >
       {/* Prochains passages TC */}
       {isTc && segment.scheduledDeparture && (
@@ -397,12 +397,6 @@ export function JourneyPanel({
         )}
       </div>
 
-      <style>{`
-        @keyframes slideDown {
-          from { opacity: 0; transform: translateY(-6px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </div>
   )
 }
