@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import type { BiclooStation } from '@shared/types/index.js'
+import { isDemoMode } from '../demo/demo-config.js'
 
 const NANTES_BICLOO_BASE =
   'https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/' +
@@ -20,8 +21,6 @@ interface NantesResponse {
   total_count: number
   results: NantesStation[]
 }
-
-import { isDemoMode } from '../demo/demo-config.js'
 
 export async function getBiclooStations(): Promise<BiclooStation[]> {
   if (isDemoMode()) {
