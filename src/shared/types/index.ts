@@ -52,6 +52,7 @@ export interface Journey {
   score: number
   comfortScore?: number
   estimatedCostEur?: number
+  departureTime?: string // ISO — heure de départ du premier leg
 }
 
 export interface WeatherCondition {

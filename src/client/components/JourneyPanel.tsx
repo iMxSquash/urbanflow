@@ -77,7 +77,11 @@ export function JourneyPanel({ journey, onClose, weather }: JourneyPanelProps) {
         <div className="flex items-start justify-between gap-3 mb-4">
           <div>
             <h2 className="text-h3 font-bold text-slate-900">{journey.label}</h2>
-            <p className="text-caption text-slate-400 mt-0.5">Meilleur itinéraire</p>
+            <p className="text-caption text-slate-400 mt-0.5">
+              {journey.departureTime
+                ? `Partir à ${formatTime(journey.departureTime)}`
+                : 'Meilleur itinéraire'}
+            </p>
             {weather && (
               <div className="mt-1.5">
                 <WeatherBadge weather={weather} variant="panel" />

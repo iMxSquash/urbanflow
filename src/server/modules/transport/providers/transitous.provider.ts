@@ -250,6 +250,11 @@ async function mapItinerary(
   const usedModes = [...new Set(segments.map((s) => s.mode))]
   const label = usedModes.map(modeLabel).join(' + ')
 
+  const firstLeg = itin.legs[0]
+  const departureTime = firstLeg?.startTime !== undefined
+    ? new Date(toMs(firstLeg.startTime)).toISOString()
+    : undefined
+
   return {
     id: `transitous-${idx}`,
     label,
@@ -259,6 +264,7 @@ async function mapItinerary(
     totalCo2g,
     co2SavingG,
     score,
+    ...(departureTime ? { departureTime } : {}),
   }
 }
 
