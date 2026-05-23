@@ -32,7 +32,7 @@ export interface JourneySegment {
   from: Coordinates
   to: Coordinates
   distanceKm: number
-  durationMin: number   // durée du trajet sur le véhicule uniquement (sans attente)
+  durationMin: number   // durée du segment (déplacement effectif) ; pour les TC, hors temps d'attente à l'arrêt
   co2g: number
   lineRef?: string
   lineName?: string
