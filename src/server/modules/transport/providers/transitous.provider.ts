@@ -331,15 +331,6 @@ export class TransitousProvider implements TransportProvider {
       throw new Error(`Transitous indisponible : ${(err as Error).message}`, { cause: err })
     }
 
-    // Log de diagnostic timing — à supprimer après validation
-    if (raw.itineraries?.length) {
-      const firstItin = raw.itineraries[0]
-      console.log(`[routing] Transitous — itin.duration=${firstItin.duration}s, legs.sum=${firstItin.legs.reduce((s, l) => s + l.duration, 0)}s`)
-      firstItin.legs.forEach((l, i) => {
-        console.log(`[routing]   leg[${i}] mode=${l.mode} duration=${l.duration}s startTime=${l.startTime ?? 'absent'} endTime=${l.endTime ?? 'absent'}`)
-      })
-    }
-
     if (raw.error) {
       throw new Error(`Transitous erreur : ${raw.error.message}`)
     }
