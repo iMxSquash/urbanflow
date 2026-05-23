@@ -1,5 +1,36 @@
+import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useConsentStore } from '../stores/consent.store'
+import { useDemoStore } from '../stores/demo.store'
+import type { Coordinates } from '@shared/types/index'
+
+interface DemoScenario {
+  fromLabel: string
+  toLabel: string
+  from: Coordinates
+  to: Coordinates
+  weather: 'sunny' | 'rainy'
+  description: string
+}
+
+const DEMO_SCENARIOS: DemoScenario[] = [
+  {
+    fromLabel: 'Commerce',
+    toLabel: 'Île de Nantes',
+    from: { lat: 47.2134, lng: -1.5541 },
+    to: { lat: 47.2005, lng: -1.554 },
+    weather: 'sunny',
+    description: 'Soleil · matin',
+  },
+  {
+    fromLabel: 'Gare de Nantes',
+    toLabel: 'Faculté des Sciences',
+    from: { lat: 47.2181, lng: -1.5418 },
+    to: { lat: 47.2628, lng: -1.5487 },
+    weather: 'rainy',
+    description: 'Pluie · heure de pointe',
+  },
+]
 
 function ConsentBadge({ granted }: { granted: boolean }) {
   return (
@@ -21,8 +52,22 @@ function ConsentBadge({ granted }: { granted: boolean }) {
 export default function ParametresPage() {
   const { geolocationConsent, denyGeolocation, resetGeolocation } = useConsentStore()
   const navigate = useNavigate()
+  const {
+    demoMode,
+    providersDemo,
+    weather,
+    loading: demoLoading,
+    fetch: fetchDemo,
+    toggle,
+    toggleProviders,
+    setWeather,
+  } = useDemoStore()
 
   const geoGranted = geolocationConsent === 'granted'
+
+  useEffect(() => {
+    void fetchDemo()
+  }, [fetchDemo])
 
   function handleRevokeGeo() {
     denyGeolocation()
@@ -61,6 +106,180 @@ export default function ParametresPage() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 py-6 lg:px-6 space-y-6">
+        {/* ── Mode démo ────────────────────────────────────────────────── */}
+        {demoMode !== null && (
+          <section
+            className={[
+              'card p-4 lg:p-6 border',
+              demoMode ? 'border-amber-200 bg-amber-50' : 'border-slate-200',
+            ].join(' ')}
+            aria-labelledby="demo-heading"
+          >
+            {/* Niveau 1 — météo simulée */}
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h2 id="demo-heading" className="text-h3 font-semibold text-slate-900">
+                  Mode démo
+                </h2>
+                <p className="text-body-sm text-slate-500 mt-0.5">
+                  {demoMode ? 'Météo simulée — trajets réels' : 'APIs réelles'}
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={demoMode}
+                aria-label="Activer ou désactiver le mode démo"
+                disabled={demoLoading}
+                onClick={() => void toggle(!demoMode)}
+                className={[
+                  'relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-eco-500 disabled:opacity-50',
+                  demoMode ? 'bg-amber-400' : 'bg-slate-300',
+                ].join(' ')}
+              >
+                <span
+                  aria-hidden="true"
+                  className={[
+                    'pointer-events-none inline-block h-6 w-6 rounded-full bg-white shadow-sm ring-0 transition-transform duration-200',
+                    demoMode ? 'translate-x-5' : 'translate-x-0',
+                  ].join(' ')}
+                />
+              </button>
+            </div>
+
+            {demoMode && (
+              <div className="mt-5 pt-4 border-t border-amber-200 space-y-5">
+                {/* Météo simulée */}
+                <div>
+                  <p className="text-body-sm font-medium text-slate-700 mb-2">Météo simulée</p>
+                  <div className="flex gap-2" role="group" aria-label="Choisir la météo simulée">
+                    <button
+                      type="button"
+                      onClick={() => void setWeather('sunny')}
+                      disabled={demoLoading}
+                      aria-pressed={weather === 'sunny'}
+                      className={[
+                        'flex items-center gap-2 px-4 py-2 rounded-button text-body-sm font-medium transition-colors duration-fast border',
+                        weather === 'sunny'
+                          ? 'bg-amber-100 border-amber-400 text-amber-800'
+                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50',
+                      ].join(' ')}
+                    >
+                      <span aria-hidden="true">☀️</span> Soleil
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void setWeather('rainy')}
+                      disabled={demoLoading}
+                      aria-pressed={weather === 'rainy'}
+                      className={[
+                        'flex items-center gap-2 px-4 py-2 rounded-button text-body-sm font-medium transition-colors duration-fast border',
+                        weather === 'rainy'
+                          ? 'bg-sky-100 border-sky-400 text-sky-800'
+                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50',
+                      ].join(' ')}
+                    >
+                      <span aria-hidden="true">🌧️</span> Pluie
+                    </button>
+                  </div>
+                </div>
+
+                {/* Niveau 2 — simulation des providers */}
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-body-sm font-medium text-slate-900">Simuler les trajets</p>
+                    <p className="text-caption text-slate-500 mt-0.5">
+                      {providersDemo
+                        ? 'Fichiers JSON — aucun appel Transitous / OSRM / Bicloo'
+                        : 'Transitous, OSRM et Bicloo en direct'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={providersDemo ?? false}
+                    aria-label="Activer ou désactiver la simulation des trajets"
+                    disabled={demoLoading}
+                    onClick={() => void toggleProviders(!providersDemo)}
+                    className={[
+                      'relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-eco-500 disabled:opacity-50',
+                      providersDemo ? 'bg-amber-400' : 'bg-slate-300',
+                    ].join(' ')}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={[
+                        'pointer-events-none inline-block h-6 w-6 rounded-full bg-white shadow-sm ring-0 transition-transform duration-200',
+                        providersDemo ? 'translate-x-5' : 'translate-x-0',
+                      ].join(' ')}
+                    />
+                  </button>
+                </div>
+
+                {/* Scénarios — visibles uniquement si providers démo actif */}
+                {providersDemo && (
+                  <div>
+                    <p className="text-body-sm font-medium text-slate-700 mb-2">
+                      Lancer un scénario
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      {DEMO_SCENARIOS.map((scenario) => (
+                        <button
+                          key={scenario.toLabel}
+                          type="button"
+                          disabled={demoLoading}
+                          onClick={() => {
+                            void setWeather(scenario.weather).then(() => {
+                              navigate('/', {
+                                state: {
+                                  demoScenario: {
+                                    from: scenario.from,
+                                    to: scenario.to,
+                                    fromLabel: scenario.fromLabel,
+                                    toLabel: scenario.toLabel,
+                                  },
+                                },
+                              })
+                            })
+                          }}
+                          className="flex items-center justify-between gap-3 px-4 py-3 rounded-card bg-white border border-slate-200 text-left hover:border-eco-400 hover:bg-eco-50 transition-colors duration-fast group disabled:opacity-50"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-body-sm font-medium text-slate-800 truncate">
+                              {scenario.fromLabel}
+                              <span className="text-slate-400 mx-1" aria-hidden="true">
+                                →
+                              </span>
+                              {scenario.toLabel}
+                            </p>
+                            <p className="text-caption text-slate-500 mt-0.5">
+                              {scenario.description}
+                            </p>
+                          </div>
+                          <svg
+                            aria-hidden="true"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="shrink-0 text-slate-400 group-hover:text-eco-600 transition-colors"
+                          >
+                            <path d="M3 8h10M8 3l5 5-5 5" />
+                          </svg>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+        )}
+
         {/* ── Confidentialité ───────────────────────────────────────────── */}
         <section className="card p-4 lg:p-6" aria-labelledby="privacy-heading">
           <h2 id="privacy-heading" className="text-h3 font-semibold text-slate-900">

@@ -22,7 +22,7 @@
             "Bash(npm install *)",
             "Bash(npm i *)"
         ],
-            "allow": [
+        "allow": [
             "Read(./**)",
             "Write(./src/**)",
             "Write(./.claude/**)",
