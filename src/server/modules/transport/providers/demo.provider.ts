@@ -28,6 +28,24 @@ async function applyGtfsShapes(journeys: Journey[]): Promise<Journey[]> {
   )
 }
 
+// Injecte departureTime sur le journey et scheduledDeparture sur tous les segments TC.
+function injectScheduledDepartures(journeys: Journey[]): Journey[] {
+  const now = Date.now()
+  return journeys.map((journey) => {
+    let accumulatedMs = 0
+    const segments = journey.segments.map((seg) => {
+      const waitMs = (seg.waitTimeMin ?? 0) * 60_000
+      accumulatedMs += waitMs
+      const withDeparture: JourneySegment = TC_MODES.includes(seg.mode)
+        ? { ...seg, scheduledDeparture: new Date(now + accumulatedMs).toISOString() }
+        : seg
+      accumulatedMs += seg.durationMin * 60_000
+      return withDeparture
+    })
+    return { ...journey, segments, departureTime: new Date(now).toISOString() }
+  })
+}
+
 export class DemoProvider implements TransportProvider {
   readonly supportedModes: TransportMode[] = [
     'walk',
@@ -49,7 +67,8 @@ export class DemoProvider implements TransportProvider {
     const filePath = path.resolve(process.cwd(), 'src/demo-data', file)
     const raw = await readFile(filePath, 'utf-8')
     const parsed = JSON.parse(raw) as { journeys: Journey[] }
-    const journeys = await applyGtfsShapes(parsed.journeys)
+    const withShapes = await applyGtfsShapes(parsed.journeys)
+    const journeys = injectScheduledDepartures(withShapes)
     console.log(
       `[routing] DemoProvider: ${journeys.length} itinéraires (météo simulée: ${weather})`
     )

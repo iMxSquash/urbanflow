@@ -223,7 +223,8 @@
           "durationMin": 8,
           "co2g": 164,
           "lineRef": "NN",
-          "lineName": "NN — Hangar à Bananes"
+          "lineName": "NN — Hangar à Bananes",
+          "waitTimeMin": 4
         },
         {
           "mode": "walk",
@@ -276,7 +277,7 @@
           ]
         }
       ],
-      "totalDurationMin": 17,
+      "totalDurationMin": 21,
       "totalDistanceKm": 2.25,
       "totalCo2g": 164,
       "co2SavingG": 405,

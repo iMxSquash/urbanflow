@@ -44,7 +44,8 @@
           "durationMin": 20,
           "co2g": 22,
           "lineRef": "1",
-          "lineName": "1 — Beaujoire / Babinière"
+          "lineName": "1 — Beaujoire / Babinière",
+          "waitTimeMin": 4
         },
         {
           "mode": "walk",
@@ -103,7 +104,7 @@
           ]
         }
       ],
-      "totalDurationMin": 27,
+      "totalDurationMin": 31,
       "totalDistanceKm": 5.98,
       "totalCo2g": 22,
       "co2SavingG": 1491,
