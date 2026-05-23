@@ -1,3 +1,4 @@
+import { CO2_FACTORS } from '@shared/constants/co2-factors'
 import type { Journey, JourneySegment, TransportMode, WeatherCondition } from '@shared/types/index'
 import { WeatherBadge } from './WeatherBadge'
 
@@ -93,7 +94,7 @@ function SegmentDetail({ segment }: { segment: JourneySegment }) {
   // CO2 économisé vs voiture pour ce segment
   const co2SavedG =
     segment.distanceKm > 0
-      ? Math.max(0, Math.round(segment.distanceKm * 253) - segment.co2g)
+      ? Math.max(0, Math.round(segment.distanceKm * CO2_FACTORS.car) - segment.co2g)
       : 0
 
   return (
