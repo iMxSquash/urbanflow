@@ -166,15 +166,21 @@ export async function recordTrip(
       [pointsEarned, userId]
     )
 
+    const tripRow = tripResult.rows[0]
+    if (!tripRow) throw new Error('Trip insert returned no row')
+
+    const userRow = userResult.rows[0]
+    if (!userRow) throw new Error(`User ${userId} not found — account may have been deleted`)
+
     const newlyUnlockedBadges = await checkAndUnlockBadges(userId, client)
 
     await client.query('COMMIT')
 
     return {
-      tripId: tripResult.rows[0].id,
+      tripId: tripRow.id,
       co2SavedGrams,
       pointsEarned,
-      totalPoints: userResult.rows[0].total_points,
+      totalPoints: userRow.total_points,
       newlyUnlockedBadges,
     }
   } catch (err) {
