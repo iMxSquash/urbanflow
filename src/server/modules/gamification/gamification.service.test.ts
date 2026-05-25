@@ -1,4 +1,9 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
+
+vi.mock('../../db/pool.js', () => ({
+  pool: { query: vi.fn(), connect: vi.fn() },
+}))
+
 import { computeCo2Saved, computePoints, POINTS_PER_GRAM_SAVED } from './gamification.service.js'
 import { CO2_FACTORS } from '../../../shared/constants/co2-factors.js'
 
