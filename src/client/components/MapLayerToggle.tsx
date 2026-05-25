@@ -101,11 +101,32 @@ const LAYER_ICONS: Record<MapLayerKey, React.ReactNode> = {
   tanStops: <StopIcon />,
 }
 
-interface MapLayerToggleProps {
-  hasJourney: boolean
+function LeafIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z" />
+      <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+    </svg>
+  )
 }
 
-export function MapLayerToggle({ hasJourney }: MapLayerToggleProps) {
+interface MapLayerToggleProps {
+  hasJourney: boolean
+  ecoMapActive?: boolean
+  onToggleEco?: () => void
+}
+
+export function MapLayerToggle({ hasJourney, ecoMapActive = false, onToggleEco }: MapLayerToggleProps) {
   const { layers, toggleLayer } = useMapLayersStore()
 
   return (
@@ -141,6 +162,29 @@ export function MapLayerToggle({ hasJourney }: MapLayerToggleProps) {
               </button>
             )
           }
+        )}
+        {hasJourney && onToggleEco && (
+          <>
+            <div className="h-px bg-slate-100 mx-1" aria-hidden="true" />
+            <button
+              type="button"
+              onClick={onToggleEco}
+              aria-pressed={ecoMapActive}
+              aria-label={ecoMapActive ? 'Désactiver la carte éco' : 'Activer la carte éco'}
+              className={[
+                'flex items-center gap-2.5 px-3 h-11 rounded-lg text-body-sm font-medium cursor-pointer',
+                'transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-600',
+                ecoMapActive
+                  ? 'bg-eco-50 text-eco-800 ring-1 ring-inset ring-eco-200'
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700',
+              ].join(' ')}
+            >
+              <span style={{ color: ecoMapActive ? '#15803d' : undefined }}>
+                <LeafIcon />
+              </span>
+              Carte éco
+            </button>
+          </>
         )}
       </div>
     </div>

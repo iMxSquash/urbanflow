@@ -6,6 +6,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { AddressSearch } from '../components/AddressSearch'
 import { ErrorBanner } from '../components/ErrorBanner'
 import { GeolocationConsent } from '../components/GeolocationConsent'
+import { EcoMapLayer } from '../components/EcoMapLayer'
 import { JourneyLayer } from '../components/JourneyLayer'
 import { JourneyPanel } from '../components/JourneyPanel'
 import { JourneyResults } from '../components/JourneyResults'
@@ -60,6 +61,7 @@ export default function MapPage() {
   const { profile, fetchProfile } = useProfileStore()
   const { weather, error: weatherError, loading: weatherLoading } = useWeather()
   const [activeSegmentIdx, setActiveSegmentIdx] = useState<number | null>(null)
+  const [ecoMapActive, setEcoMapActive] = useState(false)
   const [tripResult, setTripResult] = useState<RecordTripResult | null>(null)
   const location = useLocation()
   const locatedOnMount = useRef(false)
@@ -309,13 +311,24 @@ export default function MapPage() {
             </Suspense>
           )}
           {userPosition && <UserLocationMarker position={userPosition} />}
-          {selectedJourney && (
+          {ecoMapActive && journeys.length > 0 && (
+            <EcoMapLayer
+              journeys={journeys}
+              selectedJourneyId={selectedJourney?.id}
+              onSelect={selectJourney}
+            />
+          )}
+          {selectedJourney && !ecoMapActive && (
             <JourneyLayer journey={selectedJourney} activeSegmentIdx={activeSegmentIdx} />
           )}
         </MapContainer>
 
         {/* Sélecteur de calques */}
-        <MapLayerToggle hasJourney={journeys.length > 0 || !!selectedJourney} />
+        <MapLayerToggle
+          hasJourney={journeys.length > 0 || !!selectedJourney}
+          ecoMapActive={ecoMapActive}
+          onToggleEco={() => setEcoMapActive((v) => !v)}
+        />
 
         {/* Résultats — comparaison des itinéraires avant sélection */}
         {journeys.length > 0 && !selectedJourney && (
