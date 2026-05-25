@@ -4,7 +4,7 @@ vi.mock('../../db/pool.js', () => ({
   pool: { query: vi.fn(), connect: vi.fn() },
 }))
 
-import { computeCo2Saved, computePoints, POINTS_PER_GRAM_SAVED } from './gamification.service.js'
+import { computeCo2Saved, computePoints, GRAMS_PER_POINT } from './gamification.service.js'
 import { CO2_FACTORS } from '../../../shared/constants/co2-factors.js'
 
 describe('computeCo2Saved', () => {
@@ -60,7 +60,7 @@ describe('computeCo2Saved', () => {
 })
 
 describe('computePoints', () => {
-  it(`1 point par ${POINTS_PER_GRAM_SAVED}g de CO2 économisés`, () => {
+  it(`1 point par ${GRAMS_PER_POINT}g de CO2 économisés`, () => {
     expect(computePoints(100)).toBe(10)
     expect(computePoints(150)).toBe(15)
     expect(computePoints(99)).toBe(9)

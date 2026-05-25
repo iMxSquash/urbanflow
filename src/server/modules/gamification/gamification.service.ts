@@ -11,7 +11,7 @@ import type {
 } from './gamification.types.js'
 
 // 1 point par 10 g de CO2 économisés
-export const POINTS_PER_GRAM_SAVED = 10
+export const GRAMS_PER_POINT = 10
 
 // ── Calculs purs (testables sans BDD) ────────────────────────────────────────
 
@@ -30,7 +30,7 @@ export function computeCo2Saved(segments: Array<{ mode: string; distanceKm: numb
 }
 
 export function computePoints(co2SavedGrams: number): number {
-  return Math.floor(co2SavedGrams / POINTS_PER_GRAM_SAVED)
+  return Math.floor(co2SavedGrams / GRAMS_PER_POINT)
 }
 
 // ── Badge check (dans la transaction du trajet) ───────────────────────────────
