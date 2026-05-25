@@ -17,7 +17,7 @@ describe('computeCo2Saved', () => {
     expect(co2SavedGrams).toBe(Math.max(0, Math.round(carCo2 - tramCo2)))
   })
 
-  it('trajet marche : CO2 trajet = 0, économie = 100% coût voiture', () => {
+  it('trajet marche : facteur CO2 = 0, économie = 100% du coût voiture équivalent', () => {
     const segments = [{ mode: 'walk', distanceKm: 5 }] as const
     const { co2SavedGrams } = computeCo2Saved(segments)
     expect(co2SavedGrams).toBe(Math.round(5 * CO2_FACTORS.car))
