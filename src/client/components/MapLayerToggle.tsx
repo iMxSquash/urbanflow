@@ -136,8 +136,8 @@ export function MapLayerToggle({
   return (
     <div
       className={[
-        'absolute left-4 z-[1000]',
-        hasJourney ? 'bottom-[calc(58vh_+_12px)] lg:bottom-4' : 'bottom-4',
+        'absolute left-4 z-1000',
+        hasJourney ? 'bottom-[calc(58vh+12px)] lg:bottom-4' : 'bottom-4',
       ].join(' ')}
       role="group"
       aria-label="Calques de la carte"
