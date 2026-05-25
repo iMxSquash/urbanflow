@@ -334,7 +334,7 @@ export default function MapPage() {
         {journeys.length > 0 && !selectedJourney && (
           <div
             className={[
-              'absolute z-[1100] bg-white overflow-y-auto',
+              'absolute z-1100 bg-white overflow-y-auto',
               'bottom-0 left-0 right-0 max-h-[60vh] rounded-t-2xl',
               'shadow-[0_-8px_32px_rgba(0,0,0,0.12)]',
               'lg:top-0 lg:right-0 lg:bottom-0 lg:left-auto lg:w-80 lg:max-h-none lg:rounded-none',
