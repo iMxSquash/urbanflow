@@ -1,6 +1,7 @@
 import type pg from 'pg'
 import { pool } from '../../db/pool.js'
 import { CO2_FACTORS } from '../../../shared/constants/co2-factors.js'
+import type { TransportMode } from '../../../shared/types/index.js'
 import type { RecordTripInput } from './gamification.schema.js'
 import type {
   BadgeWithStatus,
@@ -15,14 +16,13 @@ export const GRAMS_PER_POINT = 10
 
 // ── Calculs purs (testables sans BDD) ────────────────────────────────────────
 
-export function computeCo2Saved(segments: Array<{ mode: string; distanceKm: number }>): {
+export function computeCo2Saved(segments: ReadonlyArray<{ mode: TransportMode; distanceKm: number }>): {
   totalCo2g: number
   co2SavedGrams: number
 } {
   const totalDistKm = segments.reduce((sum, s) => sum + s.distanceKm, 0)
   const totalCo2g = segments.reduce((sum, s) => {
-    const factor = (CO2_FACTORS as Record<string, number>)[s.mode] ?? 0
-    return sum + s.distanceKm * factor
+    return sum + s.distanceKm * CO2_FACTORS[s.mode]
   }, 0)
   const carCo2g = totalDistKm * CO2_FACTORS.car
   const co2SavedGrams = Math.max(0, Math.round(carCo2g - totalCo2g))

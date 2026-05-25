@@ -9,7 +9,7 @@ import { CO2_FACTORS } from '../../../shared/constants/co2-factors.js'
 
 describe('computeCo2Saved', () => {
   it('trajet 100% tramway : économie proche de 100% vs voiture', () => {
-    const segments = [{ mode: 'tramway', distanceKm: 10 }]
+    const segments = [{ mode: 'tramway', distanceKm: 10 }] as const
     const { co2SavedGrams } = computeCo2Saved(segments)
 
     const carCo2 = 10 * CO2_FACTORS.car
@@ -17,9 +17,8 @@ describe('computeCo2Saved', () => {
     expect(co2SavedGrams).toBe(Math.max(0, Math.round(carCo2 - tramCo2)))
   })
 
-  it('trajet 100% voiture : économie nulle (mode absent des facteurs → 0)', () => {
-    // Si le client envoie un mode sans facteur connu → facteur 0 → co2Saved = carCo2g entier
-    const segments = [{ mode: 'walk', distanceKm: 5 }]
+  it('trajet marche : CO2 trajet = 0, économie = 100% coût voiture', () => {
+    const segments = [{ mode: 'walk', distanceKm: 5 }] as const
     const { co2SavedGrams } = computeCo2Saved(segments)
     expect(co2SavedGrams).toBe(Math.round(5 * CO2_FACTORS.car))
   })
@@ -29,7 +28,7 @@ describe('computeCo2Saved', () => {
       { mode: 'walk', distanceKm: 0.5 },
       { mode: 'bus', distanceKm: 8 },
       { mode: 'walk', distanceKm: 0.3 },
-    ]
+    ] as const
     const { totalCo2g, co2SavedGrams } = computeCo2Saved(segments)
 
     const expectedCo2 = 0.5 * CO2_FACTORS.walk + 8 * CO2_FACTORS.bus + 0.3 * CO2_FACTORS.walk
@@ -41,8 +40,7 @@ describe('computeCo2Saved', () => {
   })
 
   it('co2SavedGrams est toujours >= 0 (jamais négatif)', () => {
-    // Impossible en pratique mais le guard Math.max(0, ...) doit tenir
-    const segments = [{ mode: 'tramway', distanceKm: 0 }]
+    const segments = [{ mode: 'tramway', distanceKm: 0 }] as const
     const { co2SavedGrams } = computeCo2Saved(segments)
     expect(co2SavedGrams).toBeGreaterThanOrEqual(0)
   })
@@ -51,7 +49,7 @@ describe('computeCo2Saved', () => {
     const segments = [
       { mode: 'bike', distanceKm: 3 },
       { mode: 'walk', distanceKm: 0.5 },
-    ]
+    ] as const
     const { totalCo2g, co2SavedGrams } = computeCo2Saved(segments)
 
     expect(totalCo2g).toBe(0)
