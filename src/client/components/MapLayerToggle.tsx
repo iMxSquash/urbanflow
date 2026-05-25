@@ -126,7 +126,11 @@ interface MapLayerToggleProps {
   onToggleEco?: () => void
 }
 
-export function MapLayerToggle({ hasJourney, ecoMapActive = false, onToggleEco }: MapLayerToggleProps) {
+export function MapLayerToggle({
+  hasJourney,
+  ecoMapActive = false,
+  onToggleEco,
+}: MapLayerToggleProps) {
   const { layers, toggleLayer } = useMapLayersStore()
 
   return (

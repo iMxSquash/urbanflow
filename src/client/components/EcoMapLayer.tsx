@@ -35,7 +35,10 @@ export function EcoMapLayer({ journeys, selectedJourneyId, onSelect }: EcoMapLay
         const positions: [number, number][] = journey.segments.flatMap((seg) =>
           seg.shape && seg.shape.length >= 2
             ? seg.shape.map((c): [number, number] => [c.lat, c.lng])
-            : [[seg.from.lat, seg.from.lng], [seg.to.lat, seg.to.lng]]
+            : [
+                [seg.from.lat, seg.from.lng],
+                [seg.to.lat, seg.to.lng],
+              ]
         )
         return (
           <Polyline
