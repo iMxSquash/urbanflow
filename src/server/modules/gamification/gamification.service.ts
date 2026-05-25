@@ -16,7 +16,9 @@ export const GRAMS_PER_POINT = 10
 
 // ── Calculs purs (testables sans BDD) ────────────────────────────────────────
 
-export function computeCo2Saved(segments: ReadonlyArray<{ mode: TransportMode; distanceKm: number }>): {
+export function computeCo2Saved(
+  segments: ReadonlyArray<{ mode: TransportMode; distanceKm: number }>
+): {
   totalCo2g: number
   co2SavedGrams: number
 } {
@@ -38,7 +40,7 @@ export function computePoints(co2SavedGrams: number): number {
 interface BadgeRow {
   id: string
   name: string
-  threshold_type: 'total_trips' | 'total_co2_saved_grams' | 'total_points'
+  threshold_type: string
   threshold_value: number
   mode_filter: string | null
 }
