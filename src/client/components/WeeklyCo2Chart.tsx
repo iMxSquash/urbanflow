@@ -6,7 +6,7 @@ interface WeeklyCo2ChartProps {
 }
 
 function formatWeekLabel(weekStart: string): string {
-  const d = new Date(weekStart)
+  const d = new Date(`${weekStart}T00:00:00`)
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 }
 
