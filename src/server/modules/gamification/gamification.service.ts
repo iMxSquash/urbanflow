@@ -14,6 +14,19 @@ import type {
 // 1 point par 10 g de CO2 économisés
 export const GRAMS_PER_POINT = 10
 
+// Ordre de priorité décroissant — TC > actif > marche
+// Ajouter un nouveau mode ici suffit, aucune requête SQL à modifier
+const MODE_PRIORITY: TransportMode[] = [
+  'tramway', 'bus', 'train', 'navibus', 'bike', 'scooter', 'walk',
+]
+
+function primaryMode(modes: TransportMode[]): TransportMode {
+  for (const m of MODE_PRIORITY) {
+    if (modes.includes(m)) return m
+  }
+  return 'walk'
+}
+
 // ── Calculs purs (testables sans BDD) ────────────────────────────────────────
 
 export function computeCo2Saved(
@@ -140,14 +153,15 @@ export async function recordTrip(
   const { co2SavedGrams } = computeCo2Saved(segments)
   const pointsEarned = computePoints(co2SavedGrams)
   const modesUsed = [...new Set(segments.map((s) => s.mode))]
+  const mainMode = primaryMode(modesUsed)
 
   const client = await pool.connect()
   try {
     await client.query('BEGIN')
 
     const tripResult = await client.query<{ id: string }>(
-      `INSERT INTO trips (user_id, origin, destination, modes_used, co2_saved_grams, points_earned)
-       VALUES ($1, ST_SetSRID(ST_MakePoint($2, $3), 4326), ST_SetSRID(ST_MakePoint($4, $5), 4326), $6, $7, $8)
+      `INSERT INTO trips (user_id, origin, destination, modes_used, primary_mode, co2_saved_grams, points_earned)
+       VALUES ($1, ST_SetSRID(ST_MakePoint($2, $3), 4326), ST_SetSRID(ST_MakePoint($4, $5), 4326), $6, $7, $8, $9)
        RETURNING id`,
       [
         userId,
@@ -156,6 +170,7 @@ export async function recordTrip(
         destination.lng,
         destination.lat,
         modesUsed,
+        mainMode,
         co2SavedGrams,
         pointsEarned,
       ]
@@ -233,13 +248,13 @@ export async function getDashboardStats(userId: string): Promise<DashboardStats>
        ORDER BY w.week_start`,
       [userId]
     ),
-    // Répartition des modes utilisés ce mois
+    // Mode principal par trajet — 1 ligne par trip, somme = tripCount
     pool.query<{ mode: string; count: number }>(
-      `SELECT unnest(modes_used) AS mode, COUNT(*)::int AS count
+      `SELECT primary_mode AS mode, COUNT(*)::int AS count
        FROM trips
        WHERE user_id = $1
          AND created_at >= date_trunc('month', now())
-       GROUP BY mode
+       GROUP BY primary_mode
        ORDER BY count DESC`,
       [userId]
     ),

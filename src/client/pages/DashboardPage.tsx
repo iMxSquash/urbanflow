@@ -176,7 +176,7 @@ export default function DashboardPage() {
           <h2 id="modes-heading" className="text-h3 font-semibold text-slate-900 mb-0.5">
             Modes utilisés
           </h2>
-          <p className="text-caption text-slate-400 mb-4">Ce mois · répartition par trajet</p>
+          <p className="text-caption text-slate-400 mb-4">Ce mois · mode principal par trajet</p>
           {loading ? (
             <ChartSkeleton height="h-52" />
           ) : stats ? (
