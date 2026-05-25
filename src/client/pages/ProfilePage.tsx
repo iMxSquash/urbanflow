@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useProfileStore } from '../stores/profile.store'
+import { useGamificationStore } from '../stores/gamification.store'
+import { getUserBadges } from '../services/gamification.service'
+import type { BadgeWithStatus } from '../services/gamification.service'
+import { BadgeGrid } from '../components/BadgeGrid'
 import type { MobilityProfile, TransportMode, UserPreference } from '@shared/types/index'
 
 // ─── Config des options ───────────────────────────────────────────────────────
@@ -424,9 +428,31 @@ export default function ProfilePage() {
   const fetchError = useProfileStore((s) => s.error)
   const fetchProfile = useProfileStore((s) => s.fetchProfile)
 
+  const newlyUnlocked = useGamificationStore((s) => s.newlyUnlockedBadges)
+  const clearNewlyUnlocked = useGamificationStore((s) => s.clearNewlyUnlockedBadges)
+
+  const [badges, setBadges] = useState<BadgeWithStatus[]>([])
+  const [badgesLoading, setBadgesLoading] = useState(true)
+
   useEffect(() => {
     void fetchProfile()
   }, [fetchProfile])
+
+  useEffect(() => {
+    getUserBadges()
+      .then(setBadges)
+      .catch(() => {
+        /* silencieux — badges non critiques */
+      })
+      .finally(() => setBadgesLoading(false))
+  }, [])
+
+  // Efface les badges "nouveaux" après affichage pour ne pas rejouer l'animation
+  useEffect(() => {
+    if (newlyUnlocked.length === 0 || badgesLoading) return
+    const t = setTimeout(clearNewlyUnlocked, 2000)
+    return () => clearTimeout(t)
+  }, [newlyUnlocked, badgesLoading, clearNewlyUnlocked])
 
   const isInitialLoading = !profile && isLoading
 
@@ -475,6 +501,10 @@ export default function ProfilePage() {
         ) : profile ? (
           <ProfileForm profile={profile} />
         ) : null}
+
+        <div className="mt-6">
+          <BadgeGrid badges={badges} newlyUnlocked={newlyUnlocked} loading={badgesLoading} />
+        </div>
       </main>
     </div>
   )
