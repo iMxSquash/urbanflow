@@ -11,7 +11,10 @@ import { JourneyPanel } from '../components/JourneyPanel'
 import { JourneyResults } from '../components/JourneyResults'
 import { MapLayerToggle } from '../components/MapLayerToggle'
 import LogoutButton from '../components/LogoutButton'
+import { TripToast } from '../components/TripToast'
 import { UserLocationMarker } from '../components/UserLocationMarker'
+import { recordTrip } from '../services/gamification.service'
+import type { RecordTripResult } from '../services/gamification.service'
 import { useGeolocation } from '../hooks/useGeolocation'
 import { useJourney } from '../hooks/useJourney'
 import { useWeather } from '../hooks/useWeather'
@@ -56,6 +59,7 @@ export default function MapPage() {
   const { profile, fetchProfile } = useProfileStore()
   const { weather, error: weatherError, loading: weatherLoading } = useWeather()
   const [activeSegmentIdx, setActiveSegmentIdx] = useState<number | null>(null)
+  const [tripResult, setTripResult] = useState<RecordTripResult | null>(null)
   const location = useLocation()
   const locatedOnMount = useRef(false)
   const scenarioApplied = useRef(false)
@@ -112,6 +116,15 @@ export default function MapPage() {
           }
         : undefined
     )
+  }
+
+  async function handleDepart() {
+    if (!selectedJourney) return
+    const { segments } = selectedJourney
+    const origin = segments[0].from
+    const destination = segments[segments.length - 1].to
+    const result = await recordTrip(origin, destination, segments)
+    setTripResult(result)
   }
 
   // Position effective : géoloc en priorité, sinon adresse saisie manuellement
@@ -311,9 +324,20 @@ export default function MapPage() {
               setActiveSegmentIdx(null)
               deselectJourney()
             }}
+            onDepart={handleDepart}
             weather={weather}
             activeSegmentIdx={activeSegmentIdx}
             onSegmentSelect={setActiveSegmentIdx}
+          />
+        )}
+
+        {/* Toast confirmation départ */}
+        {tripResult && (
+          <TripToast
+            co2SavedGrams={tripResult.co2SavedGrams}
+            pointsEarned={tripResult.pointsEarned}
+            totalPoints={tripResult.totalPoints}
+            onClose={() => setTripResult(null)}
           />
         )}
       </main>
