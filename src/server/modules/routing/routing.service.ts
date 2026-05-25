@@ -66,10 +66,8 @@ export async function planJourney(
     if (result.status === 'fulfilled') {
       journeys.push(...result.value)
     } else {
-      console.warn(
-        '[routing] Provider indisponible, fallback démo —',
-        (result.reason as Error).message
-      )
+      const msg = result.reason instanceof Error ? result.reason.message : String(result.reason)
+      console.warn('[routing] Provider indisponible, fallback démo —', msg)
       needsDemoFallback = true
     }
   }

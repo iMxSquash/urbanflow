@@ -88,7 +88,8 @@ async function fetchOsrmRoute(
       shape: route.geometry.coordinates.map(([lng, lat]) => ({ lat, lng })),
     }
   } catch (err) {
-    console.warn('[routing] OSRM indisponible, fallback haversine —', (err as Error).message)
+    const msg = err instanceof Error ? err.message : String(err)
+    console.warn('[routing] OSRM indisponible, fallback haversine —', msg)
     return { distKm: haversineKm(from, to), shape: [from, to] }
   }
 }

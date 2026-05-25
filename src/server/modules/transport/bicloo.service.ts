@@ -30,10 +30,8 @@ export async function getBiclooStations(): Promise<BiclooStation[]> {
   try {
     return await fetchFromNantes()
   } catch (err) {
-    console.warn(
-      '[bicloo] API Nantes Métropole indisponible, fallback démo —',
-      (err as Error).message
-    )
+    const msg = err instanceof Error ? err.message : String(err)
+    console.warn('[bicloo] API Nantes Métropole indisponible, fallback démo —', msg)
     return readDemoStations()
   }
 }

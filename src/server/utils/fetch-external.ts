@@ -32,10 +32,9 @@ export async function fetchWithTimeout(
   } catch (err) {
     // Upstream abort — re-throw as-is, not as a timeout error
     if (upstreamSignal?.aborted) throw err
-    const isTimeout = (err as Error).name === 'AbortError'
-    throw new Error(isTimeout ? `timeout ${timeoutMs}ms dépassé` : (err as Error).message, {
-      cause: err,
-    })
+    const isTimeout = err instanceof Error && err.name === 'AbortError'
+    const msg = err instanceof Error ? err.message : String(err)
+    throw new Error(isTimeout ? `timeout ${timeoutMs}ms dépassé` : msg, { cause: err })
   } finally {
     clearTimeout(timer)
   }

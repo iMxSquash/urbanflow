@@ -324,7 +324,8 @@ export class TransitousProvider implements TransportProvider {
 
       raw = (await res.json()) as OtpResponse
     } catch (err) {
-      throw new Error(`Transitous indisponible : ${(err as Error).message}`, { cause: err })
+      const msg = err instanceof Error ? err.message : String(err)
+      throw new Error(`Transitous indisponible : ${msg}`, { cause: err })
     }
 
     if (raw.error) {

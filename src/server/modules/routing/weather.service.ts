@@ -104,8 +104,9 @@ export function getCurrentWeather(): Promise<WeatherCondition> {
 
   const fetch$ = isWeatherDemoMode()
     ? fetchFromDemo()
-    : fetchFromApi().catch(async (err: Error) => {
-        console.warn('[weather] OpenWeatherMap indisponible, fallback démo —', err.message)
+    : fetchFromApi().catch(async (err: unknown) => {
+        const msg = err instanceof Error ? err.message : String(err)
+        console.warn('[weather] OpenWeatherMap indisponible, fallback démo —', msg)
         return fetchFromDemo()
       })
 
