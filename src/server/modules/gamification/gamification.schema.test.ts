@@ -93,6 +93,22 @@ describe('recordTripSchema', () => {
 
   // ── Coordonnées ───────────────────────────────────────────────────────────────
 
+  it('rejette NaN comme coordonnée', () => {
+    expect(recordTripSchema.safeParse({ ...VALID, origin: { lat: NaN, lng: 0 } }).success).toBe(false)
+  })
+
+  it('rejette Infinity comme coordonnée', () => {
+    expect(recordTripSchema.safeParse({ ...VALID, origin: { lat: Infinity, lng: 0 } }).success).toBe(false)
+  })
+
+  it('rejette NaN comme distanceKm', () => {
+    expect(recordTripSchema.safeParse({ ...VALID, segments: [{ mode: 'walk', distanceKm: NaN }] }).success).toBe(false)
+  })
+
+  it('rejette Infinity comme distanceKm', () => {
+    expect(recordTripSchema.safeParse({ ...VALID, segments: [{ mode: 'walk', distanceKm: Infinity }] }).success).toBe(false)
+  })
+
   it('rejette lat > 90', () => {
     expect(recordTripSchema.safeParse({ ...VALID, origin: { lat: 91, lng: 0 } }).success).toBe(false)
   })
