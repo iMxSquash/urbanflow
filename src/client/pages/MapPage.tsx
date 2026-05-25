@@ -149,6 +149,27 @@ export default function MapPage() {
             Mon profil
           </Link>
           <Link
+            to="/dashboard"
+            aria-label="Tableau de bord"
+            className="w-10 h-10 flex items-center justify-center rounded-button text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-fast"
+          >
+            <svg
+              aria-hidden="true"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="20" x2="18" y2="10" />
+              <line x1="12" y1="20" x2="12" y2="4" />
+              <line x1="6" y1="20" x2="6" y2="14" />
+            </svg>
+          </Link>
+          <Link
             to="/parametres"
             aria-label="Paramètres"
             className="w-10 h-10 flex items-center justify-center rounded-button text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-fast"

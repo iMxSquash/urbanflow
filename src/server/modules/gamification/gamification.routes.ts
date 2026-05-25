@@ -162,4 +162,40 @@ router.post(
  */
 router.get('/badges', authGuard, gamificationController.getBadges)
 
+/**
+ * @swagger
+ * /api/gamification/stats:
+ *   get:
+ *     summary: Statistiques personnelles pour le tableau de bord
+ *     description: >
+ *       Retourne le résumé mensuel (CO2, trajets, points), les économies CO2
+ *       semaine par semaine sur les 4 dernières semaines, et la répartition
+ *       des modes utilisés ce mois. Seul period=month est supporté.
+ *     tags: [Gamification]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: period
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [month]
+ *         example: month
+ *     responses:
+ *       200:
+ *         description: Statistiques du tableau de bord
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/DashboardStats'
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       500:
+ *         $ref: '#/components/responses/InternalError'
+ */
+router.get('/stats', authGuard, gamificationController.getStats)
+
 export default router

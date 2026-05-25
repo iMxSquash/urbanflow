@@ -16,3 +16,24 @@ export interface BadgeWithStatus {
   unlocked: boolean
   unlockedAt: string | null
 }
+
+export interface WeeklyBar {
+  weekStart: string
+  co2SavedGrams: number
+}
+
+export interface ModeCount {
+  mode: string
+  count: number
+}
+
+export interface DashboardStats {
+  period: 'month'
+  summary: {
+    co2SavedGrams: number
+    tripCount: number
+    totalPoints: number
+  }
+  weeklyCo2: WeeklyBar[]
+  modeBreakdown: ModeCount[]
+}

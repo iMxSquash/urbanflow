@@ -6,6 +6,7 @@ import { useAuthInit } from './hooks/useAuthInit'
 const LoginPage = lazy(() => import('./pages/LoginPage'))
 const RegisterPage = lazy(() => import('./pages/RegisterPage'))
 const ProfilePage = lazy(() => import('./pages/ProfilePage'))
+const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const MapPage = lazy(() => import('./pages/MapPage'))
 const ParametresPage = lazy(() => import('./pages/ParametresPage'))
 
@@ -39,6 +40,7 @@ function AppRoutes() {
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<MapPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/parametres" element={<ParametresPage />} />
         </Route>
 

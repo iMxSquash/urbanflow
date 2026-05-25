@@ -48,3 +48,31 @@ export async function getUserBadges(): Promise<BadgeWithStatus[]> {
   if (!res.ok) throw new Error('Impossible de charger les badges')
   return data as BadgeWithStatus[]
 }
+
+export interface WeeklyBar {
+  weekStart: string
+  co2SavedGrams: number
+}
+
+export interface ModeCount {
+  mode: string
+  count: number
+}
+
+export interface DashboardStats {
+  period: 'month'
+  summary: {
+    co2SavedGrams: number
+    tripCount: number
+    totalPoints: number
+  }
+  weeklyCo2: WeeklyBar[]
+  modeBreakdown: ModeCount[]
+}
+
+export async function getDashboardStats(): Promise<DashboardStats> {
+  const res = await apiFetch('/api/gamification/stats?period=month')
+  const data: unknown = await res.json()
+  if (!res.ok) throw new Error('Impossible de charger les statistiques')
+  return data as DashboardStats
+}

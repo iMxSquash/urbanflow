@@ -20,3 +20,17 @@ export async function getBadges(req: Request, res: Response): Promise<void> {
     res.status(500).json({ error: 'Erreur interne du serveur' })
   }
 }
+
+export async function getStats(req: Request, res: Response): Promise<void> {
+  const { period } = req.query
+  if (period !== 'month') {
+    res.status(400).json({ error: "Paramètre period invalide — valeur acceptée : 'month'" })
+    return
+  }
+  try {
+    const stats = await gamificationService.getDashboardStats(req.user!.sub)
+    res.status(200).json(stats)
+  } catch {
+    res.status(500).json({ error: 'Erreur interne du serveur' })
+  }
+}

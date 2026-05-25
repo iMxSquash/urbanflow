@@ -2,7 +2,13 @@ import type pg from 'pg'
 import { pool } from '../../db/pool.js'
 import { CO2_FACTORS } from '../../../shared/constants/co2-factors.js'
 import type { RecordTripInput } from './gamification.schema.js'
-import type { BadgeWithStatus, RecordTripResult } from './gamification.types.js'
+import type {
+  BadgeWithStatus,
+  DashboardStats,
+  ModeCount,
+  RecordTripResult,
+  WeeklyBar,
+} from './gamification.types.js'
 
 // 1 point par 10 g de CO2 économisés
 export const POINTS_PER_GRAM_SAVED = 10
@@ -173,6 +179,82 @@ export async function recordTrip(
     throw err
   } finally {
     client.release()
+  }
+}
+
+// ── getDashboardStats ─────────────────────────────────────────────────────────
+
+export async function getDashboardStats(userId: string): Promise<DashboardStats> {
+  const [summaryResult, pointsResult, weeklyResult, modeResult] = await Promise.all([
+    // Résumé mensuel (CO2 + nb trajets)
+    pool.query<{ co2_saved_grams: number; trip_count: number }>(
+      `SELECT
+         COALESCE(SUM(co2_saved_grams), 0)::int AS co2_saved_grams,
+         COUNT(*)::int AS trip_count
+       FROM trips
+       WHERE user_id = $1
+         AND created_at >= date_trunc('month', now())`,
+      [userId]
+    ),
+    // Total points cumulés
+    pool.query<{ total_points: number }>(`SELECT total_points FROM users WHERE id = $1`, [userId]),
+    // CO2 hebdomadaire — 4 semaines avec generate_series pour combler les vides
+    pool.query<{ week_start: string; co2_saved_grams: number }>(
+      `WITH weeks AS (
+         SELECT generate_series(
+           date_trunc('week', now()) - INTERVAL '3 weeks',
+           date_trunc('week', now()),
+           '1 week'::interval
+         ) AS week_start
+       ),
+       trip_sums AS (
+         SELECT
+           date_trunc('week', created_at) AS week_start,
+           SUM(co2_saved_grams)::int      AS co2_saved_grams
+         FROM trips
+         WHERE user_id = $1
+           AND created_at >= date_trunc('week', now()) - INTERVAL '3 weeks'
+         GROUP BY 1
+       )
+       SELECT
+         to_char(w.week_start, 'YYYY-MM-DD') AS week_start,
+         COALESCE(t.co2_saved_grams, 0)      AS co2_saved_grams
+       FROM weeks w
+       LEFT JOIN trip_sums t USING (week_start)
+       ORDER BY w.week_start`,
+      [userId]
+    ),
+    // Répartition des modes utilisés ce mois
+    pool.query<{ mode: string; count: number }>(
+      `SELECT unnest(modes_used) AS mode, COUNT(*)::int AS count
+       FROM trips
+       WHERE user_id = $1
+         AND created_at >= date_trunc('month', now())
+       GROUP BY mode
+       ORDER BY count DESC`,
+      [userId]
+    ),
+  ])
+
+  const summary = summaryResult.rows[0]
+  const weeklyCo2: WeeklyBar[] = weeklyResult.rows.map((r) => ({
+    weekStart: r.week_start,
+    co2SavedGrams: r.co2_saved_grams,
+  }))
+  const modeBreakdown: ModeCount[] = modeResult.rows.map((r) => ({
+    mode: r.mode,
+    count: r.count,
+  }))
+
+  return {
+    period: 'month',
+    summary: {
+      co2SavedGrams: summary.co2_saved_grams,
+      tripCount: summary.trip_count,
+      totalPoints: pointsResult.rows[0]?.total_points ?? 0,
+    },
+    weeklyCo2,
+    modeBreakdown,
   }
 }
 
