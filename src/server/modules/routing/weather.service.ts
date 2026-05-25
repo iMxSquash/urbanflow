@@ -102,7 +102,14 @@ export function getCurrentWeather(): Promise<WeatherCondition> {
   if (_cache && _cache.expiresAt > now) return Promise.resolve(_cache.data)
   if (_inflight) return _inflight
 
-  _inflight = (isWeatherDemoMode() ? fetchFromDemo() : fetchFromApi())
+  const fetch$ = isWeatherDemoMode()
+    ? fetchFromDemo()
+    : fetchFromApi().catch(async (err: Error) => {
+        console.warn('[weather] OpenWeatherMap indisponible, fallback démo —', err.message)
+        return fetchFromDemo()
+      })
+
+  _inflight = fetch$
     .then((data) => {
       _cache = { data, expiresAt: now + TTL_MS }
       console.log(
