@@ -60,11 +60,24 @@ export async function planJourney(
   const weather = await weatherPromise
 
   const journeys: Journey[] = []
+  let needsDemoFallback = false
+
   for (const result of results) {
     if (result.status === 'fulfilled') {
       journeys.push(...result.value)
     } else {
-      console.error('[routing] Provider error:', result.reason)
+      const msg = result.reason instanceof Error ? result.reason.message : String(result.reason)
+      console.warn('[routing] Provider indisponible, fallback démo —', msg)
+      needsDemoFallback = true
+    }
+  }
+
+  if (needsDemoFallback) {
+    try {
+      const demoJourneys = await DEMO_PROVIDER.getJourneys(from, to, options)
+      journeys.push(...demoJourneys)
+    } catch (err) {
+      console.error('[routing] DemoProvider indisponible :', err)
     }
   }
 

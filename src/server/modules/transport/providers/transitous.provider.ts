@@ -9,6 +9,7 @@ import { CO2_FACTORS } from '@shared/constants/co2-factors.js'
 import { computeScore } from '../../routing/scoring.service.js'
 import type { TransportProvider } from '../transport-provider.interface.js'
 import { getShapeForLeg } from '../gtfs-shapes.service.js'
+import { fetchWithTimeout } from '../../../utils/fetch-external.js'
 
 // ─── Types réponse Transitous (OTP-like, sans wrapper plan) ──────────────────
 
@@ -311,25 +312,20 @@ export class TransitousProvider implements TransportProvider {
 
     const url = `${this.baseUrl}/v1/plan?${params}`
 
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 15_000)
-
     let raw: OtpResponse
     try {
-      const res = await fetch(url, { signal: controller.signal })
-      clearTimeout(timeout)
+      const res = await fetchWithTimeout(url, {}, 5_000)
 
       if (!res.ok) {
         const body = await res.text().catch(() => '')
-        console.error(`[routing] Transitous ${res.status} — URL: ${url}`)
-        console.error(`[routing] Transitous body: ${body}`)
+        console.warn(`[routing] Transitous ${res.status} — body: ${body.slice(0, 200)}`)
         throw new Error(`Transitous HTTP ${res.status}`)
       }
 
       raw = (await res.json()) as OtpResponse
     } catch (err) {
-      clearTimeout(timeout)
-      throw new Error(`Transitous indisponible : ${(err as Error).message}`, { cause: err })
+      const msg = err instanceof Error ? err.message : String(err)
+      throw new Error(`Transitous indisponible : ${msg}`, { cause: err })
     }
 
     if (raw.error) {

@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 import { MapContainer, TileLayer } from 'react-leaflet'
 import { Link, useLocation } from 'react-router-dom'
 import { AddressSearch } from '../components/AddressSearch'
+import { ErrorBanner } from '../components/ErrorBanner'
 import { GeolocationConsent } from '../components/GeolocationConsent'
 import { JourneyLayer } from '../components/JourneyLayer'
 import { JourneyPanel } from '../components/JourneyPanel'
@@ -53,7 +54,7 @@ export default function MapPage() {
   } = useJourney()
   const { layers } = useMapLayersStore()
   const { profile, fetchProfile } = useProfileStore()
-  const { weather } = useWeather()
+  const { weather, error: weatherError, loading: weatherLoading } = useWeather()
   const [activeSegmentIdx, setActiveSegmentIdx] = useState<number | null>(null)
   const location = useLocation()
   const locatedOnMount = useRef(false)
@@ -204,19 +205,8 @@ export default function MapPage() {
 
         {/* Bannière d'erreur itinéraire */}
         {journeyError && !journeyLoading && (
-          <div
-            role="alert"
-            className="absolute top-3 left-3 right-3 z-1100 bg-white rounded-card shadow-card-md border border-red-100 px-4 py-3 flex items-center justify-between gap-3"
-          >
-            <p className="text-body-sm text-red-600 truncate">{journeyError}</p>
-            <button
-              type="button"
-              onClick={clearJourney}
-              className="btn-ghost text-caption px-3 shrink-0"
-              style={{ minHeight: '36px' }}
-            >
-              Fermer
-            </button>
+          <div className="absolute top-3 left-3 right-3 z-1100">
+            <ErrorBanner message={journeyError} onClose={clearJourney} />
           </div>
         )}
 
@@ -236,48 +226,26 @@ export default function MapPage() {
         )}
 
         {/* Bannière d'erreur géolocalisation */}
-        {showGeoError && (
-          <div
-            role="alert"
-            className="absolute top-3 left-3 right-3 z-1100 bg-white rounded-card shadow-card-md border border-red-100 px-4 py-3 flex items-center justify-between gap-3"
-          >
-            <div className="flex items-center gap-2 text-body-sm text-red-600 min-w-0">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                className="shrink-0"
-                aria-hidden="true"
-              >
-                <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
-                <path
-                  d="M8 4.5v4M8 10.5v1"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-              <span className="truncate">{geoError}</span>
+        {showGeoError && geoError && (
+          <div className="absolute top-3 left-3 right-3 z-1100 flex items-start gap-2">
+            <div className="flex-1">
+              <ErrorBanner message={geoError} onRetry={locate} />
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={locate}
-                className="btn-secondary text-caption px-3"
-                style={{ minHeight: '36px' }}
-              >
-                Réessayer
-              </button>
-              <button
-                type="button"
-                onClick={denyGeolocation}
-                className="btn-ghost text-caption px-3"
-                style={{ minHeight: '36px' }}
-              >
-                Saisir une adresse
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={denyGeolocation}
+              className="btn-secondary text-caption px-3 shrink-0 bg-white"
+              style={{ minHeight: '44px' }}
+            >
+              Saisir une adresse
+            </button>
+          </div>
+        )}
+
+        {/* Bannière d'erreur météo */}
+        {weatherError && !weatherLoading && !weather && (
+          <div className="absolute top-3 right-3 z-1100 w-72">
+            <ErrorBanner message="Météo indisponible" />
           </div>
         )}
 

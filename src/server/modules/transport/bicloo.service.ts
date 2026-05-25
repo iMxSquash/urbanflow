@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import type { BiclooStation } from '@shared/types/index.js'
 import { isDemoMode } from '../demo/demo-config.js'
+import { fetchWithTimeout } from '../../utils/fetch-external.js'
 
 const NANTES_BICLOO_BASE =
   'https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/' +
@@ -26,7 +27,13 @@ export async function getBiclooStations(): Promise<BiclooStation[]> {
   if (isDemoMode()) {
     return readDemoStations()
   }
-  return fetchFromNantes()
+  try {
+    return await fetchFromNantes()
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.warn('[bicloo] API Nantes Métropole indisponible, fallback démo —', msg)
+    return readDemoStations()
+  }
 }
 
 async function readDemoStations(): Promise<BiclooStation[]> {
@@ -38,7 +45,7 @@ async function readDemoStations(): Promise<BiclooStation[]> {
 
 async function fetchPage(offset: number): Promise<NantesResponse> {
   const url = `${NANTES_BICLOO_BASE}?limit=100&offset=${offset}`
-  const res = await fetch(url)
+  const res = await fetchWithTimeout(url)
   if (!res.ok) {
     throw new Error(`API Nantes Métropole indisponible (${res.status})`)
   }

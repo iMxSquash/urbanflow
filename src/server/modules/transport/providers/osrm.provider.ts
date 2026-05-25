@@ -10,6 +10,7 @@ import { CO2_FACTORS } from '@shared/constants/co2-factors.js'
 import { computeScore } from '../../routing/scoring.service.js'
 import { getBiclooStations } from '../bicloo.service.js'
 import type { TransportProvider } from '../transport-provider.interface.js'
+import { fetchWithTimeout } from '../../../utils/fetch-external.js'
 
 // ─── Types OSRM ───────────────────────────────────────────────────────────────
 
@@ -76,11 +77,8 @@ async function fetchOsrmRoute(
     `${OSRM_BASE}/route/v1/${profile}/${from.lng},${from.lat};${to.lng},${to.lat}` +
     `?overview=full&geometries=geojson`
 
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 10_000)
   try {
-    const res = await fetch(url, { signal: controller.signal })
-    clearTimeout(timeout)
+    const res = await fetchWithTimeout(url, {}, 5_000)
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const raw = (await res.json()) as OsrmResponse
     if (raw.code !== 'Ok' || !raw.routes?.length) throw new Error(raw.message ?? raw.code)
@@ -89,9 +87,9 @@ async function fetchOsrmRoute(
       distKm: Math.round((route.distance / 1000) * 100) / 100,
       shape: route.geometry.coordinates.map(([lng, lat]) => ({ lat, lng })),
     }
-  } catch {
-    clearTimeout(timeout)
-    // Fallback : distance haversine, tracé direct
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.warn('[routing] OSRM indisponible, fallback haversine —', msg)
     return { distKm: haversineKm(from, to), shape: [from, to] }
   }
 }
