@@ -146,7 +146,7 @@ describe('recordTrip', () => {
 
     await recordTrip(USER_ID, BASE_INPUT)
 
-    const sqls = mockClient.query.mock.calls.map(([sql]: [string]) => sql.trim())
+    const sqls = mockClient.query.mock.calls.map((call) => String(call[0]).trim())
     expect(sqls[0]).toBe('BEGIN')
     expect(sqls[sqls.length - 1]).toBe('COMMIT')
   })
@@ -175,7 +175,7 @@ describe('recordTrip', () => {
 
     await expect(recordTrip(USER_ID, BASE_INPUT)).rejects.toThrow('not found')
 
-    const sqls = mockClient.query.mock.calls.map(([sql]: [string]) => sql.trim())
+    const sqls = mockClient.query.mock.calls.map((call) => String(call[0]).trim())
     expect(sqls).toContain('ROLLBACK')
     expect(mockClient.release).toHaveBeenCalledOnce()
   })
@@ -225,7 +225,7 @@ describe('recordTrip', () => {
     const result = await recordTrip(USER_ID, BASE_INPUT)
 
     expect(result.newlyUnlockedBadges).toEqual([])
-    const sqls = mockClient.query.mock.calls.map(([sql]: [string]) => sql)
+    const sqls = mockClient.query.mock.calls.map((call) => String(call[0]))
     expect(sqls.some((s) => s.includes('INSERT INTO user_badges'))).toBe(false)
   })
 })

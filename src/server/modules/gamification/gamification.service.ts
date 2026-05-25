@@ -98,10 +98,21 @@ async function checkAndUnlockBadges(userId: string, client: pg.PoolClient): Prom
     for (const row of modeRows) modeCounts[row.mode] = row.count
   }
 
-  // Évaluation de chaque badge
+  // Types de seuil implémentés — les autres (ex. streak_days) sont exclus explicitement
+  const SUPPORTED_THRESHOLD_TYPES = new Set([
+    'total_trips',
+    'total_co2_saved_grams',
+    'total_points',
+  ])
+
+  const evaluable = pending.filter(
+    (b) => b.mode_filter !== null || SUPPORTED_THRESHOLD_TYPES.has(b.threshold_type)
+  )
+
+  // Évaluation de chaque badge éligible
   const toUnlock: string[] = []
 
-  for (const badge of pending) {
+  for (const badge of evaluable) {
     let actual: number
 
     if (badge.mode_filter !== null) {
