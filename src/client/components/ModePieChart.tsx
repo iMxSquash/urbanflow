@@ -100,9 +100,14 @@ export default function ModePieChart({ data, tripCount }: ModePieChartProps) {
           stroke="white"
           strokeWidth={2}
           opacity={hovered && hovered !== s.mode ? 0.45 : 1}
-          style={{ transition: 'opacity 120ms' }}
+          style={{ transition: 'opacity 120ms', cursor: 'pointer', outline: 'none' }}
+          tabIndex={0}
+          role="img"
+          aria-label={`${s.name} : ${s.count} trajet${s.count > 1 ? 's' : ''} (${Math.round((s.count / total) * 100)}%)`}
           onMouseEnter={() => setHovered(s.mode)}
           onMouseLeave={() => setHovered(null)}
+          onFocus={() => setHovered(s.mode)}
+          onBlur={() => setHovered(null)}
         />
       ))}
 
@@ -145,7 +150,7 @@ export default function ModePieChart({ data, tripCount }: ModePieChartProps) {
           <g key={s.mode}>
             <circle cx={lx + 5} cy={ly} r={5} fill={s.color} />
             <text x={lx + 14} y={ly + 4} fontSize={11} fill="#64748b">
-              {s.name}
+              {s.name} · {s.count}
             </text>
           </g>
         )
