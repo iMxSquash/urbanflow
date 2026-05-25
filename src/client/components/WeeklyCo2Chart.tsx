@@ -120,8 +120,14 @@ export default function WeeklyCo2Chart({ data }: WeeklyCo2ChartProps) {
               height={barH}
               fill="#16a34a"
               rx={3}
+              tabIndex={0}
+              role="img"
+              aria-label={`${label} : ${formatCo2(d.co2SavedGrams)} CO₂ économisés`}
+              style={{ outline: 'none', cursor: 'pointer' }}
               onMouseEnter={() => setTip({ cx, top: by, label, value: d.co2SavedGrams })}
               onMouseLeave={() => setTip(null)}
+              onFocus={() => setTip({ cx, top: by, label, value: d.co2SavedGrams })}
+              onBlur={() => setTip(null)}
             />
             <text x={cx} y={VH - 6} textAnchor="middle" fontSize={10} fill="#94a3b8">
               {label}
