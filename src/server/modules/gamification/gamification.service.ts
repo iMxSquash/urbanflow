@@ -87,7 +87,6 @@ async function checkAndUnlockBadges(userId: string, client: pg.PoolClient): Prom
 
   // Évaluation de chaque badge
   const toUnlock: string[] = []
-  const names: string[] = []
 
   for (const badge of pending) {
     let actual: number
@@ -112,20 +111,22 @@ async function checkAndUnlockBadges(userId: string, client: pg.PoolClient): Prom
 
     if (actual >= badge.threshold_value) {
       toUnlock.push(badge.id)
-      names.push(badge.name)
     }
   }
 
-  if (toUnlock.length > 0) {
-    await client.query(
-      `INSERT INTO user_badges (user_id, badge_id)
-       SELECT $1, unnest($2::uuid[])
-       ON CONFLICT DO NOTHING`,
-      [userId, toUnlock]
-    )
-  }
+  if (toUnlock.length === 0) return []
 
-  return names
+  // Seules les lignes effectivement insérées (ON CONFLICT DO NOTHING peut en ignorer)
+  const { rows: inserted } = await client.query<{ badge_id: string }>(
+    `INSERT INTO user_badges (user_id, badge_id)
+     SELECT $1, unnest($2::uuid[])
+     ON CONFLICT DO NOTHING
+     RETURNING badge_id`,
+    [userId, toUnlock]
+  )
+
+  const insertedIds = new Set(inserted.map((r) => r.badge_id))
+  return pending.filter((b) => insertedIds.has(b.id)).map((b) => b.name)
 }
 
 // ── recordTrip ────────────────────────────────────────────────────────────────
