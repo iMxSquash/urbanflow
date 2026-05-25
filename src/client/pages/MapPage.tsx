@@ -15,6 +15,7 @@ import { TripToast } from '../components/TripToast'
 import { UserLocationMarker } from '../components/UserLocationMarker'
 import { recordTrip } from '../services/gamification.service'
 import type { RecordTripResult } from '../services/gamification.service'
+import { useGamificationStore } from '../stores/gamification.store'
 import { useGeolocation } from '../hooks/useGeolocation'
 import { useJourney } from '../hooks/useJourney'
 import { useWeather } from '../hooks/useWeather'
@@ -125,6 +126,7 @@ export default function MapPage() {
     const destination = segments[segments.length - 1].to
     const result = await recordTrip(origin, destination, segments)
     setTripResult(result)
+    useGamificationStore.getState().setTripResult(result.totalPoints, result.newlyUnlockedBadges)
   }
 
   // Position effective : géoloc en priorité, sinon adresse saisie manuellement
@@ -337,6 +339,7 @@ export default function MapPage() {
             co2SavedGrams={tripResult.co2SavedGrams}
             pointsEarned={tripResult.pointsEarned}
             totalPoints={tripResult.totalPoints}
+            newlyUnlockedBadges={tripResult.newlyUnlockedBadges}
             onClose={() => setTripResult(null)}
           />
         )}

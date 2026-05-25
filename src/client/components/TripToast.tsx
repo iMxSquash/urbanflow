@@ -4,6 +4,7 @@ interface TripToastProps {
   co2SavedGrams: number
   pointsEarned: number
   totalPoints: number
+  newlyUnlockedBadges?: string[]
   onClose: () => void
 }
 
@@ -11,7 +12,13 @@ function formatCo2(grams: number): string {
   return grams >= 1000 ? `${(grams / 1000).toFixed(1)} kg` : `${grams} g`
 }
 
-export function TripToast({ co2SavedGrams, pointsEarned, totalPoints, onClose }: TripToastProps) {
+export function TripToast({
+  co2SavedGrams,
+  pointsEarned,
+  totalPoints,
+  newlyUnlockedBadges = [],
+  onClose,
+}: TripToastProps) {
   useEffect(() => {
     const timer = setTimeout(onClose, 5000)
     return () => clearTimeout(timer)
@@ -57,6 +64,14 @@ export function TripToast({ co2SavedGrams, pointsEarned, totalPoints, onClose }:
           <p className="text-caption text-slate-400 mt-0.5">
             Total cumulé : <span className="font-medium text-slate-600">{totalPoints} pts</span>
           </p>
+          {newlyUnlockedBadges.length > 0 && (
+            <p className="text-caption text-amber-600 font-medium mt-1">
+              🏅{' '}
+              {newlyUnlockedBadges.length === 1
+                ? '1 badge débloqué !'
+                : `${newlyUnlockedBadges.length} badges débloqués !`}
+            </p>
+          )}
         </div>
 
         <button

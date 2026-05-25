@@ -11,3 +11,12 @@ export async function recordTrip(req: Request, res: Response): Promise<void> {
     res.status(500).json({ error: 'Erreur interne du serveur' })
   }
 }
+
+export async function getBadges(req: Request, res: Response): Promise<void> {
+  try {
+    const badges = await gamificationService.getUserBadges(req.user!.sub)
+    res.status(200).json(badges)
+  } catch {
+    res.status(500).json({ error: 'Erreur interne du serveur' })
+  }
+}
