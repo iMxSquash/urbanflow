@@ -92,6 +92,64 @@ const router = Router()
  *           type: string
  *           format: date-time
  *           nullable: true
+ *     MonthlySummary:
+ *       type: object
+ *       required: [co2SavedGrams, tripCount, totalPoints]
+ *       properties:
+ *         co2SavedGrams:
+ *           type: integer
+ *           description: CO2 économisé ce mois vs voiture (g CO2e)
+ *           example: 4200
+ *         tripCount:
+ *           type: integer
+ *           description: Nombre de trajets enregistrés ce mois
+ *           example: 12
+ *         totalPoints:
+ *           type: integer
+ *           description: Total cumulé des points de l'utilisateur
+ *           example: 530
+ *     WeeklyBar:
+ *       type: object
+ *       required: [weekStart, co2SavedGrams]
+ *       properties:
+ *         weekStart:
+ *           type: string
+ *           format: date
+ *           description: Date de début de semaine (YYYY-MM-DD, lundi)
+ *           example: '2024-01-08'
+ *         co2SavedGrams:
+ *           type: integer
+ *           description: CO2 économisé sur cette semaine (g CO2e)
+ *           example: 980
+ *     ModeCount:
+ *       type: object
+ *       required: [mode, count]
+ *       properties:
+ *         mode:
+ *           $ref: '#/components/schemas/TransportMode'
+ *         count:
+ *           type: integer
+ *           description: Nombre de trajets dont c'est le mode principal
+ *           example: 5
+ *     DashboardStats:
+ *       type: object
+ *       required: [period, summary, weeklyCo2, modeBreakdown]
+ *       properties:
+ *         period:
+ *           type: string
+ *           enum: [month]
+ *         summary:
+ *           $ref: '#/components/schemas/MonthlySummary'
+ *         weeklyCo2:
+ *           type: array
+ *           description: Économies CO2 pour les 4 dernières semaines (toujours 4 éléments)
+ *           items:
+ *             $ref: '#/components/schemas/WeeklyBar'
+ *         modeBreakdown:
+ *           type: array
+ *           description: Répartition par mode principal — la somme des count égale summary.tripCount
+ *           items:
+ *             $ref: '#/components/schemas/ModeCount'
  */
 
 /**
