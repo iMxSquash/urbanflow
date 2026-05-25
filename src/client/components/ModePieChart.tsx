@@ -25,6 +25,7 @@ const DEFAULT_COLOR = '#cbd5e1'
 
 interface ModePieChartProps {
   data: ModeCount[]
+  tripCount: number
 }
 
 const CX = 160
@@ -50,7 +51,7 @@ function slicePath(
   return `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`
 }
 
-export default function ModePieChart({ data }: ModePieChartProps) {
+export default function ModePieChart({ data, tripCount }: ModePieChartProps) {
   const [hovered, setHovered] = useState<string | null>(null)
 
   if (data.length === 0) {
@@ -130,7 +131,7 @@ export default function ModePieChart({ data }: ModePieChartProps) {
           fill="#94a3b8"
           pointerEvents="none"
         >
-          {total} trajet{total > 1 ? 's' : ''}
+          {tripCount} trajet{tripCount > 1 ? 's' : ''}
         </text>
       )}
 

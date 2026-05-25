@@ -181,7 +181,7 @@ export default function DashboardPage() {
             <ChartSkeleton height="h-52" />
           ) : stats ? (
             <Suspense fallback={<ChartSkeleton height="h-52" />}>
-              <ModePieChart data={stats.modeBreakdown} />
+              <ModePieChart data={stats.modeBreakdown} tripCount={stats.summary.tripCount} />
             </Suspense>
           ) : null}
         </section>
