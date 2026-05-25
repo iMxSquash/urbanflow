@@ -315,7 +315,7 @@ export default function MapPage() {
             <EcoMapLayer
               journeys={journeys}
               selectedJourneyId={selectedJourney?.id}
-              onSelect={selectJourney}
+              onSelect={(journey) => { setActiveSegmentIdx(null); selectJourney(journey) }}
             />
           )}
           {selectedJourney && !ecoMapActive && (
