@@ -17,7 +17,13 @@ export const GRAMS_PER_POINT = 10
 // Ordre de priorité décroissant — TC > actif > marche
 // Ajouter un nouveau mode ici suffit, aucune requête SQL à modifier
 const MODE_PRIORITY: TransportMode[] = [
-  'tramway', 'bus', 'train', 'navibus', 'bike', 'scooter', 'walk',
+  'tramway',
+  'bus',
+  'train',
+  'navibus',
+  'bike',
+  'scooter',
+  'walk',
 ]
 
 function primaryMode(modes: TransportMode[]): TransportMode {

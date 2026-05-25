@@ -119,11 +119,11 @@ describe('recordTrip', () => {
 
   it('retourne le résultat correct (CO2, points, tripId)', async () => {
     setupClientSequence(
-      { rows: [] },                                       // BEGIN
-      { rows: [{ id: TRIP_ID }] },                        // INSERT trips
-      { rows: [{ total_points: EXPECTED_POINTS }] },      // UPDATE users
-      { rows: [] },                                       // SELECT pending badges → aucun
-      { rows: [] },                                       // COMMIT
+      { rows: [] }, // BEGIN
+      { rows: [{ id: TRIP_ID }] }, // INSERT trips
+      { rows: [{ total_points: EXPECTED_POINTS }] }, // UPDATE users
+      { rows: [] }, // SELECT pending badges → aucun
+      { rows: [] } // COMMIT
     )
 
     const result = await recordTrip(USER_ID, BASE_INPUT)
@@ -141,7 +141,7 @@ describe('recordTrip', () => {
       { rows: [{ id: TRIP_ID }] },
       { rows: [{ total_points: EXPECTED_POINTS }] },
       { rows: [] },
-      { rows: [] },
+      { rows: [] }
     )
 
     await recordTrip(USER_ID, BASE_INPUT)
@@ -157,7 +157,7 @@ describe('recordTrip', () => {
       { rows: [{ id: TRIP_ID }] },
       { rows: [{ total_points: EXPECTED_POINTS }] },
       { rows: [] },
-      { rows: [] },
+      { rows: [] }
     )
 
     await recordTrip(USER_ID, BASE_INPUT)
@@ -167,10 +167,10 @@ describe('recordTrip', () => {
 
   it('rollback et libère le client si user introuvable', async () => {
     setupClientSequence(
-      { rows: [] },             // BEGIN
+      { rows: [] }, // BEGIN
       { rows: [{ id: TRIP_ID }] }, // INSERT trips
-      { rows: [] },             // UPDATE users → 0 lignes
-      { rows: [] },             // ROLLBACK
+      { rows: [] }, // UPDATE users → 0 lignes
+      { rows: [] } // ROLLBACK
     )
 
     await expect(recordTrip(USER_ID, BASE_INPUT)).rejects.toThrow('not found')
@@ -185,10 +185,24 @@ describe('recordTrip', () => {
       { rows: [] },
       { rows: [{ id: TRIP_ID }] },
       { rows: [{ total_points: EXPECTED_POINTS }] },
-      { rows: [{ id: BADGE_ID, name: 'premier-trajet', threshold_type: 'total_trips', threshold_value: 1, mode_filter: null }] },
-      { rows: [{ total_trips: 1, total_co2_saved_grams: EXPECTED_CO2, total_points: EXPECTED_POINTS }] },
-      { rows: [{ badge_id: BADGE_ID }] },  // INSERT user_badges RETURNING
-      { rows: [] },                        // COMMIT
+      {
+        rows: [
+          {
+            id: BADGE_ID,
+            name: 'premier-trajet',
+            threshold_type: 'total_trips',
+            threshold_value: 1,
+            mode_filter: null,
+          },
+        ],
+      },
+      {
+        rows: [
+          { total_trips: 1, total_co2_saved_grams: EXPECTED_CO2, total_points: EXPECTED_POINTS },
+        ],
+      },
+      { rows: [{ badge_id: BADGE_ID }] }, // INSERT user_badges RETURNING
+      { rows: [] } // COMMIT
     )
 
     const result = await recordTrip(USER_ID, BASE_INPUT)
@@ -201,10 +215,24 @@ describe('recordTrip', () => {
       { rows: [] },
       { rows: [{ id: TRIP_ID }] },
       { rows: [{ total_points: EXPECTED_POINTS }] },
-      { rows: [{ id: BADGE_ID, name: 'premier-trajet', threshold_type: 'total_trips', threshold_value: 1, mode_filter: null }] },
-      { rows: [{ total_trips: 1, total_co2_saved_grams: EXPECTED_CO2, total_points: EXPECTED_POINTS }] },
-      { rows: [] },  // INSERT RETURNING → 0 lignes (ON CONFLICT)
-      { rows: [] },  // COMMIT
+      {
+        rows: [
+          {
+            id: BADGE_ID,
+            name: 'premier-trajet',
+            threshold_type: 'total_trips',
+            threshold_value: 1,
+            mode_filter: null,
+          },
+        ],
+      },
+      {
+        rows: [
+          { total_trips: 1, total_co2_saved_grams: EXPECTED_CO2, total_points: EXPECTED_POINTS },
+        ],
+      },
+      { rows: [] }, // INSERT RETURNING → 0 lignes (ON CONFLICT)
+      { rows: [] } // COMMIT
     )
 
     const result = await recordTrip(USER_ID, BASE_INPUT)
@@ -217,9 +245,23 @@ describe('recordTrip', () => {
       { rows: [] },
       { rows: [{ id: TRIP_ID }] },
       { rows: [{ total_points: EXPECTED_POINTS }] },
-      { rows: [{ id: BADGE_ID, name: 'habitue', threshold_type: 'total_trips', threshold_value: 20, mode_filter: null }] },
-      { rows: [{ total_trips: 1, total_co2_saved_grams: EXPECTED_CO2, total_points: EXPECTED_POINTS }] },
-      { rows: [] },  // COMMIT (pas d'INSERT badges)
+      {
+        rows: [
+          {
+            id: BADGE_ID,
+            name: 'habitue',
+            threshold_type: 'total_trips',
+            threshold_value: 20,
+            mode_filter: null,
+          },
+        ],
+      },
+      {
+        rows: [
+          { total_trips: 1, total_co2_saved_grams: EXPECTED_CO2, total_points: EXPECTED_POINTS },
+        ],
+      },
+      { rows: [] } // COMMIT (pas d'INSERT badges)
     )
 
     const result = await recordTrip(USER_ID, BASE_INPUT)
@@ -245,7 +287,12 @@ describe('getDashboardStats', () => {
       .mockResolvedValueOnce({ rows: [{ co2_saved_grams: 1245, trip_count: 3 }] })
       .mockResolvedValueOnce({ rows: [{ total_points: 530 }] })
       .mockResolvedValueOnce({ rows: WEEKLY_ROWS })
-      .mockResolvedValueOnce({ rows: [{ mode: 'tramway', count: 2 }, { mode: 'walk', count: 1 }] })
+      .mockResolvedValueOnce({
+        rows: [
+          { mode: 'tramway', count: 2 },
+          { mode: 'walk', count: 1 },
+        ],
+      })
 
     const stats = await getDashboardStats(USER_ID)
 
@@ -279,7 +326,7 @@ describe('getDashboardStats', () => {
   it('utilise 0 comme fallback si total_points absent', async () => {
     mockPoolQuery
       .mockResolvedValueOnce({ rows: [{ co2_saved_grams: 0, trip_count: 0 }] })
-      .mockResolvedValueOnce({ rows: [] })  // pas de ligne users
+      .mockResolvedValueOnce({ rows: [] }) // pas de ligne users
       .mockResolvedValueOnce({ rows: WEEKLY_ROWS })
       .mockResolvedValueOnce({ rows: [] })
 
