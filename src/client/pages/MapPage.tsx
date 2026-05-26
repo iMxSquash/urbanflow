@@ -10,13 +10,16 @@ import { EcoMapLayer } from '../components/EcoMapLayer'
 import { JourneyLayer } from '../components/JourneyLayer'
 import { JourneyPanel } from '../components/JourneyPanel'
 import { JourneyResults } from '../components/JourneyResults'
+import { JourneySummaryModal } from '../components/JourneySummaryModal'
 import { MapLayerToggle } from '../components/MapLayerToggle'
 import LogoutButton from '../components/LogoutButton'
+import { TrackingConsentModal } from '../components/TrackingConsentModal'
 import { TripToast } from '../components/TripToast'
 import { UserLocationMarker } from '../components/UserLocationMarker'
 import { recordTrip } from '../services/gamification.service'
 import type { RecordTripResult } from '../services/gamification.service'
 import { useGamificationStore } from '../stores/gamification.store'
+import { useActiveTracking } from '../hooks/useActiveTracking'
 import { useGeolocation } from '../hooks/useGeolocation'
 import { useJourney } from '../hooks/useJourney'
 import { useWeather } from '../hooks/useWeather'
@@ -31,16 +34,24 @@ const TanLinesLayer = lazy(() => import('../components/TanLinesLayer'))
 const TanStopsLayer = lazy(() => import('../components/TanStopsLayer'))
 
 const NANTES_COMMERCE: [number, number] = [47.218, -1.553]
+const NANTES_FALLBACK_COORDS = { lat: 47.218, lng: -1.553 }
 const CARTO_POSITRON = 'https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
 const CARTO_ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors ' +
   '&copy; <a href="https://carto.com/attributions">CARTO</a>'
+
+type TrackingPhase = 'idle' | 'consent' | 'active' | 'done'
 
 interface DemoScenarioState {
   from: Coordinates
   to: Coordinates
   fromLabel: string
   toLabel: string
+}
+
+interface ActiveTrackingState {
+  startTime: number
+  destination: Coordinates
 }
 
 export default function MapPage() {
@@ -63,15 +74,34 @@ export default function MapPage() {
   const [activeSegmentIdx, setActiveSegmentIdx] = useState<number | null>(null)
   const [ecoMapActive, setEcoMapActive] = useState(false)
   const [tripResult, setTripResult] = useState<RecordTripResult | null>(null)
+
+  // Tracking state
+  const [trackingPhase, setTrackingPhase] = useState<TrackingPhase>('idle')
+  const [activeTracking, setActiveTracking] = useState<ActiveTrackingState | null>(null)
+  const [summaryResult, setSummaryResult] = useState<RecordTripResult | null>(null)
+  const [summaryDurationMin, setSummaryDurationMin] = useState(0)
+  const arrivalHandledRef = useRef(false)
+
   const location = useLocation()
   const locatedOnMount = useRef(false)
   const scenarioApplied = useRef(false)
+
+  // Destination for tracking — stable fallback when no journey selected (hook must be unconditional)
+  const trackingDestination = activeTracking?.destination ?? NANTES_FALLBACK_COORDS
+
+  const {
+    position: trackingPosition,
+    arrived,
+    stop: stopTracking,
+  } = useActiveTracking({
+    destination: trackingDestination,
+    active: trackingPhase === 'active',
+  })
 
   useEffect(() => {
     void fetchProfile()
   }, [fetchProfile])
 
-  // Si le consentement était déjà accordé (session persistée), localiser au mount
   useEffect(() => {
     if (geolocationConsent === 'granted' && !locatedOnMount.current) {
       locatedOnMount.current = true
@@ -79,7 +109,7 @@ export default function MapPage() {
     }
   }, [geolocationConsent, locate])
 
-  // Scénario démo : pré-remplit origine + destination et déclenche le calcul
+  // Scénario démo
   useEffect(() => {
     const state = (location.state as { demoScenario?: DemoScenarioState } | null)?.demoScenario
     if (!state || scenarioApplied.current) return
@@ -99,8 +129,15 @@ export default function MapPage() {
     )
   }, [location.state, calculate, profile])
 
+  // Détection d'arrivée
+  useEffect(() => {
+    if (!arrived || trackingPhase !== 'active' || arrivalHandledRef.current) return
+    arrivalHandledRef.current = true
+    void handleArrival()
+  }, [arrived, trackingPhase]) // eslint-disable-line react-hooks/exhaustive-deps
+
   function handleGrant() {
-    locatedOnMount.current = true // empêche le useEffect de rappeler locate()
+    locatedOnMount.current = true
     grantGeolocation()
     locate()
   }
@@ -121,25 +158,86 @@ export default function MapPage() {
     )
   }
 
-  async function handleDepart() {
+  // "Partir maintenant" → ouvre la modale de consentement suivi
+  function handleDepartClick() {
+    setTrackingPhase('consent')
+  }
+
+  // L'utilisateur accepte le suivi GPS continu
+  function handleStartTracking() {
+    if (!selectedJourney) return
+    const destination = selectedJourney.segments.at(-1)!.to
+    arrivalHandledRef.current = false
+    setActiveTracking({ startTime: Date.now(), destination })
+    setTrackingPhase('active')
+  }
+
+  // L'utilisateur refuse le suivi → enregistrement immédiat (ancien comportement)
+  async function handleSkipTracking() {
+    setTrackingPhase('idle')
     if (!selectedJourney) return
     const { segments } = selectedJourney
     const origin = segments[0].from
     const destination = segments[segments.length - 1].to
-    const result = await recordTrip(origin, destination, segments)
-    setTripResult(result)
-    useGamificationStore.getState().setTripResult(result.totalPoints, result.newlyUnlockedBadges)
+    try {
+      const result = await recordTrip(origin, destination, segments)
+      setTripResult(result)
+      useGamificationStore.getState().setTripResult(result.totalPoints, result.newlyUnlockedBadges)
+    } catch {
+      // Le toast ne s'affiche pas en cas d'erreur réseau — pas de crash UI
+    }
   }
 
-  // Position effective : géoloc en priorité, sinon adresse saisie manuellement
+  // Fin de trajet : arrivée auto ou clic "Terminer"
+  async function handleArrival() {
+    if (!selectedJourney || !activeTracking) return
+    stopTracking()
+    const realDurationMin = Math.round((Date.now() - activeTracking.startTime) / 60_000)
+    const { segments } = selectedJourney
+    const origin = segments[0].from
+    const destination = segments[segments.length - 1].to
+    try {
+      const result = await recordTrip(origin, destination, segments)
+      useGamificationStore.getState().setTripResult(result.totalPoints, result.newlyUnlockedBadges)
+      setSummaryResult(result)
+      setSummaryDurationMin(Math.max(1, realDurationMin))
+    } catch {
+      // Échec silencieux : le résumé ne s'affiche pas mais le tracking est bien arrêté
+    }
+    setTrackingPhase('done')
+    setActiveTracking(null)
+  }
+
+  // Fin manuelle via "Terminer le trajet"
+  function handleEndTrip() {
+    void handleArrival()
+  }
+
+  function handleSummaryClose() {
+    setSummaryResult(null)
+    setActiveSegmentIdx(null)
+    deselectJourney()
+  }
+
+  function handlePanelClose() {
+    if (trackingPhase === 'active') {
+      stopTracking()
+      setActiveTracking(null)
+    }
+    setTrackingPhase('idle')
+    setActiveSegmentIdx(null)
+    deselectJourney()
+  }
+
+  // Position affichée : pendant le suivi on suit la position GPS temps réel
   const userPosition = geoPosition ?? addressPosition
+  const displayPosition =
+    trackingPhase === 'active' ? (trackingPosition ?? userPosition) : userPosition
 
   const showAddressSearch = geolocationConsent === 'denied' && !geoPosition
   const showGeoError = !!geoError && !geoLoading && geolocationConsent !== 'denied'
-  // Barre de destination : visible dès qu'on a une position et qu'aucun résultat n'est affiché
   const showDestSearch =
     !!userPosition && journeys.length === 0 && !selectedJourney && !journeyLoading
-  // Reserve right-edge space for the weather badge so search bars don't overlap it
   const searchRight = weather ? 'right-24 sm:right-36' : 'right-3'
 
   return (
@@ -200,14 +298,12 @@ export default function MapPage() {
         role="application"
         aria-label="Carte de mobilité de Nantes"
       >
-        {/* Barre de départ (consentement refusé, pas encore de position) */}
         {showAddressSearch && (
           <div className={`absolute top-3 left-3 ${searchRight} z-1100`}>
             <AddressSearch onSelect={setAddressPosition} />
           </div>
         )}
 
-        {/* Barre de destination */}
         {showDestSearch && (
           <div
             className={[
@@ -219,14 +315,12 @@ export default function MapPage() {
           </div>
         )}
 
-        {/* Badge météo — top-right, visible en permanence */}
         {weather && (
           <div className="absolute top-3 right-3 z-1100">
             <WeatherBadge weather={weather} variant="map" />
           </div>
         )}
 
-        {/* Indicateur de calcul d'itinéraire */}
         {journeyLoading && (
           <div
             role="status"
@@ -241,14 +335,12 @@ export default function MapPage() {
           </div>
         )}
 
-        {/* Bannière d'erreur itinéraire */}
         {journeyError && !journeyLoading && (
           <div className="absolute top-3 left-3 right-3 z-1100">
             <ErrorBanner message={journeyError} onClose={clearJourney} />
           </div>
         )}
 
-        {/* Indicateur de localisation en cours */}
         {geoLoading && (
           <div
             role="status"
@@ -263,7 +355,6 @@ export default function MapPage() {
           </div>
         )}
 
-        {/* Bannière d'erreur géolocalisation */}
         {showGeoError && geoError && (
           <div className="absolute top-3 left-3 right-3 z-1100 flex items-start gap-2">
             <div className="flex-1">
@@ -280,7 +371,6 @@ export default function MapPage() {
           </div>
         )}
 
-        {/* Bannière d'erreur météo */}
         {weatherError && !weatherLoading && !weather && (
           <div className="absolute top-3 right-3 z-1100 w-72">
             <ErrorBanner message="Météo indisponible" />
@@ -310,12 +400,20 @@ export default function MapPage() {
               <BiclooLayer />
             </Suspense>
           )}
-          {userPosition && <UserLocationMarker position={userPosition} />}
+          {displayPosition && (
+            <UserLocationMarker
+              position={displayPosition}
+              isTracking={trackingPhase === 'active'}
+            />
+          )}
           {ecoMapActive && journeys.length > 0 && (
             <EcoMapLayer
               journeys={journeys}
               selectedJourneyId={selectedJourney?.id}
-              onSelect={(journey) => { setActiveSegmentIdx(null); selectJourney(journey) }}
+              onSelect={(journey) => {
+                setActiveSegmentIdx(null)
+                selectJourney(journey)
+              }}
             />
           )}
           {selectedJourney && !ecoMapActive && (
@@ -323,14 +421,12 @@ export default function MapPage() {
           )}
         </MapContainer>
 
-        {/* Sélecteur de calques */}
         <MapLayerToggle
           hasJourney={journeys.length > 0 || !!selectedJourney}
           ecoMapActive={ecoMapActive}
           onToggleEco={() => setEcoMapActive((v) => !v)}
         />
 
-        {/* Résultats — comparaison des itinéraires avant sélection */}
         {journeys.length > 0 && !selectedJourney && (
           <div
             className={[
@@ -352,22 +448,20 @@ export default function MapPage() {
           </div>
         )}
 
-        {/* Panneau détail — après sélection d'un itinéraire */}
         {selectedJourney && (
           <JourneyPanel
             journey={selectedJourney}
-            onClose={() => {
-              setActiveSegmentIdx(null)
-              deselectJourney()
-            }}
-            onDepart={handleDepart}
+            onClose={handlePanelClose}
+            onDepartClick={handleDepartClick}
+            onEndTrip={handleEndTrip}
+            trackingPhase={trackingPhase === 'active' ? 'active' : 'idle'}
             weather={weather}
             activeSegmentIdx={activeSegmentIdx}
             onSegmentSelect={setActiveSegmentIdx}
           />
         )}
 
-        {/* Toast confirmation départ */}
+        {/* Toast confirmation départ sans suivi */}
         {tripResult && (
           <TripToast
             co2SavedGrams={tripResult.co2SavedGrams}
@@ -379,10 +473,34 @@ export default function MapPage() {
         )}
       </main>
 
-      {/* Modale de consentement RGPD — portail dans <body> pour échapper au stacking context Leaflet */}
+      {/* Modale consentement géolocalisation initiale */}
       {geolocationConsent === null &&
         createPortal(
           <GeolocationConsent onGrant={handleGrant} onDeny={denyGeolocation} />,
+          document.body
+        )}
+
+      {/* Modale consentement suivi continu */}
+      {trackingPhase === 'consent' &&
+        createPortal(
+          <TrackingConsentModal
+            onAccept={handleStartTracking}
+            onSkip={() => void handleSkipTracking()}
+          />,
+          document.body
+        )}
+
+      {/* Résumé final après arrivée */}
+      {trackingPhase === 'done' &&
+        summaryResult &&
+        selectedJourney &&
+        createPortal(
+          <JourneySummaryModal
+            journey={selectedJourney}
+            realDurationMin={summaryDurationMin}
+            tripResult={summaryResult}
+            onClose={handleSummaryClose}
+          />,
           document.body
         )}
     </div>
