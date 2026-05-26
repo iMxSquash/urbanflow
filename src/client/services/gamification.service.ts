@@ -23,7 +23,8 @@ export interface BadgeWithStatus {
 export async function recordTrip(
   origin: Coordinates,
   destination: Coordinates,
-  segments: JourneySegment[]
+  segments: JourneySegment[],
+  gpsVerified = true
 ): Promise<RecordTripResult> {
   const res = await apiFetch('/api/gamification/record-trip', {
     method: 'POST',
@@ -32,6 +33,7 @@ export async function recordTrip(
       origin,
       destination,
       segments: segments.map((s) => ({ mode: s.mode, distanceKm: s.distanceKm })),
+      gpsVerified,
     }),
   })
   const data: unknown = await res.json()

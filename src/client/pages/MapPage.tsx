@@ -172,7 +172,7 @@ export default function MapPage() {
     setTrackingPhase('active')
   }
 
-  // L'utilisateur refuse le suivi → enregistrement immédiat (ancien comportement)
+  // L'utilisateur refuse le suivi → enregistrement immédiat sans points
   async function handleSkipTracking() {
     setTrackingPhase('idle')
     if (!selectedJourney) return
@@ -180,7 +180,7 @@ export default function MapPage() {
     const origin = segments[0].from
     const destination = segments[segments.length - 1].to
     try {
-      const result = await recordTrip(origin, destination, segments)
+      const result = await recordTrip(origin, destination, segments, false)
       setTripResult(result)
       useGamificationStore.getState().setTripResult(result.totalPoints, result.newlyUnlockedBadges)
     } catch {

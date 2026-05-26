@@ -28,7 +28,11 @@ export function TripToast({
     <div
       role="status"
       aria-live="polite"
-      aria-label={`Trajet enregistré. +${pointsEarned} points. ${formatCo2(co2SavedGrams)} de CO₂ économisés.`}
+      aria-label={
+        pointsEarned > 0
+          ? `Trajet enregistré. +${pointsEarned} points. ${formatCo2(co2SavedGrams)} de CO₂ économisés.`
+          : `Trajet enregistré sans suivi GPS. ${formatCo2(co2SavedGrams)} de CO₂ économisés. Activez le suivi GPS pour gagner des points.`
+      }
       className="absolute top-20 left-1/2 -translate-x-1/2 z-[1200] animate-slide-up w-max max-w-[calc(100vw-2rem)]"
     >
       <div className="bg-white rounded-xl border border-eco-200 shadow-card-md px-4 py-3 flex items-start gap-3">
@@ -52,25 +56,41 @@ export function TripToast({
         </div>
 
         <div className="min-w-0">
-          <p className="text-body-sm font-bold text-slate-900 leading-snug">
-            Bon trajet !{' '}
-            <span className="text-eco-700">
-              +{pointsEarned} pt{pointsEarned > 1 ? 's' : ''}
-            </span>
-          </p>
-          <p className="text-caption text-eco-700 mt-0.5">
-            {formatCo2(co2SavedGrams)} CO₂ économisés vs voiture
-          </p>
-          <p className="text-caption text-slate-400 mt-0.5">
-            Total cumulé : <span className="font-medium text-slate-600">{totalPoints} pts</span>
-          </p>
-          {newlyUnlockedBadges.length > 0 && (
-            <p className="text-caption text-amber-600 font-medium mt-1">
-              🏅{' '}
-              {newlyUnlockedBadges.length === 1
-                ? '1 badge débloqué !'
-                : `${newlyUnlockedBadges.length} badges débloqués !`}
-            </p>
+          {pointsEarned > 0 ? (
+            <>
+              <p className="text-body-sm font-bold text-slate-900 leading-snug">
+                Bon trajet !{' '}
+                <span className="text-eco-700">
+                  +{pointsEarned} pt{pointsEarned > 1 ? 's' : ''}
+                </span>
+              </p>
+              <p className="text-caption text-eco-700 mt-0.5">
+                {formatCo2(co2SavedGrams)} CO₂ économisés vs voiture
+              </p>
+              <p className="text-caption text-slate-400 mt-0.5">
+                Total cumulé : <span className="font-medium text-slate-600">{totalPoints} pts</span>
+              </p>
+              {newlyUnlockedBadges.length > 0 && (
+                <p className="text-caption text-amber-600 font-medium mt-1">
+                  🏅{' '}
+                  {newlyUnlockedBadges.length === 1
+                    ? '1 badge débloqué !'
+                    : `${newlyUnlockedBadges.length} badges débloqués !`}
+                </p>
+              )}
+            </>
+          ) : (
+            <>
+              <p className="text-body-sm font-bold text-slate-900 leading-snug">
+                Trajet enregistré
+              </p>
+              <p className="text-caption text-eco-700 mt-0.5">
+                {formatCo2(co2SavedGrams)} CO₂ économisés vs voiture
+              </p>
+              <p className="text-caption text-slate-400 mt-0.5">
+                Activez le suivi GPS pour gagner des points
+              </p>
+            </>
           )}
         </div>
 
