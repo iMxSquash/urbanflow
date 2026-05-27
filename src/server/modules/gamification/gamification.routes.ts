@@ -1,10 +1,19 @@
 import { Router } from 'express'
+import rateLimit from 'express-rate-limit'
 import { authGuard } from '../../middleware/auth-guard.js'
 import { validate } from '../../middleware/validate.js'
 import { recordTripSchema } from './gamification.schema.js'
 import * as gamificationController from './gamification.controller.js'
 
 const router = Router()
+
+const recordTripRateLimit = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 20,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { error: 'Trop de trajets enregistrés, réessayez dans une heure' },
+})
 
 /**
  * @swagger
@@ -182,12 +191,15 @@ const router = Router()
  *         $ref: '#/components/responses/BadRequest'
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
+ *       429:
+ *         $ref: '#/components/responses/TooManyRequests'
  *       500:
  *         $ref: '#/components/responses/InternalError'
  */
 router.post(
   '/record-trip',
   authGuard,
+  recordTripRateLimit,
   validate(recordTripSchema),
   gamificationController.recordTrip
 )
