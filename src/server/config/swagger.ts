@@ -89,6 +89,32 @@ const options: swaggerJsdoc.Options = {
           },
         },
       },
+      responses: {
+        BadRequest: {
+          description: 'Données invalides',
+          content: {
+            'application/json': { schema: { $ref: '#/components/schemas/Error' } },
+          },
+        },
+        Unauthorized: {
+          description: 'Token manquant ou invalide',
+          content: {
+            'application/json': { schema: { $ref: '#/components/schemas/Error' } },
+          },
+        },
+        TooManyRequests: {
+          description: 'Trop de requêtes — réessayez plus tard',
+          content: {
+            'application/json': { schema: { $ref: '#/components/schemas/Error' } },
+          },
+        },
+        InternalError: {
+          description: 'Erreur serveur interne',
+          content: {
+            'application/json': { schema: { $ref: '#/components/schemas/Error' } },
+          },
+        },
+      },
       securitySchemes: {
         bearerAuth: {
           type: 'http',
