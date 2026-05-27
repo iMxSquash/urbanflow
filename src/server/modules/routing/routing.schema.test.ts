@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { TRANSPORT_MODES, USER_PREFERENCES } from '../../../shared/types/index.js'
 import { journeyRequestSchema } from './routing.schema.js'
 
 const PT_FROM = { lat: 47.218, lng: -1.553 }
@@ -14,9 +15,15 @@ describe('journeyRequestSchema', () => {
   it('accepte tous les modes incluant navibus et train', () => {
     const result = journeyRequestSchema.safeParse({
       ...MINIMAL,
-      preferredModes: ['walk', 'bus', 'tramway', 'bike', 'scooter', 'navibus', 'train'],
+      preferredModes: [...TRANSPORT_MODES],
     })
     expect(result.success).toBe(true)
+  })
+
+  it('rejette preferredModes avec plus de TRANSPORT_MODES.length entrées (anti-abus)', () => {
+    const tooMany = Array.from({ length: TRANSPORT_MODES.length + 1 }, (_, i) => TRANSPORT_MODES[i % TRANSPORT_MODES.length])
+    const result = journeyRequestSchema.safeParse({ ...MINIMAL, preferredModes: tooMany })
+    expect(result.success).toBe(false)
   })
 
   it('rejette un mode inconnu dans preferredModes', () => {
@@ -61,7 +68,7 @@ describe('journeyRequestSchema', () => {
   })
 
   it('accepte les trois préférences valides', () => {
-    for (const pref of ['eco', 'fast', 'balanced']) {
+    for (const pref of USER_PREFERENCES) {
       expect(journeyRequestSchema.safeParse({ ...MINIMAL, preference: pref }).success).toBe(true)
     }
   })

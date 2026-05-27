@@ -1,8 +1,17 @@
 import { Router } from 'express'
+import rateLimit from 'express-rate-limit'
 import { authGuard } from '../../middleware/auth-guard.js'
 import { validate } from '../../middleware/validate.js'
 import { journeyRequestSchema } from './routing.schema.js'
 import * as routingController from './routing.controller.js'
+
+const journeyRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { error: "Trop de requêtes de calcul d'itinéraire, réessayez plus tard" },
+})
 
 /**
  * @swagger
@@ -106,7 +115,7 @@ import * as routingController from './routing.controller.js'
  */
 const router = Router()
 
-router.post('/journey', authGuard, validate(journeyRequestSchema), routingController.journey)
+router.post('/journey', journeyRateLimit, authGuard, validate(journeyRequestSchema), routingController.journey)
 router.get('/weather', authGuard, routingController.weather)
 
 export default router

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { TRANSPORT_MODES } from '../../../shared/types/index.js'
 import type { Journey, JourneyOptions, JourneySegment } from '../../../shared/types/index.js'
 
 // ─── Mock providers avant import du service ───────────────────────────────────
@@ -25,7 +26,7 @@ vi.mock('../transport/providers/osrm.provider.js', () => ({
 
 vi.mock('../transport/providers/demo.provider.js', () => ({
   DemoProvider: class {
-    supportedModes = ['walk', 'bus', 'tramway', 'bike', 'scooter', 'navibus', 'train']
+    supportedModes = [...TRANSPORT_MODES]
     getJourneys = mocks.demoGetJourneys
   },
 }))

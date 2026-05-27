@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { TRANSPORT_MODES } from '../../../shared/types/index.js'
 import { updateProfileSchema } from './profile.schema.js'
 
 const valid = {
@@ -16,7 +17,7 @@ describe('updateProfileSchema', () => {
   it('accepte tous les modes connus incluant navibus et train', () => {
     const result = updateProfileSchema.safeParse({
       ...valid,
-      preferredModes: ['walk', 'bus', 'tramway', 'bike', 'scooter', 'navibus', 'train'],
+      preferredModes: [...TRANSPORT_MODES],
     })
     expect(result.success).toBe(true)
   })

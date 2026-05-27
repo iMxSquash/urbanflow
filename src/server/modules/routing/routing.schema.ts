@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { TRANSPORT_MODES, USER_PREFERENCES } from '@shared/types/index.js'
 
 const coordinatesSchema = z.object({
   lat: z.number().min(-90).max(90),
@@ -9,9 +10,10 @@ export const journeyRequestSchema = z.object({
   from: coordinatesSchema,
   to: coordinatesSchema,
   datetime: z.string().datetime({ offset: true }).optional(),
-  preference: z.enum(['eco', 'fast', 'balanced']).optional().default('balanced'),
+  preference: z.enum(USER_PREFERENCES).optional().default('balanced'),
   preferredModes: z
-    .array(z.enum(['walk', 'bus', 'tramway', 'bike', 'scooter', 'navibus', 'train']))
+    .array(z.enum(TRANSPORT_MODES))
+    .max(TRANSPORT_MODES.length)
     .optional()
     .default([]),
   maxWalkMinutes: z.number().min(1).max(120).optional().default(30),

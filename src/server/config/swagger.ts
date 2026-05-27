@@ -1,4 +1,5 @@
 import swaggerJsdoc from 'swagger-jsdoc'
+import { TRANSPORT_MODES } from '@shared/types/index.js'
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -34,7 +35,7 @@ const options: swaggerJsdoc.Options = {
         },
         TransportMode: {
           type: 'string',
-          enum: ['walk', 'bus', 'tramway', 'bike', 'scooter', 'navibus', 'train'],
+          enum: TRANSPORT_MODES,
           description: 'Mode de transport — walk/bike/scooter via OSRM, TC via Transitous',
         },
         JourneySegment: {
@@ -85,6 +86,32 @@ const options: swaggerJsdoc.Options = {
               description: 'Score multicritères (durée × CO2 × confort)',
               example: 74,
             },
+          },
+        },
+      },
+      responses: {
+        BadRequest: {
+          description: 'Données invalides',
+          content: {
+            'application/json': { schema: { $ref: '#/components/schemas/Error' } },
+          },
+        },
+        Unauthorized: {
+          description: 'Token manquant ou invalide',
+          content: {
+            'application/json': { schema: { $ref: '#/components/schemas/Error' } },
+          },
+        },
+        TooManyRequests: {
+          description: 'Trop de requêtes — réessayez plus tard',
+          content: {
+            'application/json': { schema: { $ref: '#/components/schemas/Error' } },
+          },
+        },
+        InternalError: {
+          description: 'Erreur serveur interne',
+          content: {
+            'application/json': { schema: { $ref: '#/components/schemas/Error' } },
           },
         },
       },

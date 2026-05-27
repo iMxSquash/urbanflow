@@ -1,7 +1,10 @@
+export const DEMO_WEATHER_MODES = ['sunny', 'rainy'] as const
+export type DemoWeather = (typeof DEMO_WEATHER_MODES)[number]
+
 // Runtime overrides — changed without server restart via PATCH /api/demo/mode
 let _weatherDemo: boolean | null = null // météo simulée seulement
 let _providersDemo: boolean | null = null // trajets + bicloo + tan simulés
-let _weatherOverride: 'sunny' | 'rainy' | null = null
+let _weatherOverride: DemoWeather | null = null
 
 /** Météo simulée : actif si weather demo OU providers demo est activé */
 export function isWeatherDemoMode(): boolean {
@@ -24,7 +27,7 @@ export function setProvidersDemo(enabled: boolean): void {
   _providersDemo = enabled
 }
 
-export function getDemoWeather(): 'sunny' | 'rainy' {
+export function getDemoWeather(): DemoWeather {
   if (_weatherOverride) return _weatherOverride
   if (process.env.DEMO_WEATHER === 'rainy') return 'rainy'
   if (process.env.DEMO_WEATHER === 'sunny') return 'sunny'
@@ -32,6 +35,6 @@ export function getDemoWeather(): 'sunny' | 'rainy' {
   return month >= 9 || month <= 2 ? 'rainy' : 'sunny'
 }
 
-export function setDemoWeather(w: 'sunny' | 'rainy' | null): void {
+export function setDemoWeather(w: DemoWeather | null): void {
   _weatherOverride = w
 }
