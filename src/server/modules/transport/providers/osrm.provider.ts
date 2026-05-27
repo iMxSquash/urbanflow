@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import type {
   BiclooStation,
   Coordinates,
@@ -11,6 +12,7 @@ import { computeScore } from '../../routing/scoring.service.js'
 import { getBiclooStations } from '../bicloo.service.js'
 import type { TransportProvider } from '../transport-provider.interface.js'
 import { fetchWithTimeout } from '../../../utils/fetch-external.js'
+import { haversineKm } from '../../../utils/geo.js'
 
 // ─── Types OSRM ───────────────────────────────────────────────────────────────
 
@@ -41,16 +43,6 @@ const MODE_SPEED_KMH: Record<'bike' | 'walk' | 'scooter', number> = {
 const MAX_WALK_TO_STATION_KM = 1.5
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function haversineKm(a: Coordinates, b: Coordinates): number {
-  const R = 6371
-  const dLat = ((b.lat - a.lat) * Math.PI) / 180
-  const dLon = ((b.lng - a.lng) * Math.PI) / 180
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h))
-}
 
 function nearestStation(
   stations: BiclooStation[],
@@ -181,7 +173,7 @@ async function buildBiclooJourney(
   )
 
   return {
-    id: 'osrm-bicloo',
+    id: `osrm-bicloo-${randomUUID()}`,
     label: 'Vélo Bicloo',
     segments,
     totalDurationMin,
@@ -213,7 +205,7 @@ async function buildScooterJourney(
   const score = computeScore([segment], totalDurationMin, totalDistanceKm, co2g, options)
 
   return {
-    id: 'osrm-scooter',
+    id: `osrm-scooter-${randomUUID()}`,
     label: 'Trottinette',
     segments: [segment],
     totalDurationMin,
@@ -240,7 +232,7 @@ async function buildWalkJourney(
   const score = computeScore([segment], totalDurationMin, totalDistanceKm, 0, options)
 
   return {
-    id: 'osrm-walk',
+    id: `osrm-walk-${randomUUID()}`,
     label: 'Marche',
     segments: [segment],
     totalDurationMin,

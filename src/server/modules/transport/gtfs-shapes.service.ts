@@ -1,5 +1,6 @@
 import type { Coordinates, TanLine } from '@shared/types/index.js'
 import { getTanLines } from './tan.service.js'
+import { haversineKm } from '../../utils/geo.js'
 
 // Caching the promise (not the result) ensures concurrent callers await the
 // same in-flight build rather than each triggering a separate getTanLines() call.
@@ -15,16 +16,6 @@ function getIndex(): Promise<Map<string, TanLine>> {
       })
   }
   return _indexPromise
-}
-
-function haversineKm(a: Coordinates, b: Coordinates): number {
-  const R = 6371
-  const dLat = ((b.lat - a.lat) * Math.PI) / 180
-  const dLon = ((b.lng - a.lng) * Math.PI) / 180
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h))
 }
 
 function closestIndex(line: [number, number][], point: Coordinates): number {

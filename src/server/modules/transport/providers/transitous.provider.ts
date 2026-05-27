@@ -10,6 +10,7 @@ import { computeScore } from '../../routing/scoring.service.js'
 import type { TransportProvider } from '../transport-provider.interface.js'
 import { getShapeForLeg } from '../gtfs-shapes.service.js'
 import { fetchWithTimeout } from '../../../utils/fetch-external.js'
+import { haversineKm } from '../../../utils/geo.js'
 
 // ─── Types réponse Transitous (OTP-like, sans wrapper plan) ──────────────────
 
@@ -75,16 +76,6 @@ function decodePolyline(encoded: string, precision = 5): { lat: number; lng: num
     result.push({ lat: lat / factor, lng: lng / factor })
   }
   return result
-}
-
-function haversineKm(a: { lat: number; lon: number }, b: { lat: number; lon: number }): number {
-  const R = 6371
-  const dLat = ((b.lat - a.lat) * Math.PI) / 180
-  const dLon = ((b.lon - a.lon) * Math.PI) / 180
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h))
 }
 
 // Normalise un timestamp OTP (ISO string ou Unix ms) en ms epoch.
@@ -173,7 +164,9 @@ async function mapItinerary(
       const mode = otpModeToTransportMode(leg.mode)
       const distKm =
         Math.round(
-          (leg.distance !== undefined ? leg.distance / 1000 : haversineKm(leg.from, leg.to)) * 100
+          (leg.distance !== undefined
+            ? leg.distance / 1000
+            : haversineKm({ lat: leg.from.lat, lng: leg.from.lon }, { lat: leg.to.lat, lng: leg.to.lon })) * 100
         ) / 100
       const durationMin = Math.max(1, Math.round(leg.duration / 60))
       const co2g = Math.round(distKm * CO2_FACTORS[mode])
