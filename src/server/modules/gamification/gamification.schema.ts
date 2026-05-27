@@ -8,7 +8,7 @@ const coordinatesSchema = z.object({
 
 const segmentInputSchema = z.object({
   mode: z.enum(TRANSPORT_MODES),
-  distanceKm: z.number().refine(Number.isFinite).min(0),
+  distanceKm: z.number().refine(Number.isFinite).min(0).max(200),
 })
 
 export const recordTripSchema = z.object({

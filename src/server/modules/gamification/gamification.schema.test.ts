@@ -77,6 +77,14 @@ describe('recordTripSchema', () => {
     expect(result.success).toBe(false)
   })
 
+  it('rejette distanceKm > 200 (farming de points)', () => {
+    const result = recordTripSchema.safeParse({
+      ...VALID,
+      segments: [{ mode: 'tramway', distanceKm: 201 }],
+    })
+    expect(result.success).toBe(false)
+  })
+
   it('rejette un segment sans mode', () => {
     const result = recordTripSchema.safeParse({
       ...VALID,
