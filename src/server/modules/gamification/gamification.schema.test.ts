@@ -61,6 +61,14 @@ describe('recordTripSchema', () => {
     expect(recordTripSchema.safeParse({ ...VALID, segments: [] }).success).toBe(false)
   })
 
+  it('rejette plus de 20 segments (maxItems: 20)', () => {
+    const result = recordTripSchema.safeParse({
+      ...VALID,
+      segments: Array.from({ length: 21 }, () => ({ mode: 'walk', distanceKm: 1 })),
+    })
+    expect(result.success).toBe(false)
+  })
+
   it('rejette un mode inconnu', () => {
     const result = recordTripSchema.safeParse({
       ...VALID,

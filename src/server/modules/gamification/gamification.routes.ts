@@ -48,6 +48,7 @@ const recordTripRateLimit = rateLimit({
  *         segments:
  *           type: array
  *           minItems: 1
+ *           maxItems: 20
  *           items:
  *             $ref: '#/components/schemas/SegmentInput'
  *         gpsVerified:

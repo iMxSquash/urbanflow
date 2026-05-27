@@ -14,7 +14,7 @@ const segmentInputSchema = z.object({
 export const recordTripSchema = z.object({
   origin: coordinatesSchema,
   destination: coordinatesSchema,
-  segments: z.array(segmentInputSchema).min(1),
+  segments: z.array(segmentInputSchema).min(1).max(20),
   // Default false: omitting the field is treated as unverified (no points)
   gpsVerified: z.boolean().default(false),
 })
