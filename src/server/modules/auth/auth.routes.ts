@@ -199,6 +199,12 @@ router.post('/logout', refreshRateLimit, authController.logout)
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
+ *       429:
+ *         description: Trop de tentatives (3 req / 15 min par IP)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       500:
  *         description: Erreur interne du serveur
  *         content:
