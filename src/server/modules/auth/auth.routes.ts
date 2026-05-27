@@ -23,6 +23,15 @@ const refreshRateLimit = rateLimit({
   legacyHeaders: false,
 })
 
+// Suppression compte : 3 req/15min — route destructive, anti-abus si token volé
+const deleteAccountRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 3,
+  message: { error: 'Trop de tentatives, réessayez plus tard' },
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+})
+
 const router = Router()
 
 /**
@@ -197,6 +206,6 @@ router.post('/logout', refreshRateLimit, authController.logout)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.delete('/me', authGuard, authController.deleteAccount)
+router.delete('/me', deleteAccountRateLimit, authGuard, authController.deleteAccount)
 
 export default router
