@@ -1,10 +1,20 @@
 import { Router } from 'express'
+import rateLimit from 'express-rate-limit'
 import { authGuard } from '../../middleware/auth-guard.js'
 import { validate } from '../../middleware/validate.js'
 import { updateProfileSchema } from './profile.schema.js'
 import * as profileController from './profile.controller.js'
 
 const router = Router()
+
+// 30 req/15min — protège contre le spam d'upserts en base
+const profileUpdateRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  message: { error: 'Trop de mises à jour, réessayez plus tard' },
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+})
 
 /**
  * @swagger
@@ -153,6 +163,6 @@ router.get('/', authGuard, profileController.getProfile)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/', authGuard, validate(updateProfileSchema), profileController.updateProfile)
+router.put('/', authGuard, profileUpdateRateLimit, validate(updateProfileSchema), profileController.updateProfile)
 
 export default router
