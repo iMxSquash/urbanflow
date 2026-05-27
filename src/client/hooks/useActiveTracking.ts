@@ -13,8 +13,12 @@ function haversineM(a: Coordinates, b: Coordinates): number {
   return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x))
 }
 
-// Slot tagged with the destination it was recorded for. This lets us detect
-// whether stored position is from the current session or a stale one.
+// Poll interval and movement threshold — tuned for battery/eco efficiency:
+// - Network triangulation (no GPS chip) every 20 s
+// - Only trigger re-renders when the user has actually moved > 5 m
+const POLL_INTERVAL_MS = 20_000
+const MIN_MOVE_M = 5
+
 interface PositionSlot {
   coords: Coordinates
   forDestLat: number
@@ -33,16 +37,18 @@ export function useActiveTracking({
   arrivalRadiusM = 100,
 }: UseActiveTrackingOptions) {
   const [slot, setSlot] = useState<PositionSlot | null>(null)
-  // callbackError is only set from watchPosition callbacks — never in the effect body
   const [callbackError, setCallbackError] = useState<string | null>(null)
 
-  const watchIdRef = useRef<number | null>(null)
+  const intervalIdRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  // Prevents concurrent getCurrentPosition calls if a fix takes longer than the interval
+  const pendingRef = useRef(false)
 
   const stop = useCallback(() => {
-    if (watchIdRef.current !== null) {
-      navigator.geolocation.clearWatch(watchIdRef.current)
-      watchIdRef.current = null
+    if (intervalIdRef.current !== null) {
+      clearInterval(intervalIdRef.current)
+      intervalIdRef.current = null
     }
+    pendingRef.current = false
   }, [])
 
   useEffect(() => {
@@ -51,27 +57,48 @@ export function useActiveTracking({
       return
     }
 
-    // If geolocation isn't available, bail without setState — the derived
-    // `error` value below surfaces the message without touching effect-time state.
     if (!navigator.geolocation) return
 
-    // Destination is captured via closure: when it changes, the effect re-runs
-    // and starts a fresh watchPosition with the new destination.
     const { lat: dLat, lng: dLng } = destination
 
-    watchIdRef.current = navigator.geolocation.watchPosition(
-      (pos) => {
-        const coords: Coordinates = { lat: pos.coords.latitude, lng: pos.coords.longitude }
-        setSlot({ coords, forDestLat: dLat, forDestLng: dLng })
-        setCallbackError(null)
-        if (haversineM(coords, { lat: dLat, lng: dLng }) <= arrivalRadiusM) stop()
-      },
-      (err) => {
-        console.warn('[tracking] watchPosition error:', err.code, err.message)
-        setCallbackError('Localisation perdue — vérifiez vos réglages GPS')
-      },
-      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 5_000 }
-    )
+    function fetchPosition() {
+      if (pendingRef.current) return
+      pendingRef.current = true
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          pendingRef.current = false
+          const coords: Coordinates = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+
+          // Skip state update (and map re-render) if user barely moved
+          setSlot((prev) => {
+            if (
+              prev !== null &&
+              prev.forDestLat === dLat &&
+              prev.forDestLng === dLng &&
+              haversineM(prev.coords, coords) < MIN_MOVE_M
+            ) {
+              return prev
+            }
+            return { coords, forDestLat: dLat, forDestLng: dLng }
+          })
+
+          setCallbackError(null)
+          if (haversineM(coords, { lat: dLat, lng: dLng }) <= arrivalRadiusM) stop()
+        },
+        (err) => {
+          pendingRef.current = false
+          console.warn('[tracking] getCurrentPosition error:', err.code, err.message)
+          setCallbackError('Localisation perdue — vérifiez vos réglages GPS')
+        },
+        // enableHighAccuracy: false → network/WiFi triangulation, no GPS chip
+        // maximumAge: 0 → always a fresh fix per poll (network triangulation is fast)
+        { enableHighAccuracy: false, timeout: 10_000, maximumAge: 0 }
+      )
+    }
+
+    fetchPosition() // immediate first fix on tracking start
+    intervalIdRef.current = setInterval(fetchPosition, POLL_INTERVAL_MS)
 
     return stop
   }, [active, destination, arrivalRadiusM, stop])
@@ -79,9 +106,10 @@ export function useActiveTracking({
   // Derived values — no ref.current access during render
   const geolocationUnavailable = typeof navigator !== 'undefined' && !navigator.geolocation
 
-  // Position is "current session" when the stored destination matches the prop.
   const isFreshSlot =
-    slot !== null && slot.forDestLat === destination.lat && slot.forDestLng === destination.lng
+    slot !== null &&
+    slot.forDestLat === destination.lat &&
+    slot.forDestLng === destination.lng
 
   const position = isFreshSlot ? slot!.coords : null
   const arrived = active && position !== null && haversineM(position, destination) <= arrivalRadiusM
