@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { TRANSPORT_MODES } from '../../../shared/types/index.js'
 import { recordTripSchema } from './gamification.schema.js'
 
 const VALID_SEGMENT = { mode: 'tramway', distanceKm: 5 }
@@ -18,7 +19,7 @@ describe('recordTripSchema', () => {
   })
 
   it('accepte tous les modes de transport connus', () => {
-    const modes = ['walk', 'bus', 'tramway', 'bike', 'scooter', 'navibus', 'train'] as const
+    const modes = TRANSPORT_MODES
     for (const mode of modes) {
       const result = recordTripSchema.safeParse({ ...VALID, segments: [{ mode, distanceKm: 1 }] })
       expect(result.success, `mode ${mode} devrait être accepté`).toBe(true)

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { TRANSPORT_MODES, USER_PREFERENCES } from '../../../shared/types/index.js'
 import type { TransportMode, UserPreference } from '../../../shared/types/index.js'
 
 vi.mock('../../db/pool.js', () => ({
@@ -112,7 +113,7 @@ describe('getProfile', () => {
   })
 
   it('accepte toutes les valeurs de preference valides', async () => {
-    const prefs: UserPreference[] = ['eco', 'fast', 'balanced']
+    const prefs = USER_PREFERENCES
 
     for (const pref of prefs) {
       mockQuery.mockResolvedValueOnce({ rows: [{ ...BASE_ROW, preference: pref }] })
@@ -122,15 +123,7 @@ describe('getProfile', () => {
   })
 
   it('accepte tous les modes valides sans filtrage', async () => {
-    const allModes: TransportMode[] = [
-      'walk',
-      'bus',
-      'tramway',
-      'bike',
-      'scooter',
-      'navibus',
-      'train',
-    ]
+    const allModes = TRANSPORT_MODES
     mockQuery.mockResolvedValueOnce({
       rows: [{ ...BASE_ROW, preferred_modes: allModes }],
     })

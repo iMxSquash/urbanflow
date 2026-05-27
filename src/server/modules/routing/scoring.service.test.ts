@@ -4,6 +4,7 @@ import type {
   JourneyOptions,
   WeatherCondition,
 } from '../../../shared/types/index.js'
+import { USER_PREFERENCES } from '../../../shared/types/index.js'
 import { CO2_FACTORS } from '../../../shared/constants/co2-factors.js'
 import {
   scoringWeights,
@@ -67,7 +68,7 @@ describe('scoringWeights', () => {
   })
 
   it('la somme des poids vaut 1.0 pour chaque préférence', () => {
-    for (const pref of ['eco', 'fast', 'balanced'] as const) {
+    for (const pref of USER_PREFERENCES) {
       const w = scoringWeights(pref)
       expect(w.duration + w.co2 + w.comfort).toBeCloseTo(1.0)
     }
