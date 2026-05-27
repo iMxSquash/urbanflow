@@ -128,6 +128,7 @@ router.get('/', authGuard, profileController.getProfile)
  *       Crée ou met à jour (upsert) les préférences de mobilité en BDD.
  *       La validation Zod rejette toute entrée invalide (modes inconnus,
  *       maxWalkMinutes hors plage, préférence inconnue).
+ *       Limité à 30 requêtes par 15 minutes par IP.
  *     tags: [Profile]
  *     security:
  *       - bearerAuth: []
@@ -152,6 +153,12 @@ router.get('/', authGuard, profileController.getProfile)
  *               $ref: '#/components/schemas/Error'
  *       401:
  *         description: Token manquant ou invalide
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       429:
+ *         description: Trop de mises à jour (30 req / 15 min par IP)
  *         content:
  *           application/json:
  *             schema:
