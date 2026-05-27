@@ -170,6 +170,12 @@ router.get('/', authGuard, profileController.getProfile)
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/', authGuard, profileUpdateRateLimit, validate(updateProfileSchema), profileController.updateProfile)
+router.put(
+  '/',
+  authGuard,
+  profileUpdateRateLimit,
+  validate(updateProfileSchema),
+  profileController.updateProfile
+)
 
 export default router
