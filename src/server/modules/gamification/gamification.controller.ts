@@ -7,7 +7,8 @@ export async function recordTrip(req: Request, res: Response): Promise<void> {
     const input = req.body as RecordTripInput
     const result = await gamificationService.recordTrip(req.user!.sub, input)
     res.status(201).json(result)
-  } catch {
+  } catch (err) {
+    console.error('[gamification] recordTrip error:', err)
     res.status(500).json({ error: 'Erreur interne du serveur' })
   }
 }
@@ -16,7 +17,8 @@ export async function getBadges(req: Request, res: Response): Promise<void> {
   try {
     const badges = await gamificationService.getUserBadges(req.user!.sub)
     res.status(200).json(badges)
-  } catch {
+  } catch (err) {
+    console.error('[gamification] getBadges error:', err)
     res.status(500).json({ error: 'Erreur interne du serveur' })
   }
 }
@@ -30,7 +32,8 @@ export async function getStats(req: Request, res: Response): Promise<void> {
   try {
     const stats = await gamificationService.getDashboardStats(req.user!.sub)
     res.status(200).json(stats)
-  } catch {
+  } catch (err) {
+    console.error('[gamification] getStats error:', err)
     res.status(500).json({ error: 'Erreur interne du serveur' })
   }
 }
