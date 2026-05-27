@@ -10,6 +10,7 @@ export const journeyRequestSchema = z.object({
   from: coordinatesSchema,
   to: coordinatesSchema,
   datetime: z.string().datetime({ offset: true }).optional(),
+  datetimeType: z.enum(['departure', 'arrival']).optional().default('departure'),
   preference: z.enum(USER_PREFERENCES).optional().default('balanced'),
   preferredModes: z
     .array(z.enum(TRANSPORT_MODES))

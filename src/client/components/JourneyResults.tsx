@@ -25,6 +25,13 @@ function formatCo2Saving(g: number): string {
   return g >= 1000 ? `${(g / 1000).toFixed(1)} kg` : `${Math.round(g)} g`
 }
 
+function formatDepartureTime(iso: string): string {
+  const d = new Date(iso)
+  const h = d.getHours()
+  const m = d.getMinutes()
+  return `${h}h${String(m).padStart(2, '0')}`
+}
+
 function formatCost(eur?: number): string {
   if (eur === undefined) return '—'
   if (eur === 0) return 'Gratuit'
@@ -235,14 +242,24 @@ function JourneyCard({ journey, ranks, onSelect, animDelay }: JourneyCardProps) 
           {journey.label}
         </h3>
 
-        {/* ── Mode badges ── */}
-        <ul className="flex flex-wrap gap-1 mb-4" aria-label="Modes de transport utilisés">
-          {modes.map((mode) => (
-            <li key={mode}>
-              <span className={MODE_BADGE_CLASS[mode]}>{MODE_LABEL[mode]}</span>
-            </li>
-          ))}
-        </ul>
+        {/* ── Mode badges + heure de départ ── */}
+        <div className="flex flex-wrap items-center justify-between gap-y-1 mb-4">
+          <ul className="flex flex-wrap gap-1" aria-label="Modes de transport utilisés">
+            {modes.map((mode) => (
+              <li key={mode}>
+                <span className={MODE_BADGE_CLASS[mode]}>{MODE_LABEL[mode]}</span>
+              </li>
+            ))}
+          </ul>
+          {journey.departureTime && (
+            <span
+              className="text-caption text-slate-500 shrink-0"
+              aria-label={`Départ à ${formatDepartureTime(journey.departureTime)}`}
+            >
+              Départ {formatDepartureTime(journey.departureTime)}
+            </span>
+          )}
+        </div>
 
         {/* ── Stats grid ── */}
         <dl className="grid grid-cols-3 gap-2 mb-4">

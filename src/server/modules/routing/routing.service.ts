@@ -132,20 +132,85 @@ export async function planJourney(
     )
   }
 
+  // Filtre horaire : ne garder que les trajets TC partant dans les 90 min après l'heure
+  // de référence (5 min de tolérance passée pour le décalage horloge). Sans ce filtre,
+  // l'API OTP peut renvoyer des itinéraires pour des connexions tardives même quand
+  // l'heure demandée est "maintenant". Ne s'applique pas au mode "arriver avant".
+  const MAX_LEAD_MS = 90 * 60_000
+  const PAST_BUFFER_MS = 5 * 60_000
+  const refMs = (options.departureTime ?? new Date()).getTime()
+
+  const upcoming =
+    options.datetimeType === 'arrival'
+      ? withWalkFilter
+      : withWalkFilter.filter((j) => {
+          if (!j.departureTime) return true // modes actifs (OSRM) — pas d'horaire fixe
+          const deptMs = new Date(j.departureTime).getTime()
+          return deptMs >= refMs - PAST_BUFFER_MS && deptMs <= refMs + MAX_LEAD_MS
+        })
+
+  if (upcoming.length < withWalkFilter.length) {
+    console.log(
+      `[routing] Filtre horaire ±90min : ${withWalkFilter.length} → ${upcoming.length} itinéraire(s)`
+    )
+  }
+
+  // Déduplication par label (séquence de modes visible) : Transitous renvoie plusieurs
+  // itinéraires pour la même connexion à des horaires différents. On garde un seul par
+  // type de trajet — celui dont le départ est le plus proche de l'heure demandée.
+  // Seuls les trajets avec un departureTime explicite (TC) sont concernés ; les modes
+  // actifs (OSRM — vélo, marche, scooter) n'ont pas d'horaire fixe et passent tels quels.
+  // Mode "arriver avant" : parmi les doublons on garde le départ le plus tardif.
+  const withTime = upcoming.filter((j) => j.departureTime)
+  const withoutTime = upcoming.filter((j) => !j.departureTime)
+
+  const labelGroups = new Map<string, Journey[]>()
+  for (const j of withTime) {
+    const group = labelGroups.get(j.label) ?? []
+    group.push(j)
+    labelGroups.set(j.label, group)
+  }
+
+  const dedupedTC = [...labelGroups.values()].map((group) => {
+    if (group.length === 1) return group[0]
+    return group.reduce((best, j) => {
+      const jMs = new Date(j.departureTime!).getTime()
+      const bestMs = new Date(best.departureTime!).getTime()
+      if (options.datetimeType === 'arrival') {
+        return jMs > bestMs ? j : best // arriver avant : partir le plus tard possible
+      }
+      // partir à partir de : premier départ futur, ou le plus récent si tous passés
+      const jDiff = jMs - refMs
+      const bestDiff = bestMs - refMs
+      if (jDiff >= 0 && bestDiff >= 0) return jDiff < bestDiff ? j : best
+      if (jDiff >= 0) return j
+      if (bestDiff >= 0) return best
+      return jDiff > bestDiff ? j : best
+    })
+  })
+
+  const deduped = [...dedupedTC, ...withoutTime]
+
+  if (deduped.length < upcoming.length) {
+    console.log(
+      `[routing] Déduplication par label : ${upcoming.length} → ${deduped.length} itinéraire(s)`
+    )
+  }
+
   // Recalcule co2SavingG avec une référence voiture cohérente pour tous les trajets.
   // Chaque provider utilise sa propre distance de routage, ce qui rend les économies
   // incomparables (ex: OSRM donne 6.7km vélo, Transitous 7.1km TC → références ≠).
   // On utilise la distance haversine OD comme proxy voiture unique pour cette requête.
   const carRefKm = haversineKm(from, to)
   const carRefCo2g = Math.round(carRefKm * CO2_FACTORS.car)
-  for (const journey of withWalkFilter) {
+  for (const journey of deduped) {
     journey.co2SavingG = Math.max(0, carRefCo2g - journey.totalCo2g)
   }
 
   // Re-score with weather now that all journeys are merged and filtered.
   // Providers computed a preliminary score without weather context.
   if (weather) {
-    for (const journey of withWalkFilter) {
+    for (const journey of deduped) {
       journey.score = computeScore(
         journey.segments,
         journey.totalDurationMin,
@@ -158,10 +223,10 @@ export async function planJourney(
     console.log(`[routing] Re-scoring avec météo : ${weather.condition} ${weather.temperature}°C`)
   }
 
-  for (const journey of withWalkFilter) {
+  for (const journey of deduped) {
     journey.comfortScore = computeComfortScore(journey.segments, options, weather ?? undefined)
     journey.estimatedCostEur = computeEstimatedCost(journey.segments)
   }
 
-  return withWalkFilter.sort((a, b) => b.score - a.score)
+  return deduped.sort((a, b) => b.score - a.score)
 }

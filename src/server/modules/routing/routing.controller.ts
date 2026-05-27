@@ -4,11 +4,20 @@ import { planJourney } from './routing.service.js'
 import { getCurrentWeather } from './weather.service.js'
 
 export async function journey(req: Request, res: Response): Promise<void> {
-  const { from, to, datetime, preference, preferredModes, maxWalkMinutes, pmrAccessibility } =
-    req.body as JourneyRequest
+  const {
+    from,
+    to,
+    datetime,
+    datetimeType,
+    preference,
+    preferredModes,
+    maxWalkMinutes,
+    pmrAccessibility,
+  } = req.body as JourneyRequest
 
   const options = {
     preference,
+    datetimeType,
     modes: preferredModes,
     maxWalkMinutes,
     pmrAccessibility,

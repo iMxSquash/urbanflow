@@ -17,7 +17,9 @@ export interface JourneyProfile {
 export async function planJourney(
   from: Coordinates,
   to: Coordinates,
-  profile?: JourneyProfile
+  profile?: JourneyProfile,
+  datetime?: Date,
+  datetimeType?: 'departure' | 'arrival'
 ): Promise<Journey[]> {
   const res = await apiFetch('/api/routing/journey', {
     method: 'POST',
@@ -25,6 +27,8 @@ export async function planJourney(
     body: JSON.stringify({
       from,
       to,
+      ...(datetime ? { datetime: datetime.toISOString() } : {}),
+      ...(datetimeType ? { datetimeType } : {}),
       ...(profile
         ? {
             preference: profile.preference,
