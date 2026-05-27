@@ -255,7 +255,6 @@ describe('recordTrip', () => {
     expect(result.newlyUnlockedBadges).toEqual([])
     expect(result.co2SavedGrams).toBe(EXPECTED_CO2)
     expect(result.tripId).toBe(TRIP_ID)
-    // Le check de badges ne doit pas être appelé
     const sqls = mockClient.query.mock.calls.map((call) => String(call[0]))
     expect(sqls.some((s) => s.includes('FROM badges'))).toBe(false)
   })

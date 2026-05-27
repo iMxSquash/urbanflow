@@ -1,10 +1,19 @@
 import { Router } from 'express'
+import rateLimit from 'express-rate-limit'
 import { authGuard } from '../../middleware/auth-guard.js'
 import { validate } from '../../middleware/validate.js'
 import { recordTripSchema } from './gamification.schema.js'
 import * as gamificationController from './gamification.controller.js'
 
 const router = Router()
+
+const recordTripRateLimit = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 20,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { error: 'Trop de trajets enregistrés, réessayez dans une heure' },
+})
 
 /**
  * @swagger
@@ -26,6 +35,7 @@ const router = Router()
  *         distanceKm:
  *           type: number
  *           minimum: 0
+ *           maximum: 200
  *           example: 4.2
  *     RecordTripInput:
  *       type: object
@@ -38,8 +48,16 @@ const router = Router()
  *         segments:
  *           type: array
  *           minItems: 1
+ *           maxItems: 20
  *           items:
  *             $ref: '#/components/schemas/SegmentInput'
+ *         gpsVerified:
+ *           type: boolean
+ *           default: false
+ *           description: >
+ *             Indique si le trajet a été suivi par GPS. Si false (ou absent),
+ *             0 points sont attribués. Le frontend doit envoyer true uniquement
+ *             quand le suivi GPS était actif pendant tout le trajet.
  *     RecordTripResult:
  *       type: object
  *       properties:
@@ -182,12 +200,15 @@ const router = Router()
  *         $ref: '#/components/responses/BadRequest'
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
+ *       429:
+ *         $ref: '#/components/responses/TooManyRequests'
  *       500:
  *         $ref: '#/components/responses/InternalError'
  */
 router.post(
   '/record-trip',
   authGuard,
+  recordTripRateLimit,
   validate(recordTripSchema),
   gamificationController.recordTrip
 )

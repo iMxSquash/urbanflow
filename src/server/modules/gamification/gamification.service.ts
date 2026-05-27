@@ -168,7 +168,7 @@ export async function recordTrip(
   const { origin, destination, segments, gpsVerified } = input
 
   const { co2SavedGrams } = computeCo2Saved(segments)
-  // Unverified trips (no GPS tracking) earn 0 points to prevent farming
+  // Unverified trips earn 0 points to discourage fake submissions
   const pointsEarned = gpsVerified ? computePoints(co2SavedGrams) : 0
   const modesUsed = [...new Set(segments.map((s) => s.mode))]
   const mainMode = primaryMode(modesUsed)

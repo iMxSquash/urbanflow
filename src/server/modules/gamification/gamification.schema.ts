@@ -8,14 +8,15 @@ const coordinatesSchema = z.object({
 
 const segmentInputSchema = z.object({
   mode: z.enum(TRANSPORT_MODES),
-  distanceKm: z.number().refine(Number.isFinite).min(0),
+  distanceKm: z.number().refine(Number.isFinite).min(0).max(200),
 })
 
 export const recordTripSchema = z.object({
   origin: coordinatesSchema,
   destination: coordinatesSchema,
-  segments: z.array(segmentInputSchema).min(1),
-  gpsVerified: z.boolean().default(true),
+  segments: z.array(segmentInputSchema).min(1).max(20),
+  // Default false: omitting the field is treated as unverified (no points)
+  gpsVerified: z.boolean().default(false),
 })
 
 export type RecordTripInput = z.infer<typeof recordTripSchema>
