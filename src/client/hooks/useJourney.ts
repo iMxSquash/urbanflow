@@ -19,10 +19,16 @@ export function useJourney() {
   })
 
   const calculate = useCallback(
-    async (from: Coordinates, to: Coordinates, profile?: JourneyProfile) => {
+    async (
+      from: Coordinates,
+      to: Coordinates,
+      profile?: JourneyProfile,
+      datetime?: Date,
+      datetimeType?: 'departure' | 'arrival'
+    ) => {
       setState({ journeys: [], selectedJourney: null, loading: true, error: null })
       try {
-        const journeys = await planJourney(from, to, profile)
+        const journeys = await planJourney(from, to, profile, datetime, datetimeType)
         if (journeys.length === 0) {
           setState({
             journeys: [],

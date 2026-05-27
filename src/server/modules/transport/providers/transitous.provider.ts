@@ -285,11 +285,14 @@ export class TransitousProvider implements TransportProvider {
     to: Coordinates,
     options: JourneyOptions
   ): Promise<Journey[]> {
+    const refTime = options.departureTime ?? new Date()
+
     const params = new URLSearchParams({
       fromPlace: `${from.lat},${from.lng}`,
       toPlace: `${to.lat},${to.lng}`,
       numItineraries: '5',
-      arriveBy: 'false',
+      time: refTime.toISOString(), // MOTIS2 accepte ISO 8601 UTC (ex: 2026-05-27T13:35:00.000Z)
+      arriveBy: options.datetimeType === 'arrival' ? 'true' : 'false',
     })
 
     // Traduire les modes utilisateur en modes OTP et les passer à Transitous.

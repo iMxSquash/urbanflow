@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 import { MapContainer, TileLayer } from 'react-leaflet'
 import { Link, useLocation } from 'react-router-dom'
 import { AddressSearch } from '../components/AddressSearch'
+import { DatetimePicker } from '../components/DatetimePicker'
 import { ErrorBanner } from '../components/ErrorBanner'
 import { GeolocationConsent } from '../components/GeolocationConsent'
 import { EcoMapLayer } from '../components/EcoMapLayer'
@@ -74,6 +75,8 @@ export default function MapPage() {
   const [activeSegmentIdx, setActiveSegmentIdx] = useState<number | null>(null)
   const [ecoMapActive, setEcoMapActive] = useState(false)
   const [tripResult, setTripResult] = useState<RecordTripResult | null>(null)
+  const [datetime, setDatetime] = useState<Date>(() => new Date())
+  const [datetimeType, setDatetimeType] = useState<'departure' | 'arrival'>('departure')
 
   // Tracking state
   const [trackingPhase, setTrackingPhase] = useState<TrackingPhase>('idle')
@@ -125,9 +128,11 @@ export default function MapPage() {
             maxWalkMinutes: profile.maxWalkMinutes,
             pmrAccessibility: profile.pmrAccessibility,
           }
-        : undefined
+        : undefined,
+      datetime,
+      datetimeType
     )
-  }, [location.state, calculate, profile])
+  }, [location.state, calculate, profile, datetime, datetimeType])
 
   // Détection d'arrivée
   useEffect(() => {
@@ -154,7 +159,9 @@ export default function MapPage() {
             maxWalkMinutes: profile.maxWalkMinutes,
             pmrAccessibility: profile.pmrAccessibility,
           }
-        : undefined
+        : undefined,
+      datetime,
+      datetimeType
     )
   }
 
@@ -307,11 +314,23 @@ export default function MapPage() {
         {showDestSearch && (
           <div
             className={[
-              `absolute left-3 ${searchRight} z-1100`,
+              `absolute left-3 ${searchRight} z-1100 flex flex-col gap-2`,
               showAddressSearch ? 'top-16' : 'top-3',
             ].join(' ')}
           >
             <AddressSearch onSelect={handleDestinationSelect} placeholder="Où allez-vous ?" />
+            <DatetimePicker
+              datetime={datetime}
+              type={datetimeType}
+              onDatetimeChange={(dt) => {
+                setDatetime(dt)
+                clearJourney()
+              }}
+              onTypeChange={(t) => {
+                setDatetimeType(t)
+                clearJourney()
+              }}
+            />
           </div>
         )}
 
