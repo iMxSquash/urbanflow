@@ -1,4 +1,5 @@
 import swaggerJsdoc from 'swagger-jsdoc'
+import { TRANSPORT_MODES } from '@shared/types/index.js'
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -34,7 +35,7 @@ const options: swaggerJsdoc.Options = {
         },
         TransportMode: {
           type: 'string',
-          enum: ['walk', 'bus', 'tramway', 'bike', 'scooter', 'navibus', 'train'],
+          enum: TRANSPORT_MODES,
           description: 'Mode de transport — walk/bike/scooter via OSRM, TC via Transitous',
         },
         JourneySegment: {
