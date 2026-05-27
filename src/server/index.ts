@@ -26,7 +26,7 @@ import demoRouter from './modules/demo/demo.routes.js'
 const app = express()
 const PORT = process.env.PORT ?? 3000
 
-app.set('trust proxy', 2)
+app.set('trust proxy', 1)
 
 const globalRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
