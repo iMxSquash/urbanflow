@@ -6,6 +6,8 @@ import { TransitousProvider } from '../transport/providers/transitous.provider.j
 import { getCurrentWeather } from './weather.service.js'
 import { computeScore, computeEstimatedCost, computeComfortScore } from './scoring.service.js'
 import { isDemoMode } from '../demo/demo-config.js'
+import { haversineKm } from '../../utils/geo.js'
+import { CO2_FACTORS } from '@shared/constants/co2-factors.js'
 
 // ─── Registre des providers ───────────────────────────────────────────────────
 // Catégories :
@@ -128,6 +130,16 @@ export async function planJourney(
     console.log(
       `[routing] Filtre maxWalkMinutes=${maxWalk}min : ${filtered.length} → ${withWalkFilter.length} itinéraire(s)`
     )
+  }
+
+  // Recalcule co2SavingG avec une référence voiture cohérente pour tous les trajets.
+  // Chaque provider utilise sa propre distance de routage, ce qui rend les économies
+  // incomparables (ex: OSRM donne 6.7km vélo, Transitous 7.1km TC → références ≠).
+  // On utilise la distance haversine OD comme proxy voiture unique pour cette requête.
+  const carRefKm = haversineKm(from, to)
+  const carRefCo2g = Math.round(carRefKm * CO2_FACTORS.car)
+  for (const journey of withWalkFilter) {
+    journey.co2SavingG = Math.max(0, carRefCo2g - journey.totalCo2g)
   }
 
   // Re-score with weather now that all journeys are merged and filtered.
