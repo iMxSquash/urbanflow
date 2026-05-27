@@ -158,24 +158,28 @@ export async function planJourney(
   // Déduplication par label (séquence de modes visible) : Transitous renvoie plusieurs
   // itinéraires pour la même connexion à des horaires différents. On garde un seul par
   // type de trajet — celui dont le départ est le plus proche de l'heure demandée.
-  // Mode "arriver avant" : parmi les doublons on garde le départ le plus tardif (partir
-  // le plus tard possible en arrivant à temps).
+  // Seuls les trajets avec un departureTime explicite (TC) sont concernés ; les modes
+  // actifs (OSRM — vélo, marche, scooter) n'ont pas d'horaire fixe et passent tels quels.
+  // Mode "arriver avant" : parmi les doublons on garde le départ le plus tardif.
+  const withTime = upcoming.filter((j) => j.departureTime)
+  const withoutTime = upcoming.filter((j) => !j.departureTime)
+
   const labelGroups = new Map<string, Journey[]>()
-  for (const j of upcoming) {
+  for (const j of withTime) {
     const group = labelGroups.get(j.label) ?? []
     group.push(j)
     labelGroups.set(j.label, group)
   }
 
-  const deduped = [...labelGroups.values()].map((group) => {
+  const dedupedTC = [...labelGroups.values()].map((group) => {
     if (group.length === 1) return group[0]
     return group.reduce((best, j) => {
-      const jMs = j.departureTime ? new Date(j.departureTime).getTime() : refMs
-      const bestMs = best.departureTime ? new Date(best.departureTime).getTime() : refMs
+      const jMs = new Date(j.departureTime!).getTime()
+      const bestMs = new Date(best.departureTime!).getTime()
       if (options.datetimeType === 'arrival') {
         return jMs > bestMs ? j : best // arriver avant : partir le plus tard possible
       }
-      // partir à partir de : garder le premier départ futur, ou le plus récent si passés
+      // partir à partir de : premier départ futur, ou le plus récent si tous passés
       const jDiff = jMs - refMs
       const bestDiff = bestMs - refMs
       if (jDiff >= 0 && bestDiff >= 0) return jDiff < bestDiff ? j : best
@@ -184,6 +188,8 @@ export async function planJourney(
       return jDiff > bestDiff ? j : best
     })
   })
+
+  const deduped = [...dedupedTC, ...withoutTime]
 
   if (deduped.length < upcoming.length) {
     console.log(
