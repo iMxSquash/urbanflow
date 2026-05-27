@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { CO2_FACTORS } from '@shared/constants/co2-factors'
 import type { Journey, JourneySegment, TransportMode, WeatherCondition } from '@shared/types/index'
 import { WeatherBadge } from './WeatherBadge'
@@ -203,12 +202,14 @@ function SegmentDetail({ segment }: { segment: JourneySegment }) {
 
 // ── JourneyPanel ──────────────────────────────────────────────────────────────
 
-type DepartState = 'idle' | 'loading' | 'done' | 'error'
+export type JourneyTrackingPhase = 'idle' | 'active'
 
 interface JourneyPanelProps {
   journey: Journey
   onClose: () => void
-  onDepart?: () => Promise<void>
+  onDepartClick?: () => void
+  onEndTrip?: () => void
+  trackingPhase?: JourneyTrackingPhase
   weather?: WeatherCondition | null
   activeSegmentIdx: number | null
   onSegmentSelect: (idx: number | null) => void
@@ -217,26 +218,15 @@ interface JourneyPanelProps {
 export function JourneyPanel({
   journey,
   onClose,
-  onDepart,
+  onDepartClick,
+  onEndTrip,
+  trackingPhase = 'idle',
   weather,
   activeSegmentIdx,
   onSegmentSelect,
 }: JourneyPanelProps) {
-  const [departState, setDepartState] = useState<DepartState>('idle')
-
   function toggleSegment(idx: number) {
     onSegmentSelect(activeSegmentIdx === idx ? null : idx)
-  }
-
-  async function handleDepart() {
-    if (!onDepart || departState === 'loading') return
-    setDepartState('loading')
-    try {
-      await onDepart()
-      setDepartState('done')
-    } catch {
-      setDepartState('error')
-    }
   }
 
   return (
@@ -473,49 +463,63 @@ export function JourneyPanel({
           </div>
         )}
 
-        {/* CTA Partir maintenant */}
-        {onDepart && departState !== 'done' && (
-          <div className="mt-4 pt-4 border-t border-slate-100">
+        {/* CTA — Partir / Terminer */}
+        {trackingPhase === 'active' ? (
+          <div className="mt-4 pt-4 border-t border-slate-100 space-y-3">
+            {/* Indicateur suivi actif */}
+            <div className="flex items-center gap-2 px-3 py-2 bg-transit-50 rounded-lg border border-transit-100">
+              <span
+                aria-hidden="true"
+                className="shrink-0 w-2 h-2 rounded-full bg-transit-500 animate-pulse"
+              />
+              <p className="text-caption font-medium text-transit-700">Suivi GPS actif</p>
+            </div>
             <button
               type="button"
-              onClick={() => void handleDepart()}
-              disabled={departState === 'loading'}
-              aria-busy={departState === 'loading'}
-              className="btn-primary w-full justify-center disabled:opacity-60 disabled:cursor-not-allowed"
+              onClick={onEndTrip}
+              className="btn-secondary w-full justify-center border-slate-300"
             >
-              {departState === 'loading' ? (
-                <>
-                  <div
-                    aria-hidden="true"
-                    className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"
-                  />
-                  Enregistrement…
-                </>
-              ) : (
-                <>
-                  <svg
-                    aria-hidden="true"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M5 12h14M12 5l7 7-7 7" />
-                  </svg>
-                  {departState === 'error' ? 'Réessayer' : 'Partir maintenant'}
-                </>
-              )}
+              <svg
+                aria-hidden="true"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+              </svg>
+              Terminer le trajet
             </button>
-            {departState === 'error' && (
-              <p role="alert" className="text-caption text-red-600 text-center mt-2">
-                Impossible d'enregistrer le trajet. Vérifiez votre connexion.
-              </p>
-            )}
           </div>
+        ) : (
+          onDepartClick && (
+            <div className="mt-4 pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={onDepartClick}
+                className="btn-primary w-full justify-center"
+              >
+                <svg
+                  aria-hidden="true"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+                Partir maintenant
+              </button>
+            </div>
+          )
         )}
       </div>
     </div>
