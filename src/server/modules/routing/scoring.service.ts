@@ -51,7 +51,7 @@ export function computeComfortScore(
 
   // Base : ratio de segments utilisant un mode préféré (50 si aucune préférence)
   let base =
-    preferredModes.length > 0
+    preferredModes.length > 0 && segments.length > 0
       ? Math.round(
           (segments.filter((s) => preferredModes.includes(s.mode)).length / segments.length) * 100
         )
