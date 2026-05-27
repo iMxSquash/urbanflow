@@ -6,39 +6,57 @@ import { TransitousProvider } from '../transport/providers/transitous.provider.j
 import { getCurrentWeather } from './weather.service.js'
 import { computeScore, computeEstimatedCost, computeComfortScore } from './scoring.service.js'
 import { isDemoMode } from '../demo/demo-config.js'
+import { haversineKm } from '../../utils/geo.js'
+import { CO2_FACTORS } from '@shared/constants/co2-factors.js'
 
-// Tous les providers disponibles (hors mode démo)
-const ALL_PROVIDERS: TransportProvider[] = [new TransitousProvider(), new OsrmProvider()]
+// ─── Registre des providers ───────────────────────────────────────────────────
+// Catégories :
+//   'tc'     — transports en commun (bus, tramway, train, ferry…)
+//   'active' — mobilité active et douce (vélo, marche, trottinette)
+//   'shared' — mobilités partagées futures (covoiturage, VTC…) — toujours activés
+
+type ProviderCategory = 'tc' | 'active' | 'shared'
+
+interface RegisteredProvider {
+  provider: TransportProvider
+  category: ProviderCategory
+}
+
+const PROVIDER_REGISTRY: RegisteredProvider[] = [
+  { provider: new TransitousProvider(), category: 'tc' },
+  { provider: new OsrmProvider(), category: 'active' },
+  // Pour ajouter un provider : { provider: new MyProvider(), category: 'tc' | 'active' | 'shared' }
+]
 
 const DEMO_PROVIDER = new DemoProvider()
 
-const TC_PROVIDER = ALL_PROVIDERS.find((p) => p.supportedModes.includes('bus'))! // TransitousProvider
+const TC_MODES = new Set<TransportMode>(['bus', 'tramway', 'navibus', 'train'])
+const ACTIVE_MODES = new Set<TransportMode>(['bike', 'walk', 'scooter'])
 
 function selectProviders(options: JourneyOptions): TransportProvider[] {
   if (isDemoMode()) return [DEMO_PROVIDER]
 
   const requestedModes: TransportMode[] = options.modes ?? []
 
-  // Aucun mode sélectionné → Transitous seul (fallback TC par défaut)
-  if (requestedModes.length === 0) return [TC_PROVIDER]
+  // Aucun mode sélectionné → providers TC par défaut
+  if (requestedModes.length === 0) {
+    return PROVIDER_REGISTRY.filter((r) => r.category === 'tc').map((r) => r.provider)
+  }
 
-  const selected: TransportProvider[] = []
+  const wantsTC = requestedModes.some((m) => TC_MODES.has(m))
+  const wantsActive = requestedModes.some((m) => ACTIVE_MODES.has(m))
 
-  // Transitous : activé si l'utilisateur veut un mode TC (bus, tramway, navibus, train)
-  const wantsTC = requestedModes.some((m) => TC_PROVIDER.supportedModes.includes(m))
-  if (wantsTC) selected.push(TC_PROVIDER)
+  const selected = PROVIDER_REGISTRY.filter(
+    (r) =>
+      (r.category === 'tc' && wantsTC) ||
+      (r.category === 'active' && wantsActive) ||
+      r.category === 'shared'
+  ).map((r) => r.provider)
 
-  // OSRM : activé si l'utilisateur veut vélo, trottinette ou marche
-  const osrm = ALL_PROVIDERS.find((p) => p.supportedModes.includes('bike'))
-  const wantsOsrm =
-    osrm &&
-    (requestedModes.includes('bike') ||
-      requestedModes.includes('scooter') ||
-      requestedModes.includes('walk'))
-  if (wantsOsrm && osrm) selected.push(osrm)
-
-  // Si aucun provider sélectionné (ex: mode inconnu non géré), fallback TC
-  return selected.length > 0 ? selected : [TC_PROVIDER]
+  // Fallback TC si aucun provider sélectionné (mode inconnu)
+  return selected.length > 0
+    ? selected
+    : PROVIDER_REGISTRY.filter((r) => r.category === 'tc').map((r) => r.provider)
 }
 
 export async function planJourney(
@@ -112,6 +130,16 @@ export async function planJourney(
     console.log(
       `[routing] Filtre maxWalkMinutes=${maxWalk}min : ${filtered.length} → ${withWalkFilter.length} itinéraire(s)`
     )
+  }
+
+  // Recalcule co2SavingG avec une référence voiture cohérente pour tous les trajets.
+  // Chaque provider utilise sa propre distance de routage, ce qui rend les économies
+  // incomparables (ex: OSRM donne 6.7km vélo, Transitous 7.1km TC → références ≠).
+  // On utilise la distance haversine OD comme proxy voiture unique pour cette requête.
+  const carRefKm = haversineKm(from, to)
+  const carRefCo2g = Math.round(carRefKm * CO2_FACTORS.car)
+  for (const journey of withWalkFilter) {
+    journey.co2SavingG = Math.max(0, carRefCo2g - journey.totalCo2g)
   }
 
   // Re-score with weather now that all journeys are merged and filtered.
