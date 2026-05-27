@@ -15,7 +15,6 @@ export const recordTripSchema = z.object({
   origin: coordinatesSchema,
   destination: coordinatesSchema,
   segments: z.array(segmentInputSchema).min(1),
-  gpsVerified: z.boolean().default(true),
 })
 
 export type RecordTripInput = z.infer<typeof recordTripSchema>
