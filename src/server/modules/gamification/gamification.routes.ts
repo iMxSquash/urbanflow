@@ -35,6 +35,7 @@ const recordTripRateLimit = rateLimit({
  *         distanceKm:
  *           type: number
  *           minimum: 0
+ *           maximum: 200
  *           example: 4.2
  *     RecordTripInput:
  *       type: object
@@ -49,6 +50,13 @@ const recordTripRateLimit = rateLimit({
  *           minItems: 1
  *           items:
  *             $ref: '#/components/schemas/SegmentInput'
+ *         gpsVerified:
+ *           type: boolean
+ *           default: false
+ *           description: >
+ *             Indique si le trajet a été suivi par GPS. Si false (ou absent),
+ *             0 points sont attribués. Le frontend doit envoyer true uniquement
+ *             quand le suivi GPS était actif pendant tout le trajet.
  *     RecordTripResult:
  *       type: object
  *       properties:
