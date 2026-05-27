@@ -166,7 +166,10 @@ async function mapItinerary(
         Math.round(
           (leg.distance !== undefined
             ? leg.distance / 1000
-            : haversineKm({ lat: leg.from.lat, lng: leg.from.lon }, { lat: leg.to.lat, lng: leg.to.lon })) * 100
+            : haversineKm(
+                { lat: leg.from.lat, lng: leg.from.lon },
+                { lat: leg.to.lat, lng: leg.to.lon }
+              )) * 100
         ) / 100
       const durationMin = Math.max(1, Math.round(leg.duration / 60))
       const co2g = Math.round(distKm * CO2_FACTORS[mode])

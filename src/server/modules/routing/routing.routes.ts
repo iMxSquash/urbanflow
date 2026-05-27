@@ -115,7 +115,13 @@ const journeyRateLimit = rateLimit({
  */
 const router = Router()
 
-router.post('/journey', journeyRateLimit, authGuard, validate(journeyRequestSchema), routingController.journey)
+router.post(
+  '/journey',
+  journeyRateLimit,
+  authGuard,
+  validate(journeyRequestSchema),
+  routingController.journey
+)
 router.get('/weather', authGuard, routingController.weather)
 
 export default router

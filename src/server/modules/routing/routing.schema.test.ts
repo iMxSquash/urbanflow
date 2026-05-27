@@ -21,7 +21,10 @@ describe('journeyRequestSchema', () => {
   })
 
   it('rejette preferredModes avec plus de TRANSPORT_MODES.length entrées (anti-abus)', () => {
-    const tooMany = Array.from({ length: TRANSPORT_MODES.length + 1 }, (_, i) => TRANSPORT_MODES[i % TRANSPORT_MODES.length])
+    const tooMany = Array.from(
+      { length: TRANSPORT_MODES.length + 1 },
+      (_, i) => TRANSPORT_MODES[i % TRANSPORT_MODES.length]
+    )
     const result = journeyRequestSchema.safeParse({ ...MINIMAL, preferredModes: tooMany })
     expect(result.success).toBe(false)
   })
