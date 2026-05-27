@@ -28,6 +28,7 @@ const BASE_INPUT = {
   origin: { lat: 47.218, lng: -1.553 },
   destination: { lat: 47.225, lng: -1.56 },
   segments: [{ mode: 'tramway' as const, distanceKm: 5 }],
+  gpsVerified: true,
 }
 const EXPECTED_CO2 = 1245
 const EXPECTED_POINTS = 124
@@ -238,6 +239,24 @@ describe('recordTrip', () => {
     const result = await recordTrip(USER_ID, BASE_INPUT)
 
     expect(result.newlyUnlockedBadges).toEqual([])
+  })
+
+  it('gpsVerified=false : 0 points, aucun badge, trajet quand même enregistré', async () => {
+    setupClientSequence(
+      { rows: [] }, // BEGIN
+      { rows: [{ id: TRIP_ID }] }, // INSERT trips
+      { rows: [{ total_points: 0 }] }, // UPDATE users (+0)
+      { rows: [] } // COMMIT — pas de check badges
+    )
+
+    const result = await recordTrip(USER_ID, { ...BASE_INPUT, gpsVerified: false })
+
+    expect(result.pointsEarned).toBe(0)
+    expect(result.newlyUnlockedBadges).toEqual([])
+    expect(result.co2SavedGrams).toBe(EXPECTED_CO2)
+    expect(result.tripId).toBe(TRIP_ID)
+    const sqls = mockClient.query.mock.calls.map((call) => String(call[0]))
+    expect(sqls.some((s) => s.includes('FROM badges'))).toBe(false)
   })
 
   it("ne débloque pas un badge si le seuil n'est pas atteint", async () => {

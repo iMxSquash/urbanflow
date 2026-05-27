@@ -165,10 +165,11 @@ export async function recordTrip(
   userId: string,
   input: RecordTripInput
 ): Promise<RecordTripResult> {
-  const { origin, destination, segments } = input
+  const { origin, destination, segments, gpsVerified } = input
 
   const { co2SavedGrams } = computeCo2Saved(segments)
-  const pointsEarned = computePoints(co2SavedGrams)
+  // Unverified trips earn 0 points to discourage fake submissions
+  const pointsEarned = gpsVerified ? computePoints(co2SavedGrams) : 0
   const modesUsed = [...new Set(segments.map((s) => s.mode))]
   const mainMode = primaryMode(modesUsed)
 
@@ -204,7 +205,7 @@ export async function recordTrip(
     const userRow = userResult.rows[0]
     if (!userRow) throw new Error(`User ${userId} not found — account may have been deleted`)
 
-    const newlyUnlockedBadges = await checkAndUnlockBadges(userId, client)
+    const newlyUnlockedBadges = gpsVerified ? await checkAndUnlockBadges(userId, client) : []
 
     await client.query('COMMIT')
 
