@@ -107,9 +107,7 @@ export function useActiveTracking({
   const geolocationUnavailable = typeof navigator !== 'undefined' && !navigator.geolocation
 
   const isFreshSlot =
-    slot !== null &&
-    slot.forDestLat === destination.lat &&
-    slot.forDestLng === destination.lng
+    slot !== null && slot.forDestLat === destination.lat && slot.forDestLng === destination.lng
 
   const position = isFreshSlot ? slot!.coords : null
   const arrived = active && position !== null && haversineM(position, destination) <= arrivalRadiusM
