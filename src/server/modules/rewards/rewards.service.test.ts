@@ -5,12 +5,7 @@ vi.mock('../../db/pool.js', () => ({
 }))
 
 import { pool } from '../../db/pool.js'
-import {
-  RewardError,
-  getCatalog,
-  getUserRedemptions,
-  purchaseReward,
-} from './rewards.service.js'
+import { RewardError, getCatalog, getUserRedemptions, purchaseReward } from './rewards.service.js'
 
 const mockPoolQuery = pool.query as ReturnType<typeof vi.fn>
 const mockConnect = pool.connect as ReturnType<typeof vi.fn>

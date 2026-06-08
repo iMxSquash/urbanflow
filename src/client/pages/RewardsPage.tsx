@@ -69,7 +69,9 @@ function RewardCard({ reward, purchasing, onPurchase }: RewardCardProps) {
         <p className="text-caption text-slate-400 mt-1">{reward.partnerName}</p>
       </div>
       <div className="mt-auto flex items-center justify-between gap-3 pt-1">
-        <span className="text-body font-bold text-slate-900">{formatPoints(reward.pointsCost)}</span>
+        <span className="text-body font-bold text-slate-900">
+          {formatPoints(reward.pointsCost)}
+        </span>
         <button
           type="button"
           disabled={!reward.affordable || purchasing}
@@ -92,7 +94,9 @@ function RedemptionRow({ redemption }: { redemption: UserRedemption }) {
   return (
     <li className="card p-4 flex items-center justify-between gap-4">
       <div className="min-w-0">
-        <p className="text-body-sm font-semibold text-slate-900 truncate">{redemption.rewardName}</p>
+        <p className="text-body-sm font-semibold text-slate-900 truncate">
+          {redemption.rewardName}
+        </p>
         <p className="text-caption text-slate-400 mt-0.5">
           {formatDate(redemption.redeemedAt)} · {formatPoints(redemption.pointsSpent)}
         </p>
@@ -187,7 +191,9 @@ export default function RewardsPage() {
               Boutique de récompenses
             </h1>
             <p className="text-caption text-slate-400">
-              {loading ? 'Chargement du solde…' : `Solde : ${formatPoints(catalog?.totalPoints ?? 0)}`}
+              {loading
+                ? 'Chargement du solde…'
+                : `Solde : ${formatPoints(catalog?.totalPoints ?? 0)}`}
             </p>
           </div>
         </div>
@@ -213,9 +219,8 @@ export default function RewardsPage() {
           >
             <p className="font-semibold">« {lastPurchase.rewardName} » échangé avec succès !</p>
             <p>
-              Votre code :{' '}
-              <code className="font-mono font-semibold">{lastPurchase.code}</code> — retrouvez-le
-              dans « Mes récompenses » ci-dessous.
+              Votre code : <code className="font-mono font-semibold">{lastPurchase.code}</code> —
+              retrouvez-le dans « Mes récompenses » ci-dessous.
             </p>
           </div>
         )}
@@ -243,7 +248,10 @@ export default function RewardsPage() {
               <RewardCardSkeleton />
             </div>
           ) : catalog && catalog.rewards.length > 0 ? (
-            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3" aria-label="Catalogue des récompenses">
+            <ul
+              className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+              aria-label="Catalogue des récompenses"
+            >
               {catalog.rewards.map((reward) => (
                 <li key={reward.id}>
                   <RewardCard
