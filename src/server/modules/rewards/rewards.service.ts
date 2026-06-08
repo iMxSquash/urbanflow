@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto'
 import { pool } from '../../db/pool.js'
 import type { PurchaseResult, RewardCatalog, RewardType, UserRedemption } from './rewards.types.js'
 
-export type RewardErrorCode = 'NOT_FOUND' | 'INACTIVE' | 'INSUFFICIENT_POINTS'
+export type RewardErrorCode = 'NOT_FOUND' | 'INACTIVE' | 'INSUFFICIENT_POINTS' | 'USER_NOT_FOUND'
 
 export class RewardError extends Error {
   constructor(
@@ -111,7 +111,16 @@ export async function purchaseReward(userId: string, rewardId: string): Promise<
       [reward.points_cost, userId]
     )
     const userRow = userResult.rows[0]
-    if (!userRow) throw new RewardError('INSUFFICIENT_POINTS', 'Solde de points insuffisant')
+    if (!userRow) {
+      // L'UPDATE conditionnel ne distingue pas "solde insuffisant" de "compte supprimé" :
+      // on relit l'utilisateur pour renvoyer une erreur fidèle au cas réel.
+      const existingUser = await client.query<{ total_points: number }>(
+        `SELECT total_points FROM users WHERE id = $1`,
+        [userId]
+      )
+      if (!existingUser.rows[0]) throw new RewardError('USER_NOT_FOUND', 'Utilisateur introuvable')
+      throw new RewardError('INSUFFICIENT_POINTS', 'Solde de points insuffisant')
+    }
 
     const code = `RDM-${randomUUID().slice(0, 8).toUpperCase()}`
 

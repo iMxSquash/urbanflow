@@ -206,11 +206,12 @@ describe('purchaseReward', () => {
     expect((error as RewardError).code).toBe('INACTIVE')
   })
 
-  it('rejette avec INSUFFICIENT_POINTS si le solde est trop faible (UPDATE conditionnel → 0 ligne)', async () => {
+  it('rejette avec INSUFFICIENT_POINTS si le solde est trop faible (UPDATE conditionnel → 0 ligne, mais utilisateur existant)', async () => {
     setupClientSequence(
       { rows: [] }, // BEGIN
       { rows: [{ points_cost: 900, active: true }] }, // SELECT reward
       { rows: [] }, // UPDATE users → 0 ligne (solde insuffisant)
+      { rows: [{ total_points: 100 }] }, // SELECT fallback → utilisateur trouvé
       { rows: [] } // ROLLBACK
     )
 
@@ -218,6 +219,23 @@ describe('purchaseReward', () => {
 
     expect(error).toBeInstanceOf(RewardError)
     expect((error as RewardError).code).toBe('INSUFFICIENT_POINTS')
+    const sqls = mockClient.query.mock.calls.map((call) => String(call[0]))
+    expect(sqls.some((s) => s.includes('INSERT INTO reward_redemptions'))).toBe(false)
+  })
+
+  it('rejette avec USER_NOT_FOUND si le compte a été supprimé (UPDATE conditionnel → 0 ligne et utilisateur introuvable)', async () => {
+    setupClientSequence(
+      { rows: [] }, // BEGIN
+      { rows: [{ points_cost: 120, active: true }] }, // SELECT reward
+      { rows: [] }, // UPDATE users → 0 ligne
+      { rows: [] }, // SELECT fallback → aucun utilisateur
+      { rows: [] } // ROLLBACK
+    )
+
+    const error = await purchaseReward(USER_ID, REWARD_ID).catch((e: unknown) => e)
+
+    expect(error).toBeInstanceOf(RewardError)
+    expect((error as RewardError).code).toBe('USER_NOT_FOUND')
     const sqls = mockClient.query.mock.calls.map((call) => String(call[0]))
     expect(sqls.some((s) => s.includes('INSERT INTO reward_redemptions'))).toBe(false)
   })

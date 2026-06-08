@@ -7,6 +7,7 @@ const ERROR_STATUS: Record<rewardsService.RewardErrorCode, number> = {
   NOT_FOUND: 404,
   INACTIVE: 409,
   INSUFFICIENT_POINTS: 409,
+  USER_NOT_FOUND: 404,
 }
 
 export async function getCatalog(req: Request, res: Response): Promise<void> {
