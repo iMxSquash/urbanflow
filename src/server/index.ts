@@ -21,6 +21,7 @@ import profileRouter from './modules/profile/index.js'
 import transportRouter from './modules/transport/index.js'
 import routingRouter from './modules/routing/index.js'
 import gamificationRouter from './modules/gamification/index.js'
+import rewardsRouter from './modules/rewards/index.js'
 import demoRouter from './modules/demo/demo.routes.js'
 
 const app = express()
@@ -50,6 +51,7 @@ app.use('/api/profile', profileRouter)
 app.use('/api/transport', transportRouter)
 app.use('/api/routing', routingRouter)
 app.use('/api/gamification', gamificationRouter)
+app.use('/api/rewards', rewardsRouter)
 if (process.env.NODE_ENV !== 'production' || process.env.DEMO_MODE) {
   app.use('/api/demo', demoRouter)
 }

@@ -277,6 +277,26 @@ export default function MapPage() {
             </svg>
           </Link>
           <Link
+            to="/rewards"
+            aria-label="Boutique de récompenses"
+            className="w-10 h-10 flex items-center justify-center rounded-button text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-fast"
+          >
+            <svg
+              aria-hidden="true"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="3" y="8" width="18" height="13" rx="1" />
+              <path d="M3 8h18M12 8v13M7.5 8a2.5 2.5 0 0 1 0-5C9 3 12 5 12 8M16.5 8a2.5 2.5 0 0 0 0-5C15 3 12 5 12 8" />
+            </svg>
+          </Link>
+          <Link
             to="/parametres"
             aria-label="Paramètres"
             className="w-10 h-10 flex items-center justify-center rounded-button text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-fast"

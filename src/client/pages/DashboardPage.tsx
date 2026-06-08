@@ -152,6 +152,27 @@ export default function DashboardPage() {
               />
             </div>
           ) : null}
+          {!loading && stats && (
+            <Link
+              to="/rewards"
+              className="mt-3 inline-flex items-center gap-1.5 text-body-sm font-medium text-eco-700 hover:text-eco-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-600 rounded-button px-1"
+            >
+              Échanger mes points contre des récompenses
+              <svg
+                aria-hidden="true"
+                width="14"
+                height="14"
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M8 4l6 6-6 6" />
+              </svg>
+            </Link>
+          )}
         </section>
 
         {/* ── Section 2 : CO2 hebdomadaire ─────────────────────────────── */}

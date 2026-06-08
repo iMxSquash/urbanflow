@@ -1,0 +1,23 @@
+INSERT INTO rewards (name, description, reward_type, points_cost, partner_name) VALUES
+  ('Bicloo — 1 heure offerte',
+   'Une heure de location Bicloo gratuite, à utiliser sur le réseau de vélos en libre-service de Nantes Métropole',
+   'discount_code', 120, 'Bicloo / Nantes Métropole'),
+  ('Naolib — Code -20% sur un trajet',
+   'Réduction de 20% sur l''achat d''un titre de transport unitaire Naolib (bus, tramway, navibus, chronobus)',
+   'discount_code', 150, 'Naolib / Semitan'),
+  ('Le Voyage à Nantes — Pass visite -30%',
+   'Réduction de 30% sur le Pass Le Voyage à Nantes donnant accès aux principaux parcours et lieux culturels de la métropole',
+   'discount_code', 400, 'Le Voyage à Nantes'),
+  ('Billet Planétarium de Nantes',
+   'Une entrée pour une séance au Planétarium de Nantes, dans le quartier de Procé',
+   'museum_ticket', 500, 'Planétarium de Nantes'),
+  ('Billet Muséum d''histoire naturelle de Nantes',
+   'Une entrée pour les collections permanentes du Muséum d''histoire naturelle de Nantes',
+   'museum_ticket', 600, 'Muséum de Nantes'),
+  ('Billet Musée d''Arts de Nantes',
+   'Une entrée pour les collections permanentes du Musée d''Arts de Nantes, place François-II',
+   'museum_ticket', 850, 'Musée d''Arts de Nantes'),
+  ('Billet Château des Ducs de Bretagne',
+   'Une entrée pour le château et le Musée d''histoire de Nantes',
+   'museum_ticket', 900, 'Château des Ducs de Bretagne')
+ON CONFLICT (name) DO NOTHING;
