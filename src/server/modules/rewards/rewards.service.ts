@@ -1,6 +1,46 @@
 import { randomUUID } from 'crypto'
+import type pg from 'pg'
 import { pool } from '../../db/pool.js'
 import type { PurchaseResult, RewardCatalog, RewardType, UserRedemption } from './rewards.types.js'
+
+const MAX_CODE_GENERATION_ATTEMPTS = 3
+
+function isUniqueViolation(err: unknown): boolean {
+  return (err as { code?: string }).code === '23505'
+}
+
+function generateRedemptionCode(): string {
+  return `RDM-${randomUUID().slice(0, 8).toUpperCase()}`
+}
+
+// Le code (8 hex tirés d'un UUID) est soumis à une contrainte d'unicité en DB :
+// une collision reste rare mais possible. On retente avec un nouveau code via un
+// SAVEPOINT plutôt que de faire échouer tout l'achat sur une erreur 23505 isolée.
+async function insertRedemptionWithUniqueCode(
+  client: pg.PoolClient,
+  userId: string,
+  rewardId: string,
+  pointsCost: number
+): Promise<{ id: string; code: string }> {
+  for (let attempt = 1; ; attempt++) {
+    const code = generateRedemptionCode()
+    await client.query('SAVEPOINT redemption_code')
+    try {
+      const { rows } = await client.query<{ id: string }>(
+        `INSERT INTO reward_redemptions (user_id, reward_id, code, points_spent)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id`,
+        [userId, rewardId, code, pointsCost]
+      )
+      const row = rows[0]
+      if (!row) throw new Error('Redemption insert returned no row')
+      return { id: row.id, code }
+    } catch (err) {
+      if (!isUniqueViolation(err) || attempt >= MAX_CODE_GENERATION_ATTEMPTS) throw err
+      await client.query('ROLLBACK TO SAVEPOINT redemption_code')
+    }
+  }
+}
 
 export type RewardErrorCode = 'NOT_FOUND' | 'INACTIVE' | 'INSUFFICIENT_POINTS' | 'USER_NOT_FOUND'
 
@@ -122,21 +162,17 @@ export async function purchaseReward(userId: string, rewardId: string): Promise<
       throw new RewardError('INSUFFICIENT_POINTS', 'Solde de points insuffisant')
     }
 
-    const code = `RDM-${randomUUID().slice(0, 8).toUpperCase()}`
-
-    const redemptionResult = await client.query<{ id: string }>(
-      `INSERT INTO reward_redemptions (user_id, reward_id, code, points_spent)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id`,
-      [userId, rewardId, code, reward.points_cost]
+    const { id: redemptionId, code } = await insertRedemptionWithUniqueCode(
+      client,
+      userId,
+      rewardId,
+      reward.points_cost
     )
-    const redemptionRow = redemptionResult.rows[0]
-    if (!redemptionRow) throw new Error('Redemption insert returned no row')
 
     await client.query('COMMIT')
 
     return {
-      redemptionId: redemptionRow.id,
+      redemptionId,
       code,
       pointsSpent: reward.points_cost,
       totalPoints: userRow.total_points,

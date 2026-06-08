@@ -125,9 +125,12 @@ describe('getUserRedemptions', () => {
 // ── purchaseReward ────────────────────────────────────────────────────────────
 
 describe('purchaseReward', () => {
-  function setupClientSequence(...responses: Array<{ rows: unknown[] }>) {
+  function setupClientSequence(...responses: Array<{ rows: unknown[] } | Error>) {
     let i = 0
-    mockClient.query.mockImplementation(() => Promise.resolve(responses[i++] ?? { rows: [] }))
+    mockClient.query.mockImplementation(() => {
+      const response = responses[i++] ?? { rows: [] }
+      return response instanceof Error ? Promise.reject(response) : Promise.resolve(response)
+    })
   }
 
   it("débite les points, génère un code et enregistre l'échange", async () => {
@@ -135,6 +138,7 @@ describe('purchaseReward', () => {
       { rows: [] }, // BEGIN
       { rows: [{ points_cost: 120, active: true }] }, // SELECT reward
       { rows: [{ total_points: 380 }] }, // UPDATE users RETURNING
+      { rows: [] }, // SAVEPOINT redemption_code
       { rows: [{ id: REDEMPTION_ID }] }, // INSERT reward_redemptions RETURNING
       { rows: [] } // COMMIT
     )
@@ -152,6 +156,7 @@ describe('purchaseReward', () => {
       { rows: [] },
       { rows: [{ points_cost: 120, active: true }] },
       { rows: [{ total_points: 380 }] },
+      { rows: [] },
       { rows: [{ id: REDEMPTION_ID }] },
       { rows: [] }
     )
@@ -168,6 +173,7 @@ describe('purchaseReward', () => {
       { rows: [] },
       { rows: [{ points_cost: 120, active: true }] },
       { rows: [{ total_points: 380 }] },
+      { rows: [] },
       { rows: [{ id: REDEMPTION_ID }] },
       { rows: [] }
     )
@@ -245,6 +251,7 @@ describe('purchaseReward', () => {
       { rows: [] },
       { rows: [{ points_cost: 120, active: true }] },
       { rows: [{ total_points: 380 }] },
+      { rows: [] },
       { rows: [{ id: REDEMPTION_ID }] },
       { rows: [] }
     )
@@ -254,5 +261,64 @@ describe('purchaseReward', () => {
     expect(result.code.startsWith('RDM-')).toBe(true)
     expect(result.code).toBe(result.code.toUpperCase())
     expect(result.code).toHaveLength('RDM-'.length + 8)
+  })
+
+  it('relance avec un nouveau code via SAVEPOINT en cas de collision (23505) sur le code généré', async () => {
+    const collisionError = Object.assign(
+      new Error('duplicate key value violates unique constraint'),
+      {
+        code: '23505',
+      }
+    )
+    setupClientSequence(
+      { rows: [] }, // BEGIN
+      { rows: [{ points_cost: 120, active: true }] }, // SELECT reward
+      { rows: [{ total_points: 380 }] }, // UPDATE users RETURNING
+      { rows: [] }, // SAVEPOINT redemption_code (tentative 1)
+      collisionError, // INSERT → collision sur le code généré
+      { rows: [] }, // ROLLBACK TO SAVEPOINT redemption_code
+      { rows: [] }, // SAVEPOINT redemption_code (tentative 2)
+      { rows: [{ id: REDEMPTION_ID }] }, // INSERT → succès avec un nouveau code
+      { rows: [] } // COMMIT
+    )
+
+    const result = await purchaseReward(USER_ID, REWARD_ID)
+
+    expect(result.redemptionId).toBe(REDEMPTION_ID)
+    const sqls = mockClient.query.mock.calls.map((call) => String(call[0]).trim())
+    expect(sqls.filter((s) => s === 'SAVEPOINT redemption_code')).toHaveLength(2)
+    expect(sqls).toContain('ROLLBACK TO SAVEPOINT redemption_code')
+    expect(sqls[sqls.length - 1]).toBe('COMMIT')
+  })
+
+  it('abandonne et fait un rollback complet après des collisions de code répétées', async () => {
+    const collisionError = Object.assign(
+      new Error('duplicate key value violates unique constraint'),
+      {
+        code: '23505',
+      }
+    )
+    setupClientSequence(
+      { rows: [] }, // BEGIN
+      { rows: [{ points_cost: 120, active: true }] }, // SELECT reward
+      { rows: [{ total_points: 380 }] }, // UPDATE users RETURNING
+      { rows: [] },
+      collisionError, // tentative 1
+      { rows: [] },
+      { rows: [] },
+      collisionError, // tentative 2
+      { rows: [] },
+      { rows: [] },
+      collisionError, // tentative 3 (dernière autorisée) → abandon, propage l'erreur
+      { rows: [] } // ROLLBACK
+    )
+
+    const error = await purchaseReward(USER_ID, REWARD_ID).catch((e: unknown) => e)
+
+    expect(error).toBe(collisionError)
+    const sqls = mockClient.query.mock.calls.map((call) => String(call[0]).trim())
+    expect(sqls.filter((s) => s === 'SAVEPOINT redemption_code')).toHaveLength(3)
+    expect(sqls[sqls.length - 1]).toBe('ROLLBACK')
+    expect(mockClient.release).toHaveBeenCalledOnce()
   })
 })
