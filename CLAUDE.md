@@ -41,7 +41,7 @@ Nantes Métropole — réseau Naolib (Semitan). Toutes les coordonnées GPS, don
 
 ### CI/CD
 - GitHub Actions : lint + build uniquement (PAS de Lighthouse CI, instable sur runners partagés)
-- Déploiement : Vercel (frontend) + Render (backend + PostgreSQL)
+- Déploiement : Vercel (frontend) + Render (backend) + Supabase (PostgreSQL — projet `urbanflow-smartroute`, région `eu-west-3`)
 
 ## Architecture
 
@@ -123,8 +123,9 @@ Variable d'env `DEMO_MODE=true` fait basculer TOUS les appels API externes vers 
 ## Variables d'environnement
 
 ```env
-# Base de données
-DATABASE_URL=postgresql://user:pass@host:5432/urbanflow
+# Base de données — Supabase Transaction Pooler (IPv4, port 6543)
+# Format : postgresql://postgres.[ref]:[PASSWORD]@aws-0-eu-west-3.pooler.supabase.com:6543/postgres
+DATABASE_URL=postgresql://postgres.zrukmxjxnvmzjacwbrpv:[PASSWORD]@aws-0-eu-west-3.pooler.supabase.com:6543/postgres
 
 # Mode démo (surcharge tout)
 DEMO_MODE=false
@@ -147,6 +148,16 @@ CORS_ORIGIN=http://localhost:5173
 ```
 
 ## Conventions de code
+
+### Principes généraux
+
+- **DRY** (Don't Repeat Yourself) — toute logique dupliquée deux fois devient une abstraction. Extraire dans une fonction, un hook ou un service.
+- **KISS** (Keep It Simple, Stupid) — la solution la plus simple qui fonctionne est la bonne. Pas de sur-ingénierie.
+- **YAGNI** (You Aren't Gonna Need It) — ne pas implémenter ce qui n'est pas demandé maintenant. Pas de code "au cas où".
+- **SRP** (Single Responsibility Principle) — chaque module, composant ou fonction fait une seule chose.
+- **Fail fast** — valider les préconditions tôt, ne pas laisser une erreur se propager silencieusement.
+- Pas de commentaires qui expliquent le QUOI (les noms suffisent) — seulement le POURQUOI quand ce n'est pas évident.
+- Pas de code mort, pas de `console.log` oublié, pas de `TODO` sans ticket associé.
 
 ### TypeScript
 - Mode strict activé (`"strict": true` dans tsconfig)
@@ -286,6 +297,9 @@ Pondérations par préférence utilisateur :
 - Fix branches : `fix/nom-bug`
 - Commits conventionnels : `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`
 - PR obligatoire vers main (même en solo, pour l'historique)
+- **Pas de `Co-Authored-By` dans les messages de commit** — ne jamais ajouter de trailer Claude/AI
+- Un commit = un changement logique cohérent (pas de "fix stuff" fourre-tout)
+- Description en anglais, impératif, < 72 caractères
 
 ## Philosophie de résolution de problèmes
 
