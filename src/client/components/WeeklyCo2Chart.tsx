@@ -38,7 +38,7 @@ export default function WeeklyCo2Chart({ data }: WeeklyCo2ChartProps) {
   const isEmpty = data.every((d) => d.co2SavedGrams === 0)
   if (isEmpty) {
     return (
-      <div className="h-40 flex items-center justify-center text-body-sm text-slate-400">
+      <div className="h-40 flex items-center justify-center text-body-sm text-text-muted">
         Aucun trajet enregistré ces 4 dernières semaines
       </div>
     )
@@ -61,16 +61,14 @@ export default function WeeklyCo2Chart({ data }: WeeklyCo2ChartProps) {
           width={TIP_W}
           height={TIP_H}
           rx={6}
-          fill="white"
-          stroke="#e2e8f0"
-          strokeWidth={1}
+          style={{ fill: 'var(--color-bg-card)', stroke: 'var(--color-border)', strokeWidth: 1 }}
         />
         <text
           x={tx + TIP_W / 2}
           y={ty + 14}
           textAnchor="middle"
           fontSize={10}
-          fill="#475569"
+          style={{ fill: 'var(--color-text-secondary)' }}
           fontWeight="600"
         >
           {tip.label}
@@ -80,7 +78,7 @@ export default function WeeklyCo2Chart({ data }: WeeklyCo2ChartProps) {
           y={ty + 29}
           textAnchor="middle"
           fontSize={10}
-          fill="#16a34a"
+          style={{ fill: 'var(--color-accent-eco)' }}
           fontWeight="700"
         >
           {formatCo2(tip.value)} éco.
@@ -96,8 +94,20 @@ export default function WeeklyCo2Chart({ data }: WeeklyCo2ChartProps) {
         const y = PAD_T + IH - (tick / maxVal) * IH
         return (
           <g key={tick}>
-            <line x1={PAD_L} y1={y} x2={PAD_L + IW} y2={y} stroke="#f1f5f9" strokeWidth={1} />
-            <text x={PAD_L - 6} y={y + 4} textAnchor="end" fontSize={10} fill="#94a3b8">
+            <line
+              x1={PAD_L}
+              y1={y}
+              x2={PAD_L + IW}
+              y2={y}
+              style={{ stroke: 'var(--color-border)', strokeWidth: 1 }}
+            />
+            <text
+              x={PAD_L - 6}
+              y={y + 4}
+              textAnchor="end"
+              fontSize={10}
+              style={{ fill: 'var(--color-text-muted)' }}
+            >
               {formatCo2(tick)}
             </text>
           </g>
@@ -118,7 +128,7 @@ export default function WeeklyCo2Chart({ data }: WeeklyCo2ChartProps) {
               y={by}
               width={barW}
               height={barH}
-              fill="#16a34a"
+              fill="#4ade80"
               rx={3}
               tabIndex={0}
               role="img"
@@ -129,7 +139,13 @@ export default function WeeklyCo2Chart({ data }: WeeklyCo2ChartProps) {
               onFocus={() => setTip({ cx, top: by, label, value: d.co2SavedGrams })}
               onBlur={() => setTip(null)}
             />
-            <text x={cx} y={VH - 6} textAnchor="middle" fontSize={10} fill="#94a3b8">
+            <text
+              x={cx}
+              y={VH - 6}
+              textAnchor="middle"
+              fontSize={10}
+              style={{ fill: 'var(--color-text-muted)' }}
+            >
               {label}
             </text>
           </g>

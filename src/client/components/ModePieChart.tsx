@@ -3,12 +3,12 @@ import type { ModeCount } from '../services/gamification.service'
 
 const MODE_COLORS: Record<string, string> = {
   walk: '#94a3b8',
-  bike: '#16a34a',
-  tramway: '#6366f1',
-  bus: '#f59e0b',
-  scooter: '#0891b2',
-  navibus: '#0ea5e9',
-  train: '#7c3aed',
+  bike: '#4ade80',
+  tramway: '#818cf8',
+  bus: '#fcd34d',
+  scooter: '#22d3ee',
+  navibus: '#38bdf8',
+  train: '#a78bfa',
 }
 
 const MODE_LABELS: Record<string, string> = {
@@ -21,20 +21,23 @@ const MODE_LABELS: Record<string, string> = {
   train: 'Train',
 }
 
-const DEFAULT_COLOR = '#cbd5e1'
+const DEFAULT_COLOR = '#6ee7b7'
 
 interface ModePieChartProps {
   data: ModeCount[]
   tripCount: number
 }
 
-const CX = 160
+const CX = 100
 const CY = 88
 const OUTER_R = 70
 const INNER_R = 36
-const VW = 380
-const LEGEND_Y = CY + OUTER_R + 20
-const PER_ROW = 3
+// Legend is a vertical list to the right of the donut
+const LEGEND_X = 200
+const LEGEND_START_Y = 40
+const LEGEND_ROW_H = 22
+const VW = 390
+const VH = 200
 
 function slicePath(
   cx: number,
@@ -56,7 +59,7 @@ export default function ModePieChart({ data, tripCount }: ModePieChartProps) {
 
   if (data.length === 0) {
     return (
-      <div className="h-40 flex items-center justify-center text-body-sm text-slate-400">
+      <div className="h-40 flex items-center justify-center text-body-sm text-text-muted">
         Aucun trajet enregistré ce mois
       </div>
     )
@@ -73,14 +76,12 @@ export default function ModePieChart({ data, tripCount }: ModePieChartProps) {
     return {
       mode: d.mode,
       count: d.count,
+      pct: Math.round((d.count / total) * 100),
       name: MODE_LABELS[d.mode] ?? d.mode,
       color: MODE_COLORS[d.mode] ?? DEFAULT_COLOR,
       path: slicePath(CX, CY, OUTER_R, startAngle, endAngle),
     }
   })
-
-  const legendRows = Math.ceil(data.length / PER_ROW)
-  const VH = LEGEND_Y + legendRows * 20 + 4
 
   const hoveredSlice = hovered ? slices.find((s) => s.mode === hovered) : null
 
@@ -97,13 +98,12 @@ export default function ModePieChart({ data, tripCount }: ModePieChartProps) {
           key={s.mode}
           d={s.path}
           fill={s.color}
-          stroke="white"
-          strokeWidth={2}
-          opacity={hovered && hovered !== s.mode ? 0.45 : 1}
+          stroke="none"
+          opacity={hovered && hovered !== s.mode ? 0.35 : 1}
           style={{ transition: 'opacity 120ms', cursor: 'pointer', outline: 'none' }}
           tabIndex={0}
           role="img"
-          aria-label={`${s.name} : ${s.count} trajet${s.count > 1 ? 's' : ''} (${Math.round((s.count / total) * 100)}%)`}
+          aria-label={`${s.name} : ${s.count} trajet${s.count > 1 ? 's' : ''} (${s.pct}%)`}
           onMouseEnter={() => setHovered(s.mode)}
           onMouseLeave={() => setHovered(null)}
           onFocus={() => setHovered(s.mode)}
@@ -112,19 +112,44 @@ export default function ModePieChart({ data, tripCount }: ModePieChartProps) {
       ))}
 
       {/* Donut hole */}
-      <circle cx={CX} cy={CY} r={INNER_R} fill="white" pointerEvents="none" />
+      <circle
+        cx={CX}
+        cy={CY}
+        r={INNER_R}
+        style={{ fill: 'var(--color-bg-card)' }}
+        pointerEvents="none"
+      />
 
       {/* Center label */}
       {hoveredSlice ? (
         <g pointerEvents="none">
-          <text x={CX} y={CY - 6} textAnchor="middle" fontSize={11} fill="#1e293b" fontWeight="700">
+          <text
+            x={CX}
+            y={CY - 6}
+            textAnchor="middle"
+            fontSize={11}
+            style={{ fill: 'var(--color-text-primary)' }}
+            fontWeight="700"
+          >
             {hoveredSlice.name}
           </text>
-          <text x={CX} y={CY + 9} textAnchor="middle" fontSize={10} fill="#64748b">
+          <text
+            x={CX}
+            y={CY + 9}
+            textAnchor="middle"
+            fontSize={10}
+            style={{ fill: 'var(--color-text-muted)' }}
+          >
             {hoveredSlice.count} trajet{hoveredSlice.count > 1 ? 's' : ''}
           </text>
-          <text x={CX} y={CY + 23} textAnchor="middle" fontSize={10} fill="#64748b">
-            {Math.round((hoveredSlice.count / total) * 100)}%
+          <text
+            x={CX}
+            y={CY + 23}
+            textAnchor="middle"
+            fontSize={10}
+            style={{ fill: 'var(--color-text-muted)' }}
+          >
+            {hoveredSlice.pct}%
           </text>
         </g>
       ) : (
@@ -133,24 +158,35 @@ export default function ModePieChart({ data, tripCount }: ModePieChartProps) {
           y={CY + 5}
           textAnchor="middle"
           fontSize={11}
-          fill="#94a3b8"
+          style={{ fill: 'var(--color-text-muted)' }}
           pointerEvents="none"
         >
           {tripCount} trajet{tripCount > 1 ? 's' : ''}
         </text>
       )}
 
-      {/* Legend */}
+      {/* Legend — vertical list to the right of donut */}
       {slices.map((s, i) => {
-        const col = i % PER_ROW
-        const row = Math.floor(i / PER_ROW)
-        const lx = (VW / PER_ROW) * col + 12
-        const ly = LEGEND_Y + row * 20
+        const ly = LEGEND_START_Y + i * LEGEND_ROW_H
         return (
           <g key={s.mode}>
-            <circle cx={lx + 5} cy={ly} r={5} fill={s.color} />
-            <text x={lx + 14} y={ly + 4} fontSize={11} fill="#64748b">
-              {s.name} · {s.count}
+            <circle cx={LEGEND_X + 6} cy={ly} r={5} fill={s.color} />
+            <text
+              x={LEGEND_X + 18}
+              y={ly + 4}
+              fontSize={11}
+              style={{ fill: 'var(--color-text-secondary)' }}
+            >
+              {s.name}
+            </text>
+            <text
+              x={VW - 4}
+              y={ly + 4}
+              fontSize={11}
+              textAnchor="end"
+              style={{ fill: 'var(--color-text-muted)' }}
+            >
+              {s.pct}%
             </text>
           </g>
         )
