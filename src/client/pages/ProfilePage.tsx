@@ -1,150 +1,112 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useProfileStore } from '../stores/profile.store'
+import { useAuthStore } from '../stores/auth.store'
 import { useGamificationStore } from '../stores/gamification.store'
 import { getUserBadges } from '../services/gamification.service'
 import type { BadgeWithStatus } from '../services/gamification.service'
 import { BadgeGrid } from '../components/BadgeGrid'
+import { BottomNav } from '../components/BottomNav'
 import type { MobilityProfile, TransportMode, UserPreference } from '@shared/types/index'
 
-// ─── Config des options ───────────────────────────────────────────────────────
+// ── Design tokens ────────────────────────────────────────────────────────────
 
-const PREF_OPTIONS: Array<{
-  value: UserPreference
-  label: string
-  description: string
-  icon: string
-  selectedBg: string
-  selectedBorder: string
-  selectedText: string
-}> = [
-  {
-    value: 'eco',
-    label: 'Éco',
-    description: 'Priorité au CO₂ économisé',
-    icon: '🌱',
-    selectedBg: 'bg-eco-50',
-    selectedBorder: 'border-eco-600',
-    selectedText: 'text-eco-700',
-  },
-  {
-    value: 'balanced',
-    label: 'Équilibré',
-    description: 'Durée et empreinte carbone',
-    icon: '⚖️',
-    selectedBg: 'bg-slate-100',
-    selectedBorder: 'border-slate-500',
-    selectedText: 'text-slate-700',
-  },
-  {
-    value: 'fast',
-    label: 'Rapide',
-    description: 'Priorité à la durée totale',
-    icon: '⚡',
-    selectedBg: 'bg-transit-50',
-    selectedBorder: 'border-transit-600',
-    selectedText: 'text-transit-700',
-  },
+const MODE_COLORS: Record<TransportMode, string> = {
+  walk: '#94a3b8',
+  bike: '#4ade80',
+  tramway: '#818cf8',
+  bus: '#fcd34d',
+  scooter: '#22d3ee',
+  navibus: '#38bdf8',
+  train: '#a78bfa',
+}
+
+// ── Config ───────────────────────────────────────────────────────────────────
+
+// Order matches the Figma (Équilibré | Rapide | Éco)
+const PREF_OPTIONS: Array<{ value: UserPreference; label: string }> = [
+  { value: 'balanced', label: 'Équilibré' },
+  { value: 'fast', label: 'Rapide' },
+  { value: 'eco', label: 'Éco' },
 ]
 
-const MODE_OPTIONS: Array<{
-  value: TransportMode
-  label: string
-  icon: string
-  selectedBg: string
-  selectedBorder: string
-  selectedText: string
-}> = [
-  {
-    value: 'walk',
-    label: 'Marche',
-    icon: '🚶',
-    selectedBg: 'bg-slate-100',
-    selectedBorder: 'border-slate-500',
-    selectedText: 'text-slate-700',
-  },
-  {
-    value: 'bike',
-    label: 'Vélo',
-    icon: '🚲',
-    selectedBg: 'bg-eco-50',
-    selectedBorder: 'border-eco-600',
-    selectedText: 'text-eco-700',
-  },
-  {
-    value: 'scooter',
-    label: 'Trottinette',
-    icon: '🛴',
-    selectedBg: 'bg-sky-50',
-    selectedBorder: 'border-sky-600',
-    selectedText: 'text-sky-700',
-  },
-  {
-    value: 'tramway',
-    label: 'Tramway',
-    icon: '🚋',
-    selectedBg: 'bg-transit-50',
-    selectedBorder: 'border-transit-600',
-    selectedText: 'text-transit-700',
-  },
-  {
-    value: 'bus',
-    label: 'Bus',
-    icon: '🚌',
-    selectedBg: 'bg-amber-50',
-    selectedBorder: 'border-amber-600',
-    selectedText: 'text-amber-700',
-  },
-  {
-    value: 'navibus',
-    label: 'Navibus',
-    icon: '⛴️',
-    selectedBg: 'bg-sky-50',
-    selectedBorder: 'border-sky-500',
-    selectedText: 'text-sky-700',
-  },
-  {
-    value: 'train',
-    label: 'Train',
-    icon: '🚆',
-    selectedBg: 'bg-violet-50',
-    selectedBorder: 'border-violet-600',
-    selectedText: 'text-violet-700',
-  },
+// Order matches the Figma (Marche, Tramway, Bus, Vélo, Trottinette, Navibus, Train)
+const MODE_OPTIONS: Array<{ value: TransportMode; label: string; icon: string }> = [
+  { value: 'walk', label: 'Marche', icon: '🚶' },
+  { value: 'tramway', label: 'Tramway', icon: '🚋' },
+  { value: 'bus', label: 'Bus', icon: '🚌' },
+  { value: 'bike', label: 'Vélo', icon: '🚲' },
+  { value: 'scooter', label: 'Trottinette', icon: '🛴' },
+  { value: 'navibus', label: 'Navibus', icon: '⛴️' },
+  { value: 'train', label: 'Train', icon: '🚆' },
 ]
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function deriveName(email: string): string {
+  const local = email.split('@')[0] ?? ''
+  return local
+    .replace(/[._-]/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+// ── Sub-components ───────────────────────────────────────────────────────────
+
+function Toggle({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean
+  onChange: () => void
+  label: string
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={onChange}
+      className={[
+        'relative shrink-0 w-12 h-7 rounded-full transition-colors duration-200',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-eco',
+        checked ? 'bg-accent-eco' : 'bg-border-strong',
+      ].join(' ')}
+    >
+      <span
+        aria-hidden="true"
+        className={[
+          'absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-white shadow-sm',
+          'transition-transform duration-200',
+          checked ? 'translate-x-5' : 'translate-x-0',
+        ].join(' ')}
+      />
+    </button>
+  )
+}
+
+// ── Skeleton ─────────────────────────────────────────────────────────────────
 
 function ProfileSkeleton() {
   return (
     <div className="space-y-6" aria-busy="true" aria-label="Chargement du profil">
-      <div className="card p-4 lg:p-6">
-        <div className="skeleton h-6 w-56 rounded mb-2" />
-        <div className="skeleton h-4 w-72 rounded mb-4" />
-        <div className="grid grid-cols-3 gap-3">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="skeleton h-24 rounded-card" />
-          ))}
-        </div>
+      <div className="bg-bg-card rounded-card p-4 space-y-3">
+        {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+          <div key={i} className="skeleton h-14 rounded-xl" />
+        ))}
       </div>
-      <div className="card p-4 lg:p-6">
-        <div className="skeleton h-6 w-64 rounded mb-2" />
-        <div className="skeleton h-4 w-48 rounded mb-4" />
-        <div className="flex gap-3">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="skeleton h-12 w-28 rounded-button" />
-          ))}
-        </div>
+      <div className="bg-bg-card rounded-card p-4">
+        <div className="skeleton h-14 rounded-xl" />
       </div>
-      <div className="card p-4 lg:p-6">
-        <div className="skeleton h-6 w-56 rounded mb-2" />
-        <div className="skeleton h-4 rounded-full w-full mt-6" />
+      <div className="bg-bg-card rounded-card p-4">
+        <div className="skeleton h-16 rounded-xl" />
       </div>
     </div>
   )
 }
 
-// ─── Form (initialisé depuis le profil chargé) ────────────────────────────────
+// ── ProfileForm ───────────────────────────────────────────────────────────────
 
 interface FormState {
   preference: UserPreference
@@ -212,20 +174,77 @@ function ProfileForm({ profile }: { profile: MobilityProfile }) {
 
   return (
     <div className="space-y-6">
-      {/* ── Section 1 : Mode préféré ──────────────────────────────────── */}
-      <section className="card p-4 lg:p-6" aria-labelledby="pref-heading">
-        <h2 id="pref-heading" className="text-h3 font-semibold text-slate-900">
-          Mode de déplacement préféré
+      {/* ── Modes de transport ─────────────────────────────────────────── */}
+      <section aria-labelledby="modes-heading">
+        <h2
+          id="modes-heading"
+          className="text-h3 font-semibold text-accent-eco mb-3 px-1"
+        >
+          Modes de transport
         </h2>
-        <p className="text-body-sm text-slate-500 mt-0.5 mb-4">
-          Influence le classement des itinéraires proposés
-        </p>
+        <div
+          role="group"
+          aria-labelledby="modes-heading"
+          className="bg-bg-card rounded-card divide-y divide-border overflow-hidden"
+        >
+          {MODE_OPTIONS.map((mode) => {
+            const isSelected = form.modes.includes(mode.value)
+            const isOnlyMode = form.modes.length === 1 && isSelected
+            const color = MODE_COLORS[mode.value]
+            return (
+              <div
+                key={mode.value}
+                className="flex items-center gap-3 px-4 py-3.5"
+              >
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-base shrink-0"
+                  style={{ background: `${color}28` }}
+                  aria-hidden="true"
+                >
+                  {mode.icon}
+                </div>
+                <span className="flex-1 text-body text-text-primary">{mode.label}</span>
+                <Toggle
+                  checked={isSelected}
+                  onChange={() => !isOnlyMode && toggleMode(mode.value)}
+                  label={`${isSelected ? 'Désactiver' : 'Activer'} le mode ${mode.label}`}
+                />
+              </div>
+            )
+          })}
 
+          {/* PMR row */}
+          <div className="flex items-center gap-3 px-4 py-3.5">
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center text-base shrink-0"
+              style={{ background: '#60a5fa28' }}
+              aria-hidden="true"
+            >
+              ♿
+            </div>
+            <span className="flex-1 text-body text-text-primary">Accessibilité PMR</span>
+            <Toggle
+              checked={form.pmrAccessibility}
+              onChange={() => setForm((f) => ({ ...f, pmrAccessibility: !f.pmrAccessibility }))}
+              label={`Accessibilité PMR ${form.pmrAccessibility ? 'activée' : 'désactivée'}`}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ── Priorité itinéraire ────────────────────────────────────────── */}
+      <section aria-labelledby="pref-heading">
+        <h2
+          id="pref-heading"
+          className="text-h3 font-semibold text-accent-eco mb-3 px-1"
+        >
+          Priorité itinéraire
+        </h2>
         <div
           ref={radioGroupRef}
           role="radiogroup"
           aria-labelledby="pref-heading"
-          className="grid grid-cols-3 gap-3"
+          className="bg-bg-elevated rounded-[14px] p-1 flex gap-1"
           onKeyDown={handleRadioKeyDown}
         >
           {PREF_OPTIONS.map((opt) => {
@@ -239,147 +258,71 @@ function ProfileForm({ profile }: { profile: MobilityProfile }) {
                 tabIndex={isSelected ? 0 : -1}
                 onClick={() => setForm((f) => ({ ...f, preference: opt.value }))}
                 className={[
-                  'flex flex-col items-center text-center gap-1.5 p-3 rounded-card border-2 w-full',
-                  'transition-colors duration-fast',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-600 focus-visible:ring-offset-2',
-                  isSelected
-                    ? `${opt.selectedBg} ${opt.selectedBorder} ${opt.selectedText}`
-                    : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50',
+                  'flex-1 py-2.5 rounded-[10px] text-body-sm font-semibold transition-colors duration-fast',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-eco focus-visible:ring-inset',
+                  isSelected ? 'bg-accent-eco' : 'text-text-muted hover:text-text-secondary',
                 ].join(' ')}
+                style={isSelected ? { color: '#052e16' } : undefined}
               >
-                <span aria-hidden="true" className="text-2xl leading-none">
-                  {opt.icon}
-                </span>
-                <span className="text-body-sm font-semibold">{opt.label}</span>
-                <span className="text-caption leading-snug hidden sm:block">{opt.description}</span>
+                {opt.label}
               </button>
             )
           })}
         </div>
       </section>
 
-      {/* ── Section 2 : Modes acceptés ───────────────────────────────── */}
-      <section className="card p-4 lg:p-6" aria-labelledby="modes-heading">
-        <h2 id="modes-heading" className="text-h3 font-semibold text-slate-900">
-          Modes de transport acceptés
+      {/* ── Marche maximum ────────────────────────────────────────────── */}
+      <section aria-labelledby="walk-heading">
+        <h2
+          id="walk-heading"
+          className="text-h3 font-semibold text-accent-eco mb-3 px-1"
+        >
+          Marche maximum
         </h2>
-        <p className="text-body-sm text-slate-500 mt-0.5 mb-4">Sélectionnez au moins un mode</p>
-
-        <div role="group" aria-labelledby="modes-heading" className="flex flex-wrap gap-3">
-          {MODE_OPTIONS.map((mode) => {
-            const isSelected = form.modes.includes(mode.value)
-            const isOnlyMode = form.modes.length === 1 && isSelected
-            return (
-              <button
-                key={mode.value}
-                type="button"
-                aria-pressed={isSelected}
-                aria-disabled={isOnlyMode}
-                onClick={() => toggleMode(mode.value)}
-                title={isOnlyMode ? 'Au moins un mode requis' : undefined}
-                className={[
-                  'inline-flex items-center gap-2 px-4 rounded-button border-2 text-body-sm font-medium',
-                  'transition-colors duration-fast',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-600 focus-visible:ring-offset-2',
-                  isOnlyMode ? 'opacity-60 cursor-not-allowed' : '',
-                  isSelected
-                    ? `${mode.selectedBg} ${mode.selectedBorder} ${mode.selectedText}`
-                    : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50',
-                ].join(' ')}
-              >
-                <span aria-hidden="true">{mode.icon}</span>
-                {mode.label}
-              </button>
-            )
-          })}
-        </div>
-      </section>
-
-      {/* ── Section 3 : Accessibilité PMR ───────────────────────────── */}
-      <section className="card p-4 lg:p-6" aria-labelledby="pmr-heading">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h2 id="pmr-heading" className="text-h3 font-semibold text-slate-900">
-              Accessibilité PMR
-            </h2>
-            <p className="text-body-sm text-slate-500 mt-0.5">
-              Filtre les itinéraires selon l'accessibilité des arrêts et des véhicules
-            </p>
-          </div>
-
-          <button
-            type="button"
-            role="switch"
-            aria-checked={form.pmrAccessibility}
-            aria-labelledby="pmr-heading"
-            onClick={() => setForm((f) => ({ ...f, pmrAccessibility: !f.pmrAccessibility }))}
-            className={[
-              'relative shrink-0 w-12 h-7 rounded-full border-2 transition-colors duration-fast',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-600 focus-visible:ring-offset-2',
-              form.pmrAccessibility ? 'bg-eco-600 border-eco-600' : 'bg-slate-200 border-slate-200',
-            ].join(' ')}
-          >
+        <div className="bg-bg-card rounded-card px-4 py-3.5">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-body text-text-primary">Marche maximum</span>
             <span
-              aria-hidden="true"
-              className={[
-                'absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm',
-                'transition-transform duration-fast',
-                form.pmrAccessibility ? 'translate-x-5' : 'translate-x-0',
-              ].join(' ')}
-            />
-            <span className="sr-only">{form.pmrAccessibility ? 'Activé' : 'Désactivé'}</span>
-          </button>
-        </div>
-      </section>
-
-      {/* ── Section 4 : Temps de marche max ─────────────────────────── */}
-      <section className="card p-4 lg:p-6" aria-labelledby="walk-heading">
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h2 id="walk-heading" className="text-h3 font-semibold text-slate-900">
-              Temps de marche maximum
-            </h2>
-            <p className="text-body-sm text-slate-500 mt-0.5">
-              Entre votre position et l'arrêt le plus proche
-            </p>
+              className="text-body font-semibold text-accent-eco tabular-nums"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {form.maxWalkMinutes} min
+            </span>
           </div>
-          <span
-            aria-live="polite"
-            aria-atomic="true"
-            className="text-display font-bold text-eco-700 leading-none ml-4 shrink-0"
-          >
-            {form.maxWalkMinutes} min
-          </span>
-        </div>
 
-        <label htmlFor="max-walk" className="sr-only">
-          Temps de marche maximum en minutes
-        </label>
-        <input
-          id="max-walk"
-          type="range"
-          min={5}
-          max={60}
-          step={5}
-          value={form.maxWalkMinutes}
-          onChange={(e) => setForm((f) => ({ ...f, maxWalkMinutes: Number(e.target.value) }))}
-          className="w-full h-2 cursor-pointer accent-eco-600"
-          aria-valuemin={5}
-          aria-valuemax={60}
-          aria-valuenow={form.maxWalkMinutes}
-          aria-valuetext={`${form.maxWalkMinutes} minutes`}
-        />
-        <div className="flex justify-between text-caption text-slate-400 mt-2" aria-hidden="true">
-          <span>5 min</span>
-          <span>30 min</span>
-          <span>60 min</span>
+          <label htmlFor="max-walk" className="sr-only">
+            Temps de marche maximum en minutes
+          </label>
+          <input
+            id="max-walk"
+            type="range"
+            min={5}
+            max={60}
+            step={5}
+            value={form.maxWalkMinutes}
+            onChange={(e) => setForm((f) => ({ ...f, maxWalkMinutes: Number(e.target.value) }))}
+            className="w-full h-1.5 cursor-pointer accent-accent-eco rounded-full"
+            aria-valuemin={5}
+            aria-valuemax={60}
+            aria-valuenow={form.maxWalkMinutes}
+            aria-valuetext={`${form.maxWalkMinutes} minutes`}
+          />
+          <div
+            className="flex justify-between text-caption text-text-muted mt-2"
+            aria-hidden="true"
+          >
+            <span>5 min</span>
+            <span>30 min</span>
+            <span>60 min</span>
+          </div>
         </div>
       </section>
 
-      {/* ── Feedback sauvegarde ──────────────────────────────────────────── */}
+      {/* ── Feedback sauvegarde ──────────────────────────────────────── */}
       <div role="status" aria-live="polite" aria-atomic="true" className="min-h-[3rem]">
         {saveSuccess && (
-          <div className="bg-eco-50 border border-eco-200 rounded-card px-4 py-3 text-eco-700 text-body-sm flex items-center gap-2 animate-fade-in">
+          <div className="bg-bg-elevated border border-accent-eco rounded-card px-4 py-3 text-accent-eco text-body-sm flex items-center gap-2 animate-fade-in">
             <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
               <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" />
             </svg>
@@ -389,14 +332,14 @@ function ProfileForm({ profile }: { profile: MobilityProfile }) {
         {saveError && (
           <div
             role="alert"
-            className="bg-red-50 border border-red-200 rounded-card px-4 py-3 text-red-700 text-body-sm"
+            className="bg-bg-elevated border border-accent-error rounded-card px-4 py-3 text-accent-error text-body-sm"
           >
             {saveError}
           </div>
         )}
       </div>
 
-      {/* ── Bouton enregistrer ───────────────────────────────────────────── */}
+      {/* ── Bouton enregistrer ───────────────────────────────────────── */}
       <button
         type="button"
         onClick={() => void handleSave()}
@@ -408,7 +351,8 @@ function ProfileForm({ profile }: { profile: MobilityProfile }) {
           <>
             <span
               aria-hidden="true"
-              className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+              className="inline-block w-4 h-4 border-2 rounded-full animate-spin"
+              style={{ borderColor: 'rgba(5,46,22,0.25)', borderTopColor: '#052e16' }}
             />
             Enregistrement…
           </>
@@ -420,13 +364,15 @@ function ProfileForm({ profile }: { profile: MobilityProfile }) {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ProfilePage() {
   const profile = useProfileStore((s) => s.profile)
   const isLoading = useProfileStore((s) => s.isLoading)
   const fetchError = useProfileStore((s) => s.error)
   const fetchProfile = useProfileStore((s) => s.fetchProfile)
+
+  const authUser = useAuthStore((s) => s.user)
 
   const newlyUnlocked = useGamificationStore((s) => s.newlyUnlockedBadges)
   const clearNewlyUnlocked = useGamificationStore((s) => s.clearNewlyUnlockedBadges)
@@ -441,13 +387,10 @@ export default function ProfilePage() {
   useEffect(() => {
     getUserBadges()
       .then(setBadges)
-      .catch(() => {
-        /* silencieux — badges non critiques */
-      })
+      .catch(() => { /* badges non critiques */ })
       .finally(() => setBadgesLoading(false))
   }, [])
 
-  // Efface les badges "nouveaux" après affichage pour ne pas rejouer l'animation
   useEffect(() => {
     if (newlyUnlocked.length === 0 || badgesLoading) return
     const t = setTimeout(clearNewlyUnlocked, 2000)
@@ -456,56 +399,82 @@ export default function ProfilePage() {
 
   const isInitialLoading = !profile && isLoading
 
+  const email = authUser?.email ?? ''
+  const displayName = email ? deriveName(email) : 'Utilisateur'
+  const initial = displayName.charAt(0).toUpperCase()
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-navbar">
-        <div className="max-w-2xl mx-auto flex items-center gap-3 px-4 h-16">
-          <Link
-            to="/"
-            aria-label="Retour à la carte"
-            className="shrink-0 w-12 h-12 flex items-center justify-center rounded-button text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-fast"
+    <div className="flex flex-col h-screen bg-bg-base">
+      {/* ── Header ────────────────────────────────────────────────────────── */}
+      <header className="shrink-0 px-4 pt-14 pb-4 flex items-center justify-between gap-4">
+        <Link
+          to="/"
+          aria-label="Retour à la carte"
+          className="shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-bg-elevated text-text-secondary hover:text-text-primary hover:bg-bg-card transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-eco"
+        >
+          <svg
+            aria-hidden="true"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           >
-            <svg
-              aria-hidden="true"
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M12 16l-6-6 6-6" />
-            </svg>
-          </Link>
-          <h1 className="text-h2 font-bold text-slate-900">Mon profil de mobilité</h1>
-        </div>
+            <path d="M19 12H5M12 5l-7 7 7 7" />
+          </svg>
+        </Link>
+        <h1 className="text-h2 font-bold text-text-primary">Mon profil</h1>
       </header>
 
-      {/* ── Contenu principal ────────────────────────────────────────────────── */}
-      <main className="max-w-2xl mx-auto px-4 py-6 lg:px-6">
-        {/* Erreur de chargement */}
-        {fetchError && !profile && (
-          <div
-            role="alert"
-            className="bg-red-50 border border-red-200 rounded-card px-4 py-3 text-red-700 text-body-sm mb-6"
-          >
-            {fetchError}
+      {/* ── Contenu scrollable ─────────────────────────────────────────────── */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="max-w-2xl mx-auto px-4 pb-8 space-y-6">
+          {/* ── User card ─────────────────────────────────────────────────── */}
+          {email && (
+            <div className="bg-bg-card rounded-card p-4 flex items-center gap-4">
+              <div
+                className="w-14 h-14 rounded-full bg-accent-eco flex items-center justify-center shrink-0 text-h2 font-bold"
+                style={{ color: '#052e16' }}
+                aria-hidden="true"
+              >
+                {initial}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-body font-semibold text-text-primary">{displayName}</p>
+                <p className="text-body-sm text-text-muted truncate">{email}</p>
+              </div>
+            </div>
+          )}
+
+          {/* ── Erreur de chargement ──────────────────────────────────────── */}
+          {fetchError && !profile && (
+            <div
+              role="alert"
+              className="bg-bg-elevated border border-accent-error rounded-card px-4 py-3 text-accent-error text-body-sm"
+            >
+              {fetchError}
+            </div>
+          )}
+
+          {/* ── Form ─────────────────────────────────────────────────────── */}
+          {isInitialLoading ? (
+            <ProfileSkeleton />
+          ) : profile ? (
+            <ProfileForm profile={profile} />
+          ) : null}
+
+          {/* ── Badges ───────────────────────────────────────────────────── */}
+          <div className="mt-2">
+            <BadgeGrid badges={badges} newlyUnlocked={newlyUnlocked} loading={badgesLoading} />
           </div>
-        )}
-
-        {isInitialLoading ? (
-          <ProfileSkeleton />
-        ) : profile ? (
-          <ProfileForm profile={profile} />
-        ) : null}
-
-        <div className="mt-6">
-          <BadgeGrid badges={badges} newlyUnlocked={newlyUnlocked} loading={badgesLoading} />
         </div>
       </main>
+
+      {/* ── Bottom Navigation ─────────────────────────────────────────────── */}
+      <BottomNav />
     </div>
   )
 }
