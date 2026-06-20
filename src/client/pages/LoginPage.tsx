@@ -67,18 +67,20 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-12">
+    <main className="min-h-screen bg-bg-base flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-h2 font-bold text-slate-900">Connexion</h1>
-          <p className="mt-2 text-body-sm text-slate-600">Accédez à votre espace UrbanFlow</p>
+          <h1 className="text-h2 font-bold">Connexion</h1>
+          <p className="mt-2 text-body-sm text-text-secondary">
+            Accédez à votre espace UrbanFlow
+          </p>
         </div>
 
         <div className="card p-6 md:p-8">
           {/* Zone d'erreur API — toujours dans le DOM pour que aria-live fonctionne */}
           <div role="alert" aria-atomic="true" className="mb-2">
             {apiError && (
-              <div className="bg-red-50 border border-red-200 rounded-input px-4 py-3 mb-4 text-red-700 text-body-sm">
+              <div className="rounded-input px-4 py-3 mb-4 text-body-sm bg-bg-elevated border border-accent-error text-accent-error">
                 {apiError}
               </div>
             )}
@@ -94,7 +96,7 @@ export default function LoginPage() {
                 id="login-email"
                 type="email"
                 autoComplete="email"
-                className={`input ${fieldErrors.email ? 'border-red-400 focus:ring-red-500' : ''}`}
+                className={`input ${fieldErrors.email ? 'border-accent-error focus:ring-accent-error' : ''}`}
                 value={email}
                 onChange={(e) => handleEmailChange(e.target.value)}
                 aria-required="true"
@@ -109,7 +111,9 @@ export default function LoginPage() {
                 className="mt-1.5 min-h-5"
               >
                 {fieldErrors.email && (
-                  <p className="text-body-sm text-red-600">{fieldErrors.email}</p>
+                  <p className="text-body-sm text-accent-error">
+                    {fieldErrors.email}
+                  </p>
                 )}
               </div>
             </div>
@@ -123,7 +127,7 @@ export default function LoginPage() {
                 id="login-password"
                 type="password"
                 autoComplete="current-password"
-                className={`input ${fieldErrors.password ? 'border-red-400 focus:ring-red-500' : ''}`}
+                className={`input ${fieldErrors.password ? 'border-accent-error focus:ring-accent-error' : ''}`}
                 value={password}
                 onChange={(e) => handlePasswordChange(e.target.value)}
                 aria-required="true"
@@ -138,7 +142,9 @@ export default function LoginPage() {
                 className="mt-1.5 min-h-5"
               >
                 {fieldErrors.password && (
-                  <p className="text-body-sm text-red-600">{fieldErrors.password}</p>
+                  <p className="text-body-sm text-accent-error">
+                    {fieldErrors.password}
+                  </p>
                 )}
               </div>
             </div>
@@ -155,7 +161,11 @@ export default function LoginPage() {
                 <>
                   <span
                     aria-hidden="true"
-                    className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+                    className="inline-block w-4 h-4 border-2 rounded-full animate-spin"
+                    style={{
+                      borderColor: 'rgba(5,46,22,0.25)',
+                      borderTopColor: '#052e16',
+                    }}
                   />
                   <span>Connexion en cours…</span>
                 </>
@@ -165,11 +175,11 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="flex items-center justify-center gap-1 text-body-sm text-slate-600 mt-6">
+          <div className="flex items-center justify-center gap-1 text-body-sm text-text-secondary mt-6">
             Pas encore de compte ?
             <Link
               to="/register"
-              className="inline-flex items-center px-1 min-h-[48px] text-eco-700 font-medium underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-600 focus-visible:rounded"
+              className="inline-flex items-center px-1 min-h-[48px] font-medium text-accent-eco underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:rounded"
             >
               Créer un compte
             </Link>
