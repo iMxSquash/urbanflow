@@ -14,119 +14,236 @@ ou modifies doit respecter ces règles sans exception.
 ## Identité visuelle
 
 Application de mobilité urbaine éco-responsable. Sobre, utile, accessible.
+Thème **Urban Night** (dark) par défaut. Bascule light via `data-theme="light"` sur `<html>`.
 PAS de design tape-à-l'oeil. PAS d'animations superflues.
 La couleur est fonctionnelle, pas décorative.
 
 ---
 
-## Tokens couleurs — Classes Tailwind à utiliser
+## Tokens couleurs — Classes Tailwind custom à utiliser
 
-### Actions et états
+Les couleurs sont des CSS custom properties exposées via `@utility` dans `index.css`.
+**Ne jamais écrire de valeur hex en dur** dans les classes Tailwind.
 
-| Usage | Classe Tailwind |
-|-------|----------------|
-| Action primaire (CTA) | `bg-eco-600 text-white` |
-| Action secondaire | `bg-white border border-slate-200 text-slate-700` |
-| Succès / CO2 économisé | `text-eco-700 bg-eco-50` |
-| Erreur / CO2 élevé | `text-red-600 bg-red-50` |
-| Alerte douce | `text-amber-700 bg-amber-50` |
-| Info neutre | `text-sky-700 bg-sky-50` |
+### Surfaces (fond de page et de carte)
 
-### Modes de transport
-
-| Mode | Border / bg tint | Texte |
-|------|-----------------|-------|
-| Marche | `border-slate-300 bg-slate-50` | `text-slate-600` |
-| Vélo | `border-eco-300 bg-eco-50` | `text-eco-700` |
-| Tramway | `border-transit-300 bg-transit-50` | `text-transit-700` |
-| Bus | `border-amber-300 bg-amber-50` | `text-amber-700` |
-| Navibus | `border-cyan-300 bg-cyan-50` | `text-cyan-700` |
+| Usage | Classe |
+|-------|--------|
+| Fond de page profond | `bg-deep` → `var(--color-bg-deep)` |
+| Fond de page principal | `bg-base` → `var(--color-bg-base)` |
+| Fond élevé (panels, drawers) | `bg-elevated` → `var(--color-bg-elevated)` |
+| Fond de carte (card) | `bg-card` → `var(--color-bg-card)` |
+| Overlay (modale, backdrop) | `bg-overlay` → `var(--color-overlay)` |
 
 ### Textes
 
 | Usage | Classe |
 |-------|--------|
-| Titre principal | `text-slate-900 font-bold` |
-| Corps de texte | `text-slate-700` |
-| Texte secondaire | `text-slate-500` |
-| Metadata / caption | `text-slate-400` |
-| Sur fond coloré | `text-white` |
+| Texte principal | `text-primary-dark` → `var(--color-text-primary)` |
+| Texte secondaire | `text-secondary-dark` → `var(--color-text-secondary)` |
+| Texte atténué | `text-muted-dark` → `var(--color-text-muted)` |
+| Texte désactivé | couleur `--color-text-disabled` (exempt WCAG) |
+
+### Accents
+
+| Usage | Classe |
+|-------|--------|
+| Action éco (CTA) | `text-eco` / `bg-eco-dim` / `border-eco` |
+| Transit / info | `text-transit` |
+| Ombre éco | `shadow-eco` |
+| Ombre transit | `shadow-transit` |
+
+### Modes de transport — couleurs CSS variables directes
+
+Utiliser via `style={{ color: 'var(--color-mode-bike)' }}` ou dans les composants chip.
+
+| Mode | Variable CSS |
+|------|-------------|
+| Marche | `--color-mode-walk` (#94A3B8) |
+| Vélo / Bicloo | `--color-mode-bike` (#4ADE80) |
+| Tramway | `--color-mode-tram` (#818CF8) |
+| Bus | `--color-mode-bus` (#FCD34D) |
+| Scooter | `--color-mode-scooter` (#22D3EE) |
+| Navibus | `--color-mode-navibus` (#38BDF8) |
+| Train | `--color-mode-train` (#A78BFA) |
+
+En light mode, utiliser `--color-mode-*-text` pour les textes sur fond clair.
+
+### Sémantique
+
+| Usage | Variable CSS |
+|-------|-------------|
+| Succès / CO2 économisé | `--color-success` |
+| Avertissement | `--color-warning` |
+| Erreur (texte) | `--color-error-text` |
+| Info (texte) | `--color-info-text` |
 
 ---
 
-## Composants — Patterns obligatoires
+## Composants — Classes CSS custom (@layer components)
+
+Ces classes sont définies dans `index.css`. Les utiliser directement, pas recréer leur style.
 
 ### Bouton primaire
 
 ```tsx
 <button className="btn-primary">
-  Texte
+  Rechercher un itinéraire
 </button>
-// ou avec Tailwind direct :
-<button className="inline-flex items-center justify-center gap-2 px-4 py-3
-                   bg-eco-600 text-white font-medium rounded-button
-                   hover:bg-eco-700 active:bg-eco-800
-                   focus-visible:ring-2 focus-visible:ring-eco-600 focus-visible:ring-offset-2
-                   transition-colors duration-fast
-                   disabled:opacity-50 disabled:cursor-not-allowed
-                   min-h-[48px]">
 ```
 
-### Carte d'itinéraire
+### Bouton secondaire
 
 ```tsx
-<div className="card p-4 border-l-4 border-l-eco-600">
-  {/* border-l colorée selon mode principal */}
+<button className="btn-secondary">
+  Annuler
+</button>
+```
+
+### Bouton icône (obligatoire : aria-label)
+
+```tsx
+<button className="btn-icon" aria-label="Fermer le panneau">
+  <XMarkIcon className="w-5 h-5" />
+</button>
+```
+
+### Carte
+
+```tsx
+<div className="card p-4">
+  {/* contenu */}
+</div>
+```
+
+Variante avec bordure éco pour l'itinéraire recommandé :
+```tsx
+<div className="card p-4 border border-eco shadow-eco">
+```
+
+### Chip de mode de transport
+
+```tsx
+<span
+  className="chip-mode"
+  style={{
+    color: 'var(--color-mode-bike)',
+    borderColor: 'var(--color-mode-bike)',
+    backgroundColor: 'rgba(74, 222, 128, 0.10)',
+  }}
+>
+  <BikeIcon className="w-4 h-4" />
+  Vélo
+</span>
 ```
 
 ### Input de formulaire
 
 ```tsx
 <div>
-  <label htmlFor="email" className="label">
-    Email
+  <label htmlFor="origin" className="block text-body-sm font-medium text-secondary-dark mb-2">
+    Point de départ
   </label>
   <input
-    id="email"
-    type="email"
-    className="input"
-    placeholder="votre@email.fr"
+    id="origin"
+    type="text"
+    className="input w-full"
+    placeholder="Adresse ou lieu..."
   />
 </div>
 ```
 
 JAMAIS un input sans `<label>` associé — violation WCAG directe.
 
-### Badge de mode de transport
+### Skeleton (chargement)
 
 ```tsx
-<span className="mode-badge mode-badge-bike">
-  🚲 Vélo
-</span>
+<div className="skeleton h-4 w-3/4" />
+<div className="skeleton h-4 w-1/2 mt-2" />
+```
+
+### Toast / notification
+
+```tsx
+<div role="status" aria-live="polite" aria-atomic="true">
+  <div className="toast">
+    Message de feedback
+  </div>
+</div>
+```
+
+### Bottom sheet
+
+```tsx
+<div
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="sheet-title"
+  className="bottom-sheet p-4"
+>
+  <h2 id="sheet-title" className="text-h2 font-semibold text-primary-dark">
+    Titre
+  </h2>
+</div>
+```
+
+### Glassmorphism (panels sur la carte)
+
+```tsx
+<div className="glass rounded-lg p-4">   {/* blur 16px */}
+<div className="glass-sm rounded-md p-3"> {/* blur 8px */}
 ```
 
 ---
 
 ## Règles typographiques
 
-- Police : Inter uniquement (`font-sans`)
-- Titres de page : `text-h1 font-bold text-slate-900`
-- Titres de section : `text-h2 font-semibold text-slate-900`
-- Titres de card : `text-h3 font-semibold text-slate-800`
-- Corps : `text-body text-slate-700 leading-relaxed`
-- Labels formulaire : `text-body-sm font-medium text-slate-700`
-- Metadata : `text-caption text-slate-400`
-- Chiffre CO2 / stat clé : `text-display font-bold`
+Police : **Inter uniquement** (`--font-sans`)
+
+| Niveau | Classe taille | Graisse | Usage |
+|--------|--------------|---------|-------|
+| Display | `text-display` | `font-extrabold` (800) | Chiffres dashboard, stats clés |
+| H1 | `text-h1` | `font-bold` (700) | Titres de page |
+| H2 | `text-h2` | `font-semibold` (600) | Titres de section |
+| H3 | `text-h3` | `font-semibold` (600) | Sous-titres, titres de carte |
+| Body LG | `text-body-lg` | `font-normal` (400) | Corps principal, inputs |
+| Body | `text-body` | `font-normal` (400) | Corps standard |
+| Body SM | `text-body-sm` | `font-normal` (400) | Méta, descriptions |
+| Caption | `text-caption` | `font-medium` (500) | Labels uppercase (`tracking-label`) |
+
+```tsx
+// ✅ Correct
+<h1 className="text-h1 font-bold text-primary-dark">Mes itinéraires</h1>
+<p className="text-body text-secondary-dark">Description...</p>
+<span className="text-caption tracking-label text-muted-dark">CO₂ ÉCONOMISÉ</span>
+
+// ❌ Interdit
+<h1 className="text-2xl font-bold text-slate-900">  // valeurs Tailwind génériques
+<p style={{ fontSize: '15px' }}>                    // valeur absolue CSS
+```
 
 ---
 
-## Espacement — Règles
+## Espacement
 
-- Grille 4px. Toujours utiliser les multiples Tailwind (`p-4` = 16px, `p-6` = 24px)
-- Padding interne card : `p-4` (mobile) / `p-6` (desktop)
-- Gap entre éléments d'une liste : `gap-3` ou `gap-4`
-- Padding horizontal de page : `px-4` (mobile) / `px-6` (desktop)
-- Jamais de padding ou margin en valeur absolue CSS (`style={{ padding: '13px' }}`) — utiliser Tailwind
+Grille **4px**. Utiliser les tokens `--space-*` via Tailwind ou les variables CSS.
+
+| Token | Valeur | Tailwind équivalent |
+|-------|--------|-------------------|
+| `--space-1` | 4px | `p-1` / `gap-1` |
+| `--space-2` | 8px | `p-2` / `gap-2` |
+| `--space-3` | 12px | `p-3` / `gap-3` |
+| `--space-4` | 16px | `p-4` / `gap-4` |
+| `--space-5` | 20px | `p-5` / `gap-5` |
+| `--space-6` | 24px | `p-6` / `gap-6` |
+| `--space-8` | 32px | `p-8` / `gap-8` |
+| `--space-12` | 48px | `p-12` / `gap-12` |
+
+Conventions :
+- Padding interne card : `p-4` (mobile) → `p-6` (desktop)
+- Gap liste d'itinéraires : `gap-3` ou `gap-4`
+- Padding horizontal de page : `px-4` (mobile) → `px-6` (desktop)
+- Jamais de valeur absolue CSS (`style={{ padding: '13px' }}`)
 
 ---
 
@@ -137,11 +254,13 @@ Chaque composant DOIT :
 1. **Images** : `alt` descriptif sur tout `<img>`. `alt=""` si décorative.
 2. **Formulaires** : `<label>` avec `htmlFor` pour chaque input.
 3. **Boutons icône** : `aria-label="Description de l'action"`.
-4. **États dynamiques** : `aria-live="polite"` sur les zones de feedback.
-5. **Focus** : `focus-visible:ring-2 focus-visible:ring-eco-600` sur tout élément interactif.
+4. **États dynamiques** : `role="status" aria-live="polite"` sur les zones de feedback.
+5. **Focus** : les classes `.btn-primary`, `.btn-secondary`, `.btn-icon`, `.input` gèrent le focus visible — ne pas surcharger avec `outline-none` sans compensation.
 6. **Couleur** : jamais seule pour transmettre une info — toujours icône + couleur ou texte + couleur.
-7. **Zones tactiles** : minimum `min-h-[48px] min-w-[48px]` sur tout bouton/lien.
-8. **Carte** : `role="application" aria-label="Carte de mobilité de Nantes"` sur le container Leaflet.
+7. **Zones tactiles** : `btn-primary` et `btn-secondary` ont déjà `height: var(--h-btn)` (52px). Pour les autres éléments interactifs : minimum `min-h-[44px] min-w-[44px]`.
+8. **Carte Leaflet** : `role="application" aria-label="Carte de mobilité de Nantes"` sur le container.
+9. **Bottom sheet** : `role="dialog" aria-modal="true" aria-labelledby` + focus trap JS (WCAG 2.1.2).
+10. **Toast** : `role="status" aria-live="polite" aria-atomic="true"` sur le wrapper.
 
 ---
 
@@ -151,45 +270,67 @@ Chaque composant DOIT :
 
 ✅ Autorisé :
 ```tsx
-className="animate-fade-in"        // opacity 0→1, 150ms
-className="animate-slide-up"       // translateY + fade, 200ms
-className="animate-badge-unlock"   // scale + fade, 300ms (badges seulement)
-className="transition-colors duration-fast"  // hover/focus
+className="animate-fade-in"         // opacity 0→1, 200ms
+className="animate-slide-up"        // translateY + fade, 300ms (bottom sheet)
+className="animate-badge-unlock"    // scale + fade, 600ms (badges seulement)
+className="animate-shimmer"         // skeleton loading
+className="animate-eco-pulse"       // dot éco (indicateur live uniquement)
+className="transition-colors"       // hover/focus — durée via --dur-normal
 ```
 
 ❌ Interdit :
-- `framer-motion` sauf si absolument nécessaire et justifié
-- Animations en boucle (`animate-spin`, `animate-bounce` en production)
-- Scroll animations
-- Parallaxe
-- `gsap` avec ScrollTrigger
+- `framer-motion` sauf justification documentée
+- Animations en boucle visibles en permanence (hors skeleton et eco-pulse sur indicateur)
+- Scroll animations, parallaxe, GSAP ScrollTrigger
+- `animate-spin`, `animate-bounce` (non conformes à l'identité)
 
-Toujours inclure :
-```tsx
-// Dans le composant ou le CSS global
-// Respecte prefers-reduced-motion automatiquement via le CSS global
-```
+`prefers-reduced-motion` est géré globalement dans `index.css` — pas besoin de le gérer composant par composant.
 
 ---
 
 ## Responsive — Mobile-first obligatoire
 
-Structure de classe : `[mobile] sm:[tablette] lg:[desktop]`
+Structure : `[mobile] md:[tablette] lg:[desktop]`
 
 ```tsx
 // ✅ Correct
 <div className="px-4 py-6 lg:px-8 lg:py-10">
 
-// ❌ Incorrect
-<div className="lg:px-8 px-4">  // ordre inversé
+// ❌ Incorrect — ordre inversé
+<div className="lg:px-8 px-4">
 ```
 
-Breakpoints projet :
-- `xs` (375px) : iPhone SE — cas limite
-- `sm` (640px) : tablette portrait
-- `md` (768px) : tablette paysage
-- `lg` (1024px) : desktop
-- `map` (900px) : layout carte desktop
+---
+
+## Layout de page — Structure standard
+
+```tsx
+// Page standard (dark theme actif par défaut sur <html>)
+<div className="min-h-screen bg-base flex flex-col">
+
+  {/* Top bar fixe */}
+  <header
+    className="glass fixed top-0 inset-x-0 z-[var(--z-nav)] border-b"
+    style={{ height: 'var(--h-topbar)', borderColor: 'var(--color-border)' }}
+  >
+  </header>
+
+  {/* Contenu scrollable */}
+  <main
+    className="flex-1 overflow-y-auto px-4 lg:px-6"
+    style={{ paddingTop: 'var(--h-topbar)', paddingBottom: 'var(--h-bottomnav)' }}
+  >
+  </main>
+
+  {/* Bottom navigation */}
+  <nav
+    className="bottom-nav"
+    aria-label="Navigation principale"
+  >
+  </nav>
+
+</div>
+```
 
 ---
 
@@ -214,37 +355,18 @@ export const ComponentName: FC<ComponentNameProps> = ({ prop1, prop2 }) => {
 }
 ```
 
-- Toujours exporter en named export (pas default)
+- Toujours named export (pas default)
 - Toujours typer les props
 - Composant pur : logique dans hooks, pas dans le JSX
 
 ---
 
-## Layout de page — Structure commune
-
-```tsx
-// Page standard mobile
-<div className="min-h-screen bg-slate-50 flex flex-col">
-  {/* Navbar fixe */}
-  <nav className="h-navbar fixed top-0 inset-x-0 z-navbar bg-white border-b border-slate-200">
-  </nav>
-
-  {/* Contenu principal */}
-  <main className="flex-1 pt-navbar pb-bottomnav px-4 lg:px-8">
-  </main>
-
-  {/* Bottom nav mobile uniquement */}
-  <nav className="h-bottomnav fixed bottom-0 inset-x-0 z-navbar bg-white border-t border-slate-200 lg:hidden">
-  </nav>
-</div>
-```
-
----
-
 ## Interdictions formelles
 
-- PAS de couleur hexadécimale en dur dans className (`text-[#16a34a]`) — utiliser les tokens
-- PAS de `style={{ color: '...' }}` sauf pour les couleurs de polyline Leaflet
-- PAS de tailwind `!important` (`!bg-red-500`) sauf override Leaflet documenté
-- PAS de `text-xs` sur du texte fonctionnel (minimum `text-caption` = 12px)
+- PAS de valeur hex en dur dans les classes (`text-[#4ADE80]`) — utiliser `text-eco`
+- PAS de `style={{ color: '...' }}` sauf pour les couleurs de polyline Leaflet et les couleurs de mode transport dans les chips
+- PAS de `text-slate-*`, `bg-gray-*`, `text-zinc-*` — utiliser les tokens du design system
+- PAS de `outline-none` sans focus visible compensatoire
+- PAS de `text-xs` sur du texte fonctionnel — minimum `text-caption` (11px)
 - PAS de marge négative sans commentaire expliquant pourquoi
+- PAS de `!important` Tailwind sauf override Leaflet documenté
