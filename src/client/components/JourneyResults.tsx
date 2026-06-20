@@ -61,15 +61,14 @@ const MODE_LABEL: Record<TransportMode, string> = {
   train: 'Train',
 }
 
-// Combines .mode-badge base class with color-specific classes from index.css
 const MODE_BADGE_CLASS: Record<TransportMode, string> = {
   walk: 'mode-badge mode-badge-walk',
   bike: 'mode-badge mode-badge-bike',
   tramway: 'mode-badge mode-badge-tram',
   bus: 'mode-badge mode-badge-bus',
   navibus: 'mode-badge mode-badge-navibus',
-  scooter: 'mode-badge bg-cyan-50 text-cyan-700',
-  train: 'mode-badge bg-violet-50 text-violet-700',
+  scooter: 'mode-badge mode-badge-scooter',
+  train: 'mode-badge mode-badge-train',
 }
 
 // ── Rank badge config ──────────────────────────────────────────────────────
@@ -83,7 +82,7 @@ interface RankMeta {
 const RANK_META: Record<RankLabel, RankMeta> = {
   recommended: {
     label: 'Recommandé',
-    chipClass: 'bg-eco-100 text-eco-800 border border-eco-200',
+    chipClass: 'bg-bg-elevated text-accent-eco border border-border',
     icon: (
       <svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
@@ -92,7 +91,7 @@ const RANK_META: Record<RankLabel, RankMeta> = {
   },
   fastest: {
     label: 'Plus rapide',
-    chipClass: 'bg-transit-50 text-transit-700 border border-transit-200',
+    chipClass: 'bg-bg-elevated text-accent-transit border border-border',
     icon: (
       <svg
         aria-hidden="true"
@@ -111,7 +110,7 @@ const RANK_META: Record<RankLabel, RankMeta> = {
   },
   greenest: {
     label: 'Meilleur CO₂',
-    chipClass: 'bg-eco-50 text-eco-700 border border-eco-200',
+    chipClass: 'bg-bg-elevated text-accent-eco border border-border',
     icon: (
       <svg
         aria-hidden="true"
@@ -130,7 +129,7 @@ const RANK_META: Record<RankLabel, RankMeta> = {
   },
   comfortable: {
     label: 'Confortable',
-    chipClass: 'bg-slate-100 text-slate-600 border border-slate-200',
+    chipClass: 'bg-bg-elevated text-text-muted border border-border',
     icon: (
       <svg
         aria-hidden="true"
@@ -157,20 +156,16 @@ function computeRanks(journeys: Journey[]): Map<string, RankLabel[]> {
 
   const push = (id: string, rank: RankLabel) => map.get(id)!.push(rank)
 
-  // Recommended: highest composite score
   push(journeys.reduce((b, j) => (j.score > b.score ? j : b)).id, 'recommended')
 
   if (journeys.length > 1) {
-    // Fastest: lowest total duration
     push(journeys.reduce((b, j) => (j.totalDurationMin < b.totalDurationMin ? j : b)).id, 'fastest')
 
-    // Greenest: highest CO2 saving vs car (only if any journey actually saves CO2)
     const maxCo2 = Math.max(...journeys.map((j) => j.co2SavingG))
     if (maxCo2 > 0) {
       push(journeys.reduce((b, j) => (j.co2SavingG > b.co2SavingG ? j : b)).id, 'greenest')
     }
 
-    // Comfortable: unlabeled journey with the highest comfortScore
     const unlabeled = journeys.filter((j) => map.get(j.id)!.length === 0)
     if (unlabeled.length > 0) {
       const mostComfortable = unlabeled.reduce((best, j) =>
@@ -184,10 +179,10 @@ function computeRanks(journeys: Journey[]): Map<string, RankLabel[]> {
 }
 
 function cardBorderClass(ranks: RankLabel[]): string {
-  if (ranks.includes('recommended')) return 'border-l-4 border-eco-600'
-  if (ranks.includes('fastest')) return 'border-l-4 border-transit-500'
-  if (ranks.includes('greenest')) return 'border-l-4 border-eco-400'
-  return 'border-l-4 border-slate-200'
+  if (ranks.includes('recommended')) return 'border-l-4 border-accent-eco'
+  if (ranks.includes('fastest')) return 'border-l-4 border-accent-transit'
+  if (ranks.includes('greenest')) return 'border-l-4 border-accent-eco'
+  return 'border-l-4 border-border'
 }
 
 // ── JourneyCard ────────────────────────────────────────────────────────────
@@ -210,7 +205,7 @@ function JourneyCard({ journey, ranks, onSelect, animDelay }: JourneyCardProps) 
   return (
     <article
       className={[
-        'bg-white rounded-card border border-slate-100 overflow-hidden animate-slide-up',
+        'bg-bg-card rounded-card border border-border overflow-hidden animate-slide-up',
         cardBorderClass(ranks),
         isRecommended ? 'shadow-card-md' : 'shadow-card',
       ].join(' ')}
@@ -238,7 +233,7 @@ function JourneyCard({ journey, ranks, onSelect, animDelay }: JourneyCardProps) 
         )}
 
         {/* ── Journey label ── */}
-        <h3 className="text-body font-semibold text-slate-900 leading-tight mb-2">
+        <h3 className="text-body font-semibold text-text-primary leading-tight mb-2">
           {journey.label}
         </h3>
 
@@ -253,7 +248,7 @@ function JourneyCard({ journey, ranks, onSelect, animDelay }: JourneyCardProps) 
           </ul>
           {journey.departureTime && (
             <span
-              className="text-caption text-slate-500 shrink-0"
+              className="text-caption text-text-muted shrink-0"
               aria-label={`Départ à ${formatDepartureTime(journey.departureTime)}`}
             >
               Départ {formatDepartureTime(journey.departureTime)}
@@ -263,28 +258,28 @@ function JourneyCard({ journey, ranks, onSelect, animDelay }: JourneyCardProps) 
 
         {/* ── Stats grid ── */}
         <dl className="grid grid-cols-3 gap-2 mb-4">
-          <div className="bg-slate-50 rounded-lg p-2.5 text-center">
-            <dt className="text-caption text-slate-500 leading-none mb-1">Durée</dt>
-            <dd className="text-body-sm font-bold text-slate-900 tabular-nums leading-tight">
+          <div className="bg-bg-elevated rounded-lg p-2.5 text-center">
+            <dt className="text-caption text-text-muted leading-none mb-1">Durée</dt>
+            <dd className="text-body-sm font-bold text-text-primary tabular-nums leading-tight">
               {formatDuration(journey.totalDurationMin)}
             </dd>
           </div>
 
-          <div className="bg-eco-50 rounded-lg p-2.5 text-center">
-            <dt className="text-caption text-slate-500 leading-none mb-1">
+          <div className="bg-bg-elevated rounded-lg p-2.5 text-center">
+            <dt className="text-caption text-text-muted leading-none mb-1">
               <abbr title="CO₂ économisé par rapport à la voiture">CO₂ éco.</abbr>
             </dt>
             <dd
-              className={`text-body-sm font-bold leading-tight tabular-nums ${journey.co2SavingG > 0 ? 'text-eco-700' : 'text-slate-500'}`}
+              className={`text-body-sm font-bold leading-tight tabular-nums ${journey.co2SavingG > 0 ? 'text-accent-eco' : 'text-text-muted'}`}
               aria-label={co2Label}
             >
               {journey.co2SavingG > 0 ? `-${formatCo2Saving(journey.co2SavingG)}` : '—'}
             </dd>
           </div>
 
-          <div className="bg-slate-50 rounded-lg p-2.5 text-center">
-            <dt className="text-caption text-slate-500 leading-none mb-1">Coût</dt>
-            <dd className="text-body-sm font-bold text-slate-900 leading-tight">
+          <div className="bg-bg-elevated rounded-lg p-2.5 text-center">
+            <dt className="text-caption text-text-muted leading-none mb-1">Coût</dt>
+            <dd className="text-body-sm font-bold text-text-primary leading-tight">
               {formatCost(journey.estimatedCostEur)}
             </dd>
           </div>
@@ -311,7 +306,6 @@ export function JourneyResults({ journeys, onSelect, onClose }: JourneyResultsPr
 
   const ranks = computeRanks(journeys)
 
-  // Recommended first, then descending score
   const sorted = [...journeys].sort((a, b) => {
     const aRec = ranks.get(a.id)!.includes('recommended')
     const bRec = ranks.get(b.id)!.includes('recommended')
@@ -326,13 +320,13 @@ export function JourneyResults({ journeys, onSelect, onClose }: JourneyResultsPr
     <section aria-label="Résultats des itinéraires">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-h3 font-bold text-slate-900">{headingText}</h2>
+        <h2 className="text-h3 font-bold text-text-primary">{headingText}</h2>
         {onClose ? (
           <button
             type="button"
             onClick={onClose}
             aria-label="Fermer les résultats"
-            className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-600"
+            className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full text-text-muted hover:text-text-primary hover:bg-bg-elevated transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-eco"
           >
             <svg
               aria-hidden="true"
@@ -348,7 +342,7 @@ export function JourneyResults({ journeys, onSelect, onClose }: JourneyResultsPr
             </svg>
           </button>
         ) : count > 1 ? (
-          <span className="text-caption text-slate-500">Comparaison</span>
+          <span className="text-caption text-text-muted">Comparaison</span>
         ) : null}
       </div>
 

@@ -2,7 +2,7 @@ import 'leaflet/dist/leaflet.css'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MapContainer, TileLayer } from 'react-leaflet'
-import { Link, useLocation } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { AddressSearch } from '../components/AddressSearch'
 import { DatetimePicker } from '../components/DatetimePicker'
 import { ErrorBanner } from '../components/ErrorBanner'
@@ -13,10 +13,10 @@ import { JourneyPanel } from '../components/JourneyPanel'
 import { JourneyResults } from '../components/JourneyResults'
 import { JourneySummaryModal } from '../components/JourneySummaryModal'
 import { MapLayerToggle } from '../components/MapLayerToggle'
-import LogoutButton from '../components/LogoutButton'
 import { TrackingConsentModal } from '../components/TrackingConsentModal'
 import { TripToast } from '../components/TripToast'
 import { UserLocationMarker } from '../components/UserLocationMarker'
+import { WeatherBadge } from '../components/WeatherBadge'
 import { recordTrip } from '../services/gamification.service'
 import type { RecordTripResult } from '../services/gamification.service'
 import { useGamificationStore } from '../stores/gamification.store'
@@ -27,7 +27,7 @@ import { useWeather } from '../hooks/useWeather'
 import { useConsentStore } from '../stores/consent.store'
 import { useMapLayersStore } from '../stores/map-layers.store'
 import { useProfileStore } from '../stores/profile.store'
-import { WeatherBadge } from '../components/WeatherBadge'
+import { useThemeStore } from '../stores/theme.store'
 import type { Coordinates } from '@shared/types/index'
 
 const BiclooLayer = lazy(() => import('../components/BiclooLayer'))
@@ -37,10 +37,62 @@ const TanStopsLayer = lazy(() => import('../components/TanStopsLayer'))
 const NANTES_COMMERCE: [number, number] = [47.218, -1.553]
 const NANTES_FALLBACK_COORDS = { lat: 47.218, lng: -1.553 }
 const CARTO_POSITRON = 'https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+const CARTO_DARK_MATTER = 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
 const CARTO_ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors ' +
   '&copy; <a href="https://carto.com/attributions">CARTO</a>'
 
+// ── Bottom navigation ──────────────────────────────────────────────────────
+const NAV_ITEMS = [
+  {
+    label: 'Carte',
+    to: '/',
+    end: true,
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" aria-hidden="true">
+        <path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Trajets',
+    to: '/dashboard',
+    end: false,
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" aria-hidden="true">
+        <circle cx="5" cy="18" r="2" />
+        <circle cx="19" cy="6" r="2" />
+        <path d="M5 16V10a4 4 0 014-4h6" />
+        <path d="M16 4l3 2-3 2" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Stats',
+    to: '/rewards',
+    end: false,
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" aria-hidden="true">
+        <line x1="18" y1="20" x2="18" y2="10" />
+        <line x1="12" y1="20" x2="12" y2="4" />
+        <line x1="6" y1="20" x2="6" y2="14" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Profil',
+    to: '/profile',
+    end: false,
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" aria-hidden="true">
+        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
+      </svg>
+    ),
+  },
+] as const
+
+// ── Types ──────────────────────────────────────────────────────────────────
 type TrackingPhase = 'idle' | 'consent' | 'active' | 'done'
 
 interface DemoScenarioState {
@@ -55,6 +107,15 @@ interface ActiveTrackingState {
   destination: Coordinates
 }
 
+function useIsDark(): boolean {
+  const themeMode = useThemeStore((s) => s.themeMode)
+  if (themeMode === 'dark') return true
+  if (themeMode === 'light') return false
+  const h = new Date().getHours()
+  return h >= 20 || h < 7
+}
+
+// ── Component ──────────────────────────────────────────────────────────────
 export default function MapPage() {
   const { geolocationConsent, grantGeolocation, denyGeolocation } = useConsentStore()
   const { position: geoPosition, error: geoError, loading: geoLoading, locate } = useGeolocation()
@@ -78,7 +139,6 @@ export default function MapPage() {
   const [datetime, setDatetime] = useState<Date>(() => new Date())
   const [datetimeType, setDatetimeType] = useState<'departure' | 'arrival'>('departure')
 
-  // Tracking state
   const [trackingPhase, setTrackingPhase] = useState<TrackingPhase>('idle')
   const [activeTracking, setActiveTracking] = useState<ActiveTrackingState | null>(null)
   const [summaryResult, setSummaryResult] = useState<RecordTripResult | null>(null)
@@ -88,15 +148,10 @@ export default function MapPage() {
   const location = useLocation()
   const locatedOnMount = useRef(false)
   const scenarioApplied = useRef(false)
+  const isDark = useIsDark()
 
-  // Destination for tracking — stable fallback when no journey selected (hook must be unconditional)
   const trackingDestination = activeTracking?.destination ?? NANTES_FALLBACK_COORDS
-
-  const {
-    position: trackingPosition,
-    arrived,
-    stop: stopTracking,
-  } = useActiveTracking({
+  const { position: trackingPosition, arrived, stop: stopTracking } = useActiveTracking({
     destination: trackingDestination,
     active: trackingPhase === 'active',
   })
@@ -112,7 +167,6 @@ export default function MapPage() {
     }
   }, [geolocationConsent, locate])
 
-  // Scénario démo
   useEffect(() => {
     const state = (location.state as { demoScenario?: DemoScenarioState } | null)?.demoScenario
     if (!state || scenarioApplied.current) return
@@ -134,7 +188,6 @@ export default function MapPage() {
     )
   }, [location.state, calculate, profile, datetime, datetimeType])
 
-  // Détection d'arrivée
   useEffect(() => {
     if (!arrived || trackingPhase !== 'active' || arrivalHandledRef.current) return
     arrivalHandledRef.current = true
@@ -165,12 +218,10 @@ export default function MapPage() {
     )
   }
 
-  // "Partir maintenant" → ouvre la modale de consentement suivi
   function handleDepartClick() {
     setTrackingPhase('consent')
   }
 
-  // L'utilisateur accepte le suivi GPS continu
   function handleStartTracking() {
     if (!selectedJourney) return
     const destination = selectedJourney.segments.at(-1)!.to
@@ -179,7 +230,6 @@ export default function MapPage() {
     setTrackingPhase('active')
   }
 
-  // L'utilisateur refuse le suivi → enregistrement immédiat sans points
   async function handleSkipTracking() {
     setTrackingPhase('idle')
     if (!selectedJourney) return
@@ -191,11 +241,10 @@ export default function MapPage() {
       setTripResult(result)
       useGamificationStore.getState().setTripResult(result.totalPoints, result.newlyUnlockedBadges)
     } catch {
-      // Le toast ne s'affiche pas en cas d'erreur réseau — pas de crash UI
+      // Le toast ne s'affiche pas en cas d'erreur réseau
     }
   }
 
-  // Fin de trajet : arrivée auto ou clic "Terminer"
   async function handleArrival() {
     if (!selectedJourney || !activeTracking) return
     stopTracking()
@@ -209,13 +258,12 @@ export default function MapPage() {
       setSummaryResult(result)
       setSummaryDurationMin(Math.max(1, realDurationMin))
     } catch {
-      // Échec silencieux : le résumé ne s'affiche pas mais le tracking est bien arrêté
+      // Échec silencieux
     }
     setTrackingPhase('done')
     setActiveTracking(null)
   }
 
-  // Fin manuelle via "Terminer le trajet"
   function handleEndTrip() {
     void handleArrival()
   }
@@ -236,7 +284,6 @@ export default function MapPage() {
     deselectJourney()
   }
 
-  // Position affichée : pendant le suivi on suit la position GPS temps réel
   const userPosition = geoPosition ?? addressPosition
   const displayPosition =
     trackingPhase === 'active' ? (trackingPosition ?? userPosition) : userPosition
@@ -245,177 +292,16 @@ export default function MapPage() {
   const showGeoError = !!geoError && !geoLoading && geolocationConsent !== 'denied'
   const showDestSearch =
     !!userPosition && journeys.length === 0 && !selectedJourney && !journeyLoading
-  const searchRight = weather ? 'right-24 sm:right-36' : 'right-3'
+  const showBottomArea = journeys.length === 0 && !selectedJourney
 
   return (
-    <div className="flex flex-col h-screen">
-      <header className="h-16 bg-white border-b border-slate-200 px-4 flex items-center justify-between shrink-0 z-navbar">
-        <span className="text-h3 font-bold text-slate-900">UrbanFlow</span>
-        <nav className="flex items-center gap-2">
-          <Link to="/profile" className="btn-secondary text-body-sm px-3">
-            Mon profil
-          </Link>
-          <Link
-            to="/dashboard"
-            aria-label="Tableau de bord"
-            className="w-10 h-10 flex items-center justify-center rounded-button text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-fast"
-          >
-            <svg
-              aria-hidden="true"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.75"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="18" y1="20" x2="18" y2="10" />
-              <line x1="12" y1="20" x2="12" y2="4" />
-              <line x1="6" y1="20" x2="6" y2="14" />
-            </svg>
-          </Link>
-          <Link
-            to="/rewards"
-            aria-label="Boutique de récompenses"
-            className="w-10 h-10 flex items-center justify-center rounded-button text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-fast"
-          >
-            <svg
-              aria-hidden="true"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.75"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect x="3" y="8" width="18" height="13" rx="1" />
-              <path d="M3 8h18M12 8v13M7.5 8a2.5 2.5 0 0 1 0-5C9 3 12 5 12 8M16.5 8a2.5 2.5 0 0 0 0-5C15 3 12 5 12 8" />
-            </svg>
-          </Link>
-          <Link
-            to="/parametres"
-            aria-label="Paramètres"
-            className="w-10 h-10 flex items-center justify-center rounded-button text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-fast"
-          >
-            <svg
-              aria-hidden="true"
-              width="18"
-              height="18"
-              viewBox="0 0 20 20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.75"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="10" cy="10" r="3" />
-              <path d="M10 2v1.5M10 16.5V18M2 10h1.5M16.5 10H18M4.22 4.22l1.06 1.06M14.72 14.72l1.06 1.06M4.22 15.78l1.06-1.06M14.72 5.28l1.06-1.06" />
-            </svg>
-          </Link>
-          <LogoutButton />
-        </nav>
-      </header>
-
+    <div className="flex flex-col h-screen bg-bg-deep">
+      {/* ── Map ── */}
       <main
         className="flex-1 relative overflow-hidden isolate"
         role="application"
         aria-label="Carte de mobilité de Nantes"
       >
-        {showAddressSearch && (
-          <div className={`absolute top-3 left-3 ${searchRight} z-1100`}>
-            <AddressSearch onSelect={setAddressPosition} />
-          </div>
-        )}
-
-        {showDestSearch && (
-          <div
-            className={[
-              `absolute left-3 ${searchRight} z-1100 flex flex-col gap-2`,
-              showAddressSearch ? 'top-16' : 'top-3',
-            ].join(' ')}
-          >
-            <AddressSearch onSelect={handleDestinationSelect} placeholder="Où allez-vous ?" />
-            <DatetimePicker
-              datetime={datetime}
-              type={datetimeType}
-              onDatetimeChange={(dt) => {
-                setDatetime(dt)
-                clearJourney()
-              }}
-              onTypeChange={(t) => {
-                setDatetimeType(t)
-                clearJourney()
-              }}
-            />
-          </div>
-        )}
-
-        {weather && (
-          <div className="absolute top-3 right-3 z-1100">
-            <WeatherBadge weather={weather} variant="map" />
-          </div>
-        )}
-
-        {journeyLoading && (
-          <div
-            role="status"
-            aria-label="Calcul de l'itinéraire en cours"
-            className="absolute top-3 left-1/2 -translate-x-1/2 z-1100 bg-white rounded-full px-4 py-2 shadow-card flex items-center gap-2 text-body-sm text-slate-600 whitespace-nowrap"
-          >
-            <div
-              className="w-4 h-4 border-2 border-slate-200 border-t-eco-600 rounded-full animate-spin"
-              aria-hidden="true"
-            />
-            Calcul de l'itinéraire…
-          </div>
-        )}
-
-        {journeyError && !journeyLoading && (
-          <div className="absolute top-3 left-3 right-3 z-1100">
-            <ErrorBanner message={journeyError} onClose={clearJourney} />
-          </div>
-        )}
-
-        {geoLoading && (
-          <div
-            role="status"
-            aria-label="Localisation en cours"
-            className="absolute top-3 left-1/2 -translate-x-1/2 z-1100 bg-white rounded-full px-4 py-2 shadow-card flex items-center gap-2 text-body-sm text-slate-600 whitespace-nowrap"
-          >
-            <div
-              className="w-4 h-4 border-2 border-slate-200 border-t-eco-600 rounded-full animate-spin"
-              aria-hidden="true"
-            />
-            Localisation en cours…
-          </div>
-        )}
-
-        {showGeoError && geoError && (
-          <div className="absolute top-3 left-3 right-3 z-1100 flex items-start gap-2">
-            <div className="flex-1">
-              <ErrorBanner message={geoError} onRetry={locate} />
-            </div>
-            <button
-              type="button"
-              onClick={denyGeolocation}
-              className="btn-secondary text-caption px-3 shrink-0 bg-white"
-              style={{ minHeight: '44px' }}
-            >
-              Saisir une adresse
-            </button>
-          </div>
-        )}
-
-        {weatherError && !weatherLoading && !weather && (
-          <div className="absolute top-3 right-3 z-1100 w-72">
-            <ErrorBanner message="Météo indisponible" />
-          </div>
-        )}
-
         <MapContainer
           center={NANTES_COMMERCE}
           zoom={13}
@@ -423,27 +309,18 @@ export default function MapPage() {
           zoomControl={false}
           attributionControl={false}
         >
-          <TileLayer url={CARTO_POSITRON} attribution={CARTO_ATTRIBUTION} />
+          <TileLayer url={isDark ? CARTO_DARK_MATTER : CARTO_POSITRON} attribution={CARTO_ATTRIBUTION} />
           {layers.tanLines && (
-            <Suspense fallback={null}>
-              <TanLinesLayer />
-            </Suspense>
+            <Suspense fallback={null}><TanLinesLayer /></Suspense>
           )}
           {layers.tanStops && (
-            <Suspense fallback={null}>
-              <TanStopsLayer />
-            </Suspense>
+            <Suspense fallback={null}><TanStopsLayer /></Suspense>
           )}
           {layers.bikesharing && (
-            <Suspense fallback={null}>
-              <BiclooLayer />
-            </Suspense>
+            <Suspense fallback={null}><BiclooLayer /></Suspense>
           )}
           {displayPosition && (
-            <UserLocationMarker
-              position={displayPosition}
-              isTracking={trackingPhase === 'active'}
-            />
+            <UserLocationMarker position={displayPosition} isTracking={trackingPhase === 'active'} />
           )}
           {ecoMapActive && journeys.length > 0 && (
             <EcoMapLayer
@@ -466,20 +343,88 @@ export default function MapPage() {
           onToggleEco={() => setEcoMapActive((v) => !v)}
         />
 
+        {/* ── Weather badge — top right ── */}
+        {weather && (
+          <div className="absolute top-4 right-4 z-[1100]">
+            <WeatherBadge weather={weather} variant="map" />
+          </div>
+        )}
+
+        {/* ── Loading: journey calc ── */}
+        {journeyLoading && (
+          <div
+            role="status"
+            aria-label="Calcul de l'itinéraire en cours"
+            className="absolute top-4 left-1/2 -translate-x-1/2 z-[1100] bg-bg-card rounded-full px-4 py-2 shadow-card flex items-center gap-2 text-body-sm text-text-secondary whitespace-nowrap"
+          >
+            <div
+              className="w-4 h-4 border-2 border-border border-t-accent-eco rounded-full animate-spin"
+              aria-hidden="true"
+            />
+            Calcul de l'itinéraire…
+          </div>
+        )}
+
+        {/* ── Loading: geolocation ── */}
+        {geoLoading && (
+          <div
+            role="status"
+            aria-label="Localisation en cours"
+            className="absolute top-4 left-1/2 -translate-x-1/2 z-[1100] bg-bg-card rounded-full px-4 py-2 shadow-card flex items-center gap-2 text-body-sm text-text-secondary whitespace-nowrap"
+          >
+            <div
+              className="w-4 h-4 border-2 border-border border-t-accent-eco rounded-full animate-spin"
+              aria-hidden="true"
+            />
+            Localisation en cours…
+          </div>
+        )}
+
+        {/* ── Journey error ── */}
+        {journeyError && !journeyLoading && (
+          <div className="absolute top-4 left-4 right-4 z-[1100]">
+            <ErrorBanner message={journeyError} onClose={clearJourney} />
+          </div>
+        )}
+
+        {/* ── Geo error ── */}
+        {showGeoError && geoError && (
+          <div className="absolute top-4 left-4 right-4 z-[1100] flex items-start gap-2">
+            <div className="flex-1">
+              <ErrorBanner message={geoError} onRetry={locate} />
+            </div>
+            <button
+              type="button"
+              onClick={denyGeolocation}
+              className="btn-secondary text-caption px-3 shrink-0"
+              style={{ minHeight: '44px' }}
+            >
+              Saisir une adresse
+            </button>
+          </div>
+        )}
+
+        {/* ── Weather error ── */}
+        {weatherError && !weatherLoading && !weather && (
+          <div className="absolute top-4 right-4 z-[1100] w-72">
+            <ErrorBanner message="Météo indisponible" />
+          </div>
+        )}
+
+        {/* ── Journey results bottom sheet ── */}
         {journeys.length > 0 && !selectedJourney && (
           <div
             className={[
-              'absolute z-1100 bg-white overflow-y-auto',
-              'bottom-0 left-0 right-0 max-h-[60vh] rounded-t-2xl',
-              'shadow-[0_-8px_32px_rgba(0,0,0,0.12)]',
+              'absolute z-[1200] bg-bg-card overflow-y-auto',
+              'bottom-0 left-0 right-0 max-h-[62vh] rounded-t-2xl shadow-float',
               'lg:top-0 lg:right-0 lg:bottom-0 lg:left-auto lg:w-80 lg:max-h-none lg:rounded-none',
-              'lg:shadow-[-8px_0_32px_rgba(0,0,0,0.08)]',
+              'lg:shadow-[-8px_0_32px_rgba(0,0,0,0.12)]',
             ].join(' ')}
             role="complementary"
             aria-label="Résultats des itinéraires"
           >
             <div className="flex justify-center pt-3 lg:hidden" aria-hidden="true">
-              <div className="w-8 h-1 bg-slate-200 rounded-full" />
+              <div className="w-10 h-1 bg-border-strong rounded-full" />
             </div>
             <div className="p-4 lg:p-5">
               <JourneyResults journeys={journeys} onSelect={selectJourney} onClose={clearJourney} />
@@ -487,6 +432,7 @@ export default function MapPage() {
           </div>
         )}
 
+        {/* ── Journey detail panel ── */}
         {selectedJourney && (
           <JourneyPanel
             journey={selectedJourney}
@@ -500,7 +446,39 @@ export default function MapPage() {
           />
         )}
 
-        {/* Toast confirmation départ sans suivi */}
+        {/* ── Bottom search / idle pill ── */}
+        {showBottomArea && (
+          <div className="absolute bottom-0 left-0 right-0 z-[1100] px-4 pb-4 flex flex-col gap-2">
+            {showAddressSearch && (
+              <AddressSearch onSelect={setAddressPosition} />
+            )}
+            {userPosition && !showAddressSearch && (
+              <div className="bg-bg-card rounded-[14px] px-4 py-[14px] flex items-center gap-3 shadow-float">
+                <span className="w-2.5 h-2.5 rounded-full bg-accent-eco shrink-0" aria-hidden="true" />
+                <span className="text-body text-text-primary">Ma position actuelle</span>
+              </div>
+            )}
+            {showDestSearch && (
+              <>
+                <AddressSearch onSelect={handleDestinationSelect} placeholder="Où allez-vous ?" />
+                <DatetimePicker
+                  datetime={datetime}
+                  type={datetimeType}
+                  onDatetimeChange={(dt) => {
+                    setDatetime(dt)
+                    clearJourney()
+                  }}
+                  onTypeChange={(t) => {
+                    setDatetimeType(t)
+                    clearJourney()
+                  }}
+                />
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ── Trip toast ── */}
         {tripResult && (
           <TripToast
             co2SavedGrams={tripResult.co2SavedGrams}
@@ -512,14 +490,49 @@ export default function MapPage() {
         )}
       </main>
 
-      {/* Modale consentement géolocalisation initiale */}
+      {/* ── Bottom Navigation ── */}
+      <nav
+        className="shrink-0 bg-bg-elevated border-t border-border z-navbar"
+        aria-label="Navigation principale"
+      >
+        <ul className="flex h-[4.5rem]">
+          {NAV_ITEMS.map(({ label, to, end, icon }) => (
+            <li key={to} className="flex-1">
+              <NavLink
+                to={to}
+                end={end}
+                className={({ isActive }) =>
+                  [
+                    'h-full flex flex-col items-center justify-center gap-1 px-2',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-eco',
+                    isActive ? 'text-accent-eco' : 'text-text-disabled',
+                  ].join(' ')
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    {icon}
+                    <span
+                      className={`text-[10px] font-medium leading-none transition-colors duration-fast ${
+                        isActive ? 'text-text-primary' : 'text-text-disabled'
+                      }`}
+                    >
+                      {label}
+                    </span>
+                  </>
+                )}
+              </NavLink>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      {/* ── Portals ── */}
       {geolocationConsent === null &&
         createPortal(
           <GeolocationConsent onGrant={handleGrant} onDeny={denyGeolocation} />,
           document.body
         )}
-
-      {/* Modale consentement suivi continu */}
       {trackingPhase === 'consent' &&
         createPortal(
           <TrackingConsentModal
@@ -528,8 +541,6 @@ export default function MapPage() {
           />,
           document.body
         )}
-
-      {/* Résumé final après arrivée */}
       {trackingPhase === 'done' &&
         summaryResult &&
         selectedJourney &&
