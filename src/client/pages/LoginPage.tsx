@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { login } from '../services/auth.service'
 import { useAuthStore } from '../stores/auth.store'
+import { UrbanFlowLogo } from '../components/UrbanFlowLogo'
 
 interface FormErrors {
   email?: string
@@ -22,6 +23,15 @@ function validate(email: string, password: string): FormErrors {
   }
 
   return errors
+}
+
+function InputDot() {
+  return (
+    <span
+      className="absolute left-3 top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-accent-eco shrink-0 pointer-events-none"
+      aria-hidden="true"
+    />
+  )
 }
 
 export default function LoginPage() {
@@ -67,36 +77,42 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-bg-base flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-h2 font-bold">Connexion</h1>
-          <p className="mt-2 text-body-sm text-text-secondary">
-            Accédez à votre espace UrbanFlow
-          </p>
+    <main className="min-h-screen bg-bg-base flex flex-col px-6 pt-14 pb-10">
+      <div className="w-full max-w-sm mx-auto flex flex-col">
+
+        {/* Logo */}
+        <div className="flex justify-center mb-10">
+          <UrbanFlowLogo />
         </div>
 
-        <div className="card p-6 md:p-8">
-          {/* Zone d'erreur API — toujours dans le DOM pour que aria-live fonctionne */}
-          <div role="alert" aria-atomic="true" className="mb-2">
-            {apiError && (
-              <div className="rounded-input px-4 py-3 mb-4 text-body-sm bg-bg-elevated border border-accent-error text-accent-error">
-                {apiError}
-              </div>
-            )}
-          </div>
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-h1 font-bold text-text-primary">Bon retour !</h1>
+          <p className="mt-1 text-body-sm text-text-secondary">Connectez-vous pour continuer</p>
+        </div>
 
-          <form onSubmit={handleSubmit} aria-label="Formulaire de connexion" noValidate>
-            {/* Email */}
-            <div className="mb-4">
-              <label htmlFor="login-email" className="label">
-                Adresse email
-              </label>
+        {/* API error */}
+        <div role="alert" aria-atomic="true">
+          {apiError && (
+            <div className="rounded-input px-4 py-3 mb-4 text-body-sm bg-bg-elevated border border-accent-error text-accent-error">
+              {apiError}
+            </div>
+          )}
+        </div>
+
+        <form onSubmit={handleSubmit} aria-label="Formulaire de connexion" noValidate>
+          {/* Email */}
+          <div className="mb-4">
+            <label htmlFor="login-email" className="label">
+              Email
+            </label>
+            <div className="relative">
+              <InputDot />
               <input
                 id="login-email"
                 type="email"
                 autoComplete="email"
-                className={`input ${fieldErrors.email ? 'border-accent-error focus:ring-accent-error' : ''}`}
+                className={`input pl-10 ${fieldErrors.email ? 'border-accent-error focus:ring-accent-error' : ''}`}
                 value={email}
                 onChange={(e) => handleEmailChange(e.target.value)}
                 aria-required="true"
@@ -104,30 +120,34 @@ export default function LoginPage() {
                 aria-describedby="login-email-error"
                 disabled={isLoading}
               />
-              <div
-                id="login-email-error"
-                aria-live="polite"
-                aria-atomic="true"
-                className="mt-1.5 min-h-5"
-              >
-                {fieldErrors.email && (
-                  <p className="text-body-sm text-accent-error">
-                    {fieldErrors.email}
-                  </p>
-                )}
-              </div>
             </div>
+            <div id="login-email-error" aria-live="polite" aria-atomic="true" className="mt-1.5 min-h-5">
+              {fieldErrors.email && (
+                <p className="text-body-sm text-accent-error">{fieldErrors.email}</p>
+              )}
+            </div>
+          </div>
 
-            {/* Mot de passe */}
-            <div className="mb-6">
-              <label htmlFor="login-password" className="label">
+          {/* Password */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-1.5">
+              <label htmlFor="login-password" className="label mb-0">
                 Mot de passe
               </label>
+              <button
+                type="button"
+                className="text-body-sm text-accent-eco hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-eco focus-visible:rounded-input px-1"
+              >
+                Oublié ?
+              </button>
+            </div>
+            <div className="relative">
+              <InputDot />
               <input
                 id="login-password"
                 type="password"
                 autoComplete="current-password"
-                className={`input ${fieldErrors.password ? 'border-accent-error focus:ring-accent-error' : ''}`}
+                className={`input pl-10 ${fieldErrors.password ? 'border-accent-error focus:ring-accent-error' : ''}`}
                 value={password}
                 onChange={(e) => handlePasswordChange(e.target.value)}
                 aria-required="true"
@@ -135,55 +155,49 @@ export default function LoginPage() {
                 aria-describedby="login-password-error"
                 disabled={isLoading}
               />
-              <div
-                id="login-password-error"
-                aria-live="polite"
-                aria-atomic="true"
-                className="mt-1.5 min-h-5"
-              >
-                {fieldErrors.password && (
-                  <p className="text-body-sm text-accent-error">
-                    {fieldErrors.password}
-                  </p>
-                )}
-              </div>
             </div>
-
-            {/* Bouton submit */}
-            <button
-              type="submit"
-              className="btn-primary w-full"
-              aria-disabled={isLoading}
-              aria-busy={isLoading}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <span
-                    aria-hidden="true"
-                    className="inline-block w-4 h-4 border-2 rounded-full animate-spin"
-                    style={{
-                      borderColor: 'rgba(5,46,22,0.25)',
-                      borderTopColor: '#052e16',
-                    }}
-                  />
-                  <span>Connexion en cours…</span>
-                </>
-              ) : (
-                'Se connecter'
+            <div id="login-password-error" aria-live="polite" aria-atomic="true" className="mt-1.5 min-h-5">
+              {fieldErrors.password && (
+                <p className="text-body-sm text-accent-error">{fieldErrors.password}</p>
               )}
-            </button>
-          </form>
-
-          <div className="flex items-center justify-center gap-1 text-body-sm text-text-secondary mt-6">
-            Pas encore de compte ?
-            <Link
-              to="/register"
-              className="inline-flex items-center px-1 min-h-[48px] font-medium text-accent-eco underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:rounded"
-            >
-              Créer un compte
-            </Link>
+            </div>
           </div>
+
+          {/* Submit */}
+          <button
+            type="submit"
+            className="btn-primary w-full"
+            aria-disabled={isLoading}
+            aria-busy={isLoading}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <span
+                  aria-hidden="true"
+                  className="inline-block w-4 h-4 border-2 rounded-full animate-spin"
+                  style={{
+                    borderColor: 'rgba(5,46,22,0.25)',
+                    borderTopColor: '#052e16',
+                  }}
+                />
+                <span>Connexion en cours…</span>
+              </>
+            ) : (
+              'Se connecter'
+            )}
+          </button>
+        </form>
+
+        {/* Bottom link */}
+        <div className="flex items-center justify-center gap-1 text-body-sm text-text-secondary mt-8">
+          Pas encore de compte ?
+          <Link
+            to="/register"
+            className="inline-flex items-center px-1 min-h-[48px] font-medium text-accent-eco underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-eco focus-visible:rounded"
+          >
+            Créer un compte
+          </Link>
         </div>
       </div>
     </main>
