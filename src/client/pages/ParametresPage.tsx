@@ -2,7 +2,10 @@ import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useConsentStore } from '../stores/consent.store'
 import { useDemoStore } from '../stores/demo.store'
+import { BottomNav } from '../components/BottomNav'
 import type { Coordinates } from '@shared/types/index'
+
+// ── Types locaux ─────────────────────────────────────────────────────────────
 
 interface DemoScenario {
   fromLabel: string
@@ -12,6 +15,8 @@ interface DemoScenario {
   weather: 'sunny' | 'rainy'
   description: string
 }
+
+// ── Config ───────────────────────────────────────────────────────────────────
 
 const DEMO_SCENARIOS: DemoScenario[] = [
   {
@@ -32,22 +37,70 @@ const DEMO_SCENARIOS: DemoScenario[] = [
   },
 ]
 
+// ── Sous-composants ───────────────────────────────────────────────────────────
+
+function Toggle({
+  checked,
+  onChange,
+  label,
+  disabled = false,
+  accent = 'eco',
+}: {
+  checked: boolean
+  onChange: () => void
+  label: string
+  disabled?: boolean
+  accent?: 'eco' | 'warning'
+}) {
+  const trackActive = accent === 'warning' ? 'bg-accent-warning' : 'bg-accent-eco'
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={onChange}
+      disabled={disabled}
+      className={[
+        'relative shrink-0 w-12 h-7 rounded-full transition-colors duration-200',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-eco',
+        'disabled:opacity-50 disabled:cursor-not-allowed',
+        checked ? trackActive : 'bg-border-strong',
+      ].join(' ')}
+    >
+      <span
+        aria-hidden="true"
+        className={[
+          'absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-white shadow-sm',
+          'transition-transform duration-200',
+          checked ? 'translate-x-5' : 'translate-x-0',
+        ].join(' ')}
+      />
+    </button>
+  )
+}
+
 function ConsentBadge({ granted }: { granted: boolean }) {
   return (
     <span
       className={[
         'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-caption font-medium',
-        granted ? 'bg-eco-50 text-eco-700' : 'bg-slate-100 text-slate-500',
+        granted ? 'bg-bg-elevated text-accent-eco' : 'bg-bg-elevated text-text-disabled',
       ].join(' ')}
     >
       <span
         aria-hidden="true"
-        className={['w-1.5 h-1.5 rounded-full', granted ? 'bg-eco-500' : 'bg-slate-400'].join(' ')}
+        className={[
+          'w-1.5 h-1.5 rounded-full',
+          granted ? 'bg-accent-eco' : 'bg-text-disabled',
+        ].join(' ')}
       />
       {granted ? 'Activée' : 'Désactivée'}
     </span>
   )
 }
+
+// ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ParametresPage() {
   const { geolocationConsent, denyGeolocation, resetGeolocation } = useConsentStore()
@@ -79,325 +132,328 @@ export default function ParametresPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-navbar">
-        <div className="max-w-2xl mx-auto flex items-center gap-3 px-4 h-16">
-          <Link
-            to="/"
-            aria-label="Retour à la carte"
-            className="shrink-0 w-12 h-12 flex items-center justify-center rounded-button text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-fast"
+    <div className="flex flex-col h-screen bg-bg-base">
+      {/* ── Header ────────────────────────────────────────────────────────── */}
+      <header className="shrink-0 px-4 pt-14 pb-4 flex items-center justify-between gap-4">
+        <Link
+          to="/"
+          aria-label="Retour à la carte"
+          className="shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-bg-elevated text-text-secondary hover:text-text-primary hover:bg-bg-card transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-eco"
+        >
+          <svg
+            aria-hidden="true"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           >
-            <svg
-              aria-hidden="true"
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M12 16l-6-6 6-6" />
-            </svg>
-          </Link>
-          <h1 className="text-h2 font-bold text-slate-900">Paramètres</h1>
-        </div>
+            <path d="M19 12H5M12 5l-7 7 7 7" />
+          </svg>
+        </Link>
+        <h1 className="text-h2 font-bold text-text-primary">Paramètres</h1>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-6 lg:px-6 space-y-6">
-        {/* ── Mode démo ────────────────────────────────────────────────── */}
-        {demoMode !== null && (
-          <section
-            className={[
-              'card p-4 lg:p-6 border',
-              demoMode ? 'border-amber-200 bg-amber-50' : 'border-slate-200',
-            ].join(' ')}
-            aria-labelledby="demo-heading"
-          >
-            {/* Niveau 1 — météo simulée */}
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h2 id="demo-heading" className="text-h3 font-semibold text-slate-900">
-                  Mode démo
-                </h2>
-                <p className="text-body-sm text-slate-500 mt-0.5">
-                  {demoMode ? 'Météo simulée — trajets réels' : 'APIs réelles'}
-                </p>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={demoMode}
-                aria-label="Activer ou désactiver le mode démo"
-                disabled={demoLoading}
-                onClick={() => void toggle(!demoMode)}
+      {/* ── Contenu scrollable ─────────────────────────────────────────────── */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="max-w-2xl mx-auto px-4 pb-8 space-y-6">
+
+          {/* ── Mode démo ─────────────────────────────────────────────────── */}
+          {demoMode !== null && (
+            <section aria-labelledby="demo-heading">
+              <h2
+                id="demo-heading"
+                className="text-h3 font-semibold text-accent-eco mb-3 px-1"
+              >
+                Mode démo
+              </h2>
+
+              <div
                 className={[
-                  'relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-eco-500 disabled:opacity-50',
-                  demoMode ? 'bg-amber-400' : 'bg-slate-300',
+                  'bg-bg-card rounded-card overflow-hidden',
+                  demoMode ? 'border border-accent-warning' : 'border border-border',
                 ].join(' ')}
               >
-                <span
-                  aria-hidden="true"
-                  className={[
-                    'pointer-events-none inline-block h-6 w-6 rounded-full bg-white shadow-sm ring-0 transition-transform duration-200',
-                    demoMode ? 'translate-x-5' : 'translate-x-0',
-                  ].join(' ')}
-                />
-              </button>
-            </div>
-
-            {demoMode && (
-              <div className="mt-5 pt-4 border-t border-amber-200 space-y-5">
-                {/* Météo simulée */}
-                <div>
-                  <p className="text-body-sm font-medium text-slate-700 mb-2">Météo simulée</p>
-                  <div className="flex gap-2" role="group" aria-label="Choisir la météo simulée">
-                    <button
-                      type="button"
-                      onClick={() => void setWeather('sunny')}
-                      disabled={demoLoading}
-                      aria-pressed={weather === 'sunny'}
-                      className={[
-                        'flex items-center gap-2 px-4 py-2 rounded-button text-body-sm font-medium transition-colors duration-fast border',
-                        weather === 'sunny'
-                          ? 'bg-amber-100 border-amber-400 text-amber-800'
-                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50',
-                      ].join(' ')}
-                    >
-                      <span aria-hidden="true">☀️</span> Soleil
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void setWeather('rainy')}
-                      disabled={demoLoading}
-                      aria-pressed={weather === 'rainy'}
-                      className={[
-                        'flex items-center gap-2 px-4 py-2 rounded-button text-body-sm font-medium transition-colors duration-fast border',
-                        weather === 'rainy'
-                          ? 'bg-sky-100 border-sky-400 text-sky-800'
-                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50',
-                      ].join(' ')}
-                    >
-                      <span aria-hidden="true">🌧️</span> Pluie
-                    </button>
-                  </div>
-                </div>
-
-                {/* Niveau 2 — simulation des providers */}
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-body-sm font-medium text-slate-900">Simuler les trajets</p>
-                    <p className="text-caption text-slate-500 mt-0.5">
-                      {providersDemo
-                        ? 'Fichiers JSON — aucun appel Transitous / OSRM / Bicloo'
-                        : 'Transitous, OSRM et Bicloo en direct'}
+                {/* Toggle principal */}
+                <div className="flex items-center justify-between gap-4 px-4 py-4">
+                  <div className="min-w-0">
+                    <p className="text-body font-semibold text-text-primary">Activer le mode démo</p>
+                    <p className={['text-body-sm mt-0.5', demoMode ? 'text-accent-warning' : 'text-text-muted'].join(' ')}>
+                      {demoMode ? 'Météo simulée — trajets réels' : 'APIs réelles'}
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={providersDemo ?? false}
-                    aria-label="Activer ou désactiver la simulation des trajets"
+                  <Toggle
+                    checked={demoMode}
+                    onChange={() => void toggle(!demoMode)}
+                    label="Activer ou désactiver le mode démo"
                     disabled={demoLoading}
-                    onClick={() => void toggleProviders(!providersDemo)}
-                    className={[
-                      'relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-eco-500 disabled:opacity-50',
-                      providersDemo ? 'bg-amber-400' : 'bg-slate-300',
-                    ].join(' ')}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className={[
-                        'pointer-events-none inline-block h-6 w-6 rounded-full bg-white shadow-sm ring-0 transition-transform duration-200',
-                        providersDemo ? 'translate-x-5' : 'translate-x-0',
-                      ].join(' ')}
-                    />
-                  </button>
+                    accent="warning"
+                  />
                 </div>
 
-                {/* Scénarios — visibles uniquement si providers démo actif */}
-                {providersDemo && (
-                  <div>
-                    <p className="text-body-sm font-medium text-slate-700 mb-2">
-                      Lancer un scénario
-                    </p>
-                    <div className="flex flex-col gap-2">
-                      {DEMO_SCENARIOS.map((scenario) => (
-                        <button
-                          key={scenario.toLabel}
-                          type="button"
-                          disabled={demoLoading}
-                          onClick={() => {
-                            void setWeather(scenario.weather).then(() => {
-                              navigate('/', {
-                                state: {
-                                  demoScenario: {
-                                    from: scenario.from,
-                                    to: scenario.to,
-                                    fromLabel: scenario.fromLabel,
-                                    toLabel: scenario.toLabel,
-                                  },
-                                },
-                              })
-                            })
-                          }}
-                          className="flex items-center justify-between gap-3 px-4 py-3 rounded-card bg-white border border-slate-200 text-left hover:border-eco-400 hover:bg-eco-50 transition-colors duration-fast group disabled:opacity-50"
-                        >
-                          <div className="min-w-0">
-                            <p className="text-body-sm font-medium text-slate-800 truncate">
-                              {scenario.fromLabel}
-                              <span className="text-slate-400 mx-1" aria-hidden="true">
-                                →
-                              </span>
-                              {scenario.toLabel}
-                            </p>
-                            <p className="text-caption text-slate-500 mt-0.5">
-                              {scenario.description}
-                            </p>
-                          </div>
-                          <svg
-                            aria-hidden="true"
-                            width="16"
-                            height="16"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="shrink-0 text-slate-400 group-hover:text-eco-600 transition-colors"
+                {/* Détails démo */}
+                {demoMode && (
+                  <div className="border-t border-border px-4 py-4 space-y-5">
+                    {/* Météo simulée */}
+                    <div>
+                      <p className="text-body-sm font-medium text-text-secondary mb-2">
+                        Météo simulée
+                      </p>
+                      <div
+                        className="flex gap-2"
+                        role="group"
+                        aria-label="Choisir la météo simulée"
+                      >
+                        {(['sunny', 'rainy'] as const).map((w) => (
+                          <button
+                            key={w}
+                            type="button"
+                            onClick={() => void setWeather(w)}
+                            disabled={demoLoading}
+                            aria-pressed={weather === w}
+                            className={[
+                              'flex items-center gap-2 px-4 py-2 rounded-xl text-body-sm font-medium transition-colors duration-fast border disabled:opacity-50',
+                              weather === w
+                                ? 'bg-bg-elevated border-accent-eco text-text-primary'
+                                : 'bg-bg-base border-border text-text-muted hover:border-accent-eco/50',
+                            ].join(' ')}
                           >
-                            <path d="M3 8h10M8 3l5 5-5 5" />
-                          </svg>
-                        </button>
-                      ))}
+                            <span aria-hidden="true">{w === 'sunny' ? '☀️' : '🌧️'}</span>
+                            {w === 'sunny' ? 'Soleil' : 'Pluie'}
+                          </button>
+                        ))}
+                      </div>
                     </div>
+
+                    {/* Simuler les providers */}
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="text-body-sm font-medium text-text-primary">
+                          Simuler les trajets
+                        </p>
+                        <p className="text-caption text-text-muted mt-0.5">
+                          {providersDemo
+                            ? 'Fichiers JSON — aucun appel Transitous / OSRM / Bicloo'
+                            : 'Transitous, OSRM et Bicloo en direct'}
+                        </p>
+                      </div>
+                      <Toggle
+                        checked={providersDemo ?? false}
+                        onChange={() => void toggleProviders(!providersDemo)}
+                        label="Activer ou désactiver la simulation des trajets"
+                        disabled={demoLoading}
+                        accent="warning"
+                      />
+                    </div>
+
+                    {/* Scénarios */}
+                    {providersDemo && (
+                      <div>
+                        <p className="text-body-sm font-medium text-text-secondary mb-2">
+                          Lancer un scénario
+                        </p>
+                        <div className="flex flex-col gap-2">
+                          {DEMO_SCENARIOS.map((scenario) => (
+                            <button
+                              key={scenario.toLabel}
+                              type="button"
+                              disabled={demoLoading}
+                              onClick={() => {
+                                void setWeather(scenario.weather).then(() => {
+                                  navigate('/', {
+                                    state: {
+                                      demoScenario: {
+                                        from: scenario.from,
+                                        to: scenario.to,
+                                        fromLabel: scenario.fromLabel,
+                                        toLabel: scenario.toLabel,
+                                      },
+                                    },
+                                  })
+                                })
+                              }}
+                              className="flex items-center justify-between gap-3 px-4 py-3 rounded-card bg-bg-base border border-border text-left hover:border-accent-eco transition-colors duration-fast group disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-eco"
+                            >
+                              <div className="min-w-0">
+                                <p className="text-body-sm font-medium text-text-primary truncate">
+                                  {scenario.fromLabel}
+                                  <span
+                                    className="text-text-disabled mx-1"
+                                    aria-hidden="true"
+                                  >
+                                    →
+                                  </span>
+                                  {scenario.toLabel}
+                                </p>
+                                <p className="text-caption text-text-muted mt-0.5">
+                                  {scenario.description}
+                                </p>
+                              </div>
+                              <svg
+                                aria-hidden="true"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 16 16"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="shrink-0 text-text-disabled group-hover:text-accent-eco transition-colors duration-fast"
+                              >
+                                <path d="M3 8h10M8 3l5 5-5 5" />
+                              </svg>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
-          </section>
-        )}
-
-        {/* ── Confidentialité ───────────────────────────────────────────── */}
-        <section className="card p-4 lg:p-6" aria-labelledby="privacy-heading">
-          <h2 id="privacy-heading" className="text-h3 font-semibold text-slate-900">
-            Confidentialité & données
-          </h2>
-          <p className="text-body-sm text-slate-500 mt-0.5 mb-5">
-            Gérez vos consentements conformément au RGPD
-          </p>
-
-          <div className="divide-y divide-slate-100">
-            {/* Géolocalisation */}
-            <div className="flex items-center justify-between gap-4 py-4 first:pt-0 last:pb-0">
-              <div className="min-w-0">
-                <p className="text-body-sm font-medium text-slate-900">Géolocalisation</p>
-                <p className="text-caption text-slate-500 mt-0.5">
-                  Affiche votre position en temps réel sur la carte
-                </p>
-              </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <ConsentBadge granted={geoGranted} />
-                {geoGranted ? (
-                  <button
-                    type="button"
-                    onClick={handleRevokeGeo}
-                    className="btn-ghost text-caption px-3 text-red-600 hover:bg-red-50"
-                    style={{ minHeight: '36px' }}
-                  >
-                    Révoquer
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleActivateGeo}
-                    className="btn-secondary text-caption px-3"
-                    style={{ minHeight: '36px' }}
-                  >
-                    Activer
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {!geoGranted && (
-            <p className="mt-4 text-caption text-slate-400 bg-slate-50 rounded-card px-3 py-2">
-              En activant la géolocalisation vous serez redirigé vers la carte où une modale de
-              consentement vous sera présentée.
-            </p>
+            </section>
           )}
-        </section>
 
-        {/* ── Vos droits RGPD ───────────────────────────────────────────── */}
-        <section className="card p-4 lg:p-6" aria-labelledby="rights-heading">
-          <h2 id="rights-heading" className="text-h3 font-semibold text-slate-900">
-            Vos droits
-          </h2>
-          <p className="text-body-sm text-slate-500 mt-0.5 mb-4">
-            Conformément au Règlement Général sur la Protection des Données (RGPD)
-          </p>
+          {/* ── Confidentialité ───────────────────────────────────────────── */}
+          <section aria-labelledby="privacy-heading">
+            <h2
+              id="privacy-heading"
+              className="text-h3 font-semibold text-accent-eco mb-3 px-1"
+            >
+              Confidentialité & données
+            </h2>
 
-          <ul className="space-y-3 text-body-sm text-slate-600">
-            <li className="flex gap-2">
-              <span aria-hidden="true" className="text-eco-500 shrink-0">
-                ✓
-              </span>
-              <span>
-                <strong className="font-medium text-slate-800">Droit d'accès</strong> — vos données
-                de profil et de mobilité sont visibles dans votre profil
-              </span>
-            </li>
-            <li className="flex gap-2">
-              <span aria-hidden="true" className="text-eco-500 shrink-0">
-                ✓
-              </span>
-              <span>
-                <strong className="font-medium text-slate-800">Droit à l'effacement</strong> — vous
-                pouvez supprimer votre compte et toutes vos données à tout moment
-              </span>
-            </li>
-            <li className="flex gap-2">
-              <span aria-hidden="true" className="text-eco-500 shrink-0">
-                ✓
-              </span>
-              <span>
-                <strong className="font-medium text-slate-800">Données GPS</strong> — aucune donnée
-                de position n'est transmise à des tiers ni stockée au-delà de la session
-              </span>
-            </li>
-            <li className="flex gap-2">
-              <span aria-hidden="true" className="text-eco-500 shrink-0">
-                ✓
-              </span>
-              <span>
-                <strong className="font-medium text-slate-800">Conservation</strong> — les données
-                de trajets sont conservées 12 mois maximum
-              </span>
-            </li>
-          </ul>
-        </section>
+            <div className="bg-bg-card rounded-card overflow-hidden divide-y divide-border">
+              {/* Géolocalisation */}
+              <div className="flex items-center justify-between gap-4 px-4 py-4">
+                <div className="min-w-0">
+                  <p className="text-body-sm font-semibold text-text-primary">Géolocalisation</p>
+                  <p className="text-caption text-text-muted mt-0.5">
+                    Affiche votre position en temps réel sur la carte
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <ConsentBadge granted={geoGranted} />
+                  {geoGranted ? (
+                    <button
+                      type="button"
+                      onClick={handleRevokeGeo}
+                      className="text-caption font-medium text-accent-error hover:opacity-80 transition-opacity duration-fast px-3 py-1.5 rounded-lg border border-accent-error/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-error"
+                    >
+                      Révoquer
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleActivateGeo}
+                      className="text-caption font-medium text-accent-eco hover:opacity-80 transition-opacity duration-fast px-3 py-1.5 rounded-lg border border-accent-eco/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-eco"
+                    >
+                      Activer
+                    </button>
+                  )}
+                </div>
+              </div>
 
-        {/* ── Supprimer le compte ───────────────────────────────────────── */}
-        <section className="card p-4 lg:p-6 border border-red-100" aria-labelledby="delete-heading">
-          <h2 id="delete-heading" className="text-h3 font-semibold text-slate-900">
-            Supprimer mon compte
-          </h2>
-          <p className="text-body-sm text-slate-500 mt-0.5 mb-4">
-            Suppression définitive de votre compte et de toutes vos données (droit à l'effacement
-            RGPD)
-          </p>
-          <Link
-            to="/profile"
-            className="btn-ghost text-caption px-4 text-red-600 hover:bg-red-50 border border-red-200"
-            style={{ minHeight: '36px', display: 'inline-flex', alignItems: 'center' }}
-          >
-            Accéder à la gestion du compte
-          </Link>
-        </section>
+              {/* Note si non accordé */}
+              {!geoGranted && (
+                <div className="px-4 py-3 bg-bg-base">
+                  <p className="text-caption text-text-muted">
+                    En activant la géolocalisation vous serez redirigé vers la carte où une modale
+                    de consentement vous sera présentée.
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* ── Vos droits RGPD ───────────────────────────────────────────── */}
+          <section aria-labelledby="rights-heading">
+            <h2
+              id="rights-heading"
+              className="text-h3 font-semibold text-accent-eco mb-3 px-1"
+            >
+              Vos droits (RGPD)
+            </h2>
+
+            <div className="bg-bg-card rounded-card px-4 py-4">
+              <ul className="space-y-3 text-body-sm text-text-secondary">
+                {[
+                  {
+                    title: "Droit d'accès",
+                    desc: 'vos données de profil et de mobilité sont visibles dans votre profil',
+                  },
+                  {
+                    title: "Droit à l'effacement",
+                    desc: 'vous pouvez supprimer votre compte et toutes vos données à tout moment',
+                  },
+                  {
+                    title: 'Données GPS',
+                    desc: "aucune donnée de position n'est transmise à des tiers ni stockée au-delà de la session",
+                  },
+                  {
+                    title: 'Conservation',
+                    desc: 'les données de trajets sont conservées 12 mois maximum',
+                  },
+                ].map(({ title, desc }) => (
+                  <li key={title} className="flex gap-2">
+                    <span aria-hidden="true" className="text-accent-eco shrink-0 mt-0.5">
+                      ✓
+                    </span>
+                    <span>
+                      <strong className="font-semibold text-text-primary">{title}</strong>
+                      {' — '}
+                      {desc}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+
+          {/* ── Supprimer mon compte ──────────────────────────────────────── */}
+          <section aria-labelledby="delete-heading">
+            <h2
+              id="delete-heading"
+              className="text-h3 font-semibold text-accent-eco mb-3 px-1"
+            >
+              Supprimer mon compte
+            </h2>
+
+            <div className="bg-bg-card rounded-card border border-accent-error/20 px-4 py-4">
+              <p className="text-body-sm text-text-muted mb-4">
+                Suppression définitive de votre compte et de toutes vos données (droit à
+                l'effacement RGPD).
+              </p>
+              <Link
+                to="/profile"
+                className="inline-flex items-center gap-2 text-body-sm font-medium text-accent-error border border-accent-error/30 rounded-xl px-4 py-2 hover:bg-accent-error/5 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-error"
+              >
+                Accéder à la gestion du compte
+                <svg
+                  aria-hidden="true"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+          </section>
+
+        </div>
       </main>
+
+      {/* ── Bottom Navigation ─────────────────────────────────────────────── */}
+      <BottomNav />
     </div>
   )
 }
