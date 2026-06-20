@@ -355,11 +355,16 @@
 
   /* ── Carte / Panel ── */
   .card {
-    @apply bg-white rounded-card shadow-card border border-slate-100;
+    @apply rounded-card shadow-card;
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
   }
 
   .card-hover {
-    @apply bg-white rounded-card shadow-card border border-slate-100 transition-shadow duration-fast hover:shadow-card-md;
+    @apply rounded-card shadow-card transition-shadow duration-fast;
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    &:hover { @apply shadow-card-md; }
   }
 
   /* ── Boutons ── */
@@ -368,36 +373,63 @@
     min-height: 48px;
   }
 
-  /* En v4, @apply ne peut pas référencer des classes @layer components — on inline les styles */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-button font-medium text-body-sm transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-eco-700 text-white hover:bg-eco-800 active:bg-eco-900 focus-visible:ring-eco-600;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-button font-medium text-body-sm transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
     min-height: 48px;
+    background-color: var(--color-accent-eco);
+    color: #052e16;
+    &:hover  { background-color: var(--color-accent-success); }
+    &:active { background-color: #16a34a; }
+    &:focus-visible { --tw-ring-color: var(--color-accent-eco); }
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-button font-medium text-body-sm transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 active:bg-slate-100 focus-visible:ring-slate-400;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-button font-medium text-body-sm transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
     min-height: 48px;
+    background-color: var(--color-bg-elevated);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    &:hover  { background-color: var(--color-bg-card); }
+    &:active { background-color: var(--color-bg-deep); }
+    &:focus-visible { --tw-ring-color: var(--color-border-strong); }
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-button font-medium text-body-sm transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600 hover:bg-slate-100 active:bg-slate-200 focus-visible:ring-slate-400;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-button font-medium text-body-sm transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
     min-height: 48px;
+    color: var(--color-text-secondary);
+    &:hover  { background-color: var(--color-bg-elevated); }
+    &:active { background-color: var(--color-bg-card); }
+    &:focus-visible { --tw-ring-color: var(--color-border-strong); }
   }
 
   .btn-eco {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-button font-medium text-body-sm transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-eco-50 text-eco-700 border border-eco-200 hover:bg-eco-100 active:bg-eco-200 focus-visible:ring-eco-600;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-button font-medium text-body-sm transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
     min-height: 48px;
+    background-color: var(--color-bg-elevated);
+    color: var(--color-accent-eco);
+    border: 1px solid var(--color-accent-eco);
+    &:hover  { background-color: var(--color-bg-card); }
+    &:active { background-color: var(--color-bg-deep); }
+    &:focus-visible { --tw-ring-color: var(--color-accent-eco); }
   }
 
   /* ── Inputs ── */
   .input {
-    @apply w-full px-4 py-3 rounded-input bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 text-body transition-colors duration-fast focus:outline-none focus:ring-2 focus:ring-eco-600 focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed;
+    @apply w-full px-4 py-3 rounded-input text-body transition-colors duration-fast focus:outline-none focus:ring-2 focus:border-transparent disabled:cursor-not-allowed;
     min-height: 48px;
+    background-color: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+    &::placeholder { color: var(--color-text-disabled); }
+    &:focus { --tw-ring-color: var(--color-accent-eco); }
+    &:disabled { background-color: var(--color-bg-deep); color: var(--color-text-muted); }
   }
 
   /* ── Labels ── */
   .label {
-    @apply block text-body-sm font-medium text-slate-700 mb-1.5;
+    @apply block text-body-sm font-medium mb-1.5;
+    color: var(--color-text-secondary);
   }
 
   /* ── Badges de mode de transport ── */
@@ -406,55 +438,56 @@
     min-height: 24px;
   }
 
-  .mode-badge-walk {
-    @apply bg-slate-100 text-slate-600;
-  }
-
-  .mode-badge-bike {
-    @apply bg-eco-50 text-eco-700;
-  }
-
-  .mode-badge-tram {
-    @apply bg-transit-50 text-transit-700;
-  }
-
-  .mode-badge-bus {
-    @apply bg-amber-50 text-amber-700;
-  }
-
-  .mode-badge-navibus {
-    @apply bg-cyan-50 text-cyan-700;
-  }
+  .mode-badge-walk    { background-color: var(--color-bg-elevated); color: var(--color-mode-walk); }
+  .mode-badge-bike    { background-color: var(--color-bg-elevated); color: var(--color-mode-bike); }
+  .mode-badge-tram    { background-color: var(--color-bg-elevated); color: var(--color-mode-tram); }
+  .mode-badge-bus     { background-color: var(--color-bg-elevated); color: var(--color-mode-bus); }
+  .mode-badge-scooter { background-color: var(--color-bg-elevated); color: var(--color-mode-scooter); }
+  .mode-badge-navibus { background-color: var(--color-bg-elevated); color: var(--color-mode-navibus); }
+  .mode-badge-train   { background-color: var(--color-bg-elevated); color: var(--color-mode-train); }
 
   /* ── Score CO2 ── */
   .co2-positive {
-    @apply text-eco-700 bg-eco-50 rounded-full px-2 py-0.5;
+    @apply rounded-full px-2 py-0.5;
+    color: var(--color-accent-eco);
+    background-color: var(--color-bg-elevated);
   }
 
   .co2-negative {
-    @apply text-red-600 bg-red-50 rounded-full px-2 py-0.5;
+    @apply rounded-full px-2 py-0.5;
+    color: var(--color-accent-error);
+    background-color: var(--color-bg-elevated);
   }
 
   .co2-neutral {
-    @apply text-slate-600 bg-slate-100 rounded-full px-2 py-0.5;
+    @apply rounded-full px-2 py-0.5;
+    color: var(--color-text-muted);
+    background-color: var(--color-bg-elevated);
   }
 
-  /* ── Toast notifications ── */
+  /* ── Toast notifications — fond toujours sombre pour la lisibilité ── */
   .toast {
-    @apply fixed bottom-20 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-body-sm font-medium px-4 py-3 rounded-card shadow-float animate-slide-up z-toast;
+    @apply fixed bottom-20 left-1/2 -translate-x-1/2 text-body-sm font-medium px-4 py-3 rounded-card shadow-float animate-slide-up z-toast;
+    background-color: #0c1510;
+    color: #f0fdf4;
   }
 
   .toast-success {
-    @apply fixed bottom-20 left-1/2 -translate-x-1/2 bg-eco-700 text-white text-body-sm font-medium px-4 py-3 rounded-card shadow-float animate-slide-up z-toast;
+    @apply fixed bottom-20 left-1/2 -translate-x-1/2 text-body-sm font-medium px-4 py-3 rounded-card shadow-float animate-slide-up z-toast;
+    background-color: var(--color-accent-success);
+    color: #052e16;
   }
 
   .toast-error {
-    @apply fixed bottom-20 left-1/2 -translate-x-1/2 bg-red-600 text-white text-body-sm font-medium px-4 py-3 rounded-card shadow-float animate-slide-up z-toast;
+    @apply fixed bottom-20 left-1/2 -translate-x-1/2 text-body-sm font-medium px-4 py-3 rounded-card shadow-float animate-slide-up z-toast;
+    background-color: var(--color-accent-error);
+    color: #fff;
   }
 
   /* ── Skeleton loading ── */
   .skeleton {
-    @apply bg-slate-200 rounded animate-pulse;
+    @apply rounded animate-pulse;
+    background-color: var(--color-bg-elevated);
   }
 }
 
