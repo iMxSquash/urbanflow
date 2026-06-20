@@ -45,10 +45,12 @@
 
   /* ─── Couleurs — Modes de transport ─────── */
   --color-mode-walk:    #94a3b8;
-  --color-mode-bike:    #16a34a;
-  --color-mode-tram:    #2563eb;
-  --color-mode-bus:     #d97706;
-  --color-mode-navibus: #0891b2;
+  --color-mode-bike:    #4ade80;
+  --color-mode-tram:    #818cf8;
+  --color-mode-bus:     #fcd34d;
+  --color-mode-scooter: #22d3ee;
+  --color-mode-navibus: #38bdf8;
+  --color-mode-train:   #a78bfa;
   --color-mode-car:     #dc2626;
 
   /* ─── Couleurs — Surfaces ────────────────── */
@@ -60,17 +62,49 @@
   --color-border: #e2e8f0;
   --color-border-strong: #cbd5e1;
 
+  /* ─── Surfaces Urban Night (dark) ────────── */
+  --color-dark-deep:     #060c08;
+  --color-dark-base:     #0c1510;
+  --color-dark-elevated: #142218;
+  --color-dark-card:     #1c2e20;
+
+  /* ─── Surfaces Urban Day (light) ─────────── */
+  --color-light-deep:     #ecfdf5;
+  --color-light-base:     #f7fff9;
+  --color-light-elevated: #ffffff;
+  --color-light-card:     #f0fdf4;
+
+  /* ─── Textes Urban Night (dark) ──────────── */
+  --color-dark-text-primary:   #f0fdf4;
+  --color-dark-text-secondary: #bbf7d0;
+  --color-dark-text-muted:     #6ee7b7;
+  --color-dark-text-disabled:  #4d6b55;
+
+  /* ─── Textes Urban Day (light) ───────────── */
+  --color-light-text-primary:   #052e16;
+  --color-light-text-secondary: #14532d;
+  --color-light-text-muted:     #166534;
+  --color-light-text-disabled:  #86efac;
+
+  /* ─── Accents & Sémantique ───────────────── */
+  --color-accent-eco:     #4ade80;
+  --color-accent-transit: #60a5fa;
+  --color-accent-success: #22c55e;
+  --color-accent-warning: #f59e0b;
+  --color-accent-error:   #f87171;
+  --color-accent-info:    #93c5fd;
+
   /* ─── Typographie ────────────────────────── */
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 
-  --text-display:  2.25rem;
-  --text-h1:       1.875rem;
-  --text-h2:       1.5rem;
-  --text-h3:       1.25rem;
-  --text-body-lg:  1.125rem;
-  --text-body:     1rem;
-  --text-body-sm:  0.875rem;
-  --text-caption:  0.75rem;
+  --text-display:  2rem;       /* 32px */
+  --text-h1:       1.625rem;   /* 26px */
+  --text-h2:       1.25rem;    /* 20px */
+  --text-h3:       1.0625rem;  /* 17px */
+  --text-body-lg:  1rem;       /* 16px */
+  --text-body:     0.9375rem;  /* 15px */
+  --text-body-sm:  0.8125rem;  /* 13px */
+  --text-caption:  0.6875rem;  /* 11px */
 
   /* ─── Espacements custom ─────────────────── */
   --spacing-13:    3.25rem;
@@ -85,10 +119,11 @@
 
   /* ─── Rayons de bordure ──────────────────── */
   --radius-card:   12px;
-  --radius-badge:  20px;
-  --radius-button: 8px;
-  --radius-input:  8px;
+  --radius-badge:  999px;
+  --radius-button: 6px;
+  --radius-input:  6px;
   --radius-map:    16px;
+  --radius-xl:     24px;
 
   /* ─── Ombres ─────────────────────────────── */
   --shadow-card:     0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.06);
@@ -173,10 +208,12 @@
 :root {
   /* Modes de transport */
   --color-mode-walk:    #94a3b8;
-  --color-mode-bike:    #16a34a;
-  --color-mode-tram:    #2563eb;
-  --color-mode-bus:     #d97706;
-  --color-mode-navibus: #0891b2;
+  --color-mode-bike:    #4ade80;
+  --color-mode-tram:    #818cf8;
+  --color-mode-bus:     #fcd34d;
+  --color-mode-scooter: #22d3ee;
+  --color-mode-navibus: #38bdf8;
+  --color-mode-train:   #a78bfa;
   --color-mode-car:     #dc2626;
 
   /* Surfaces */
