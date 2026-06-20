@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import ProtectedRoute from './components/ProtectedRoute'
 import { useAuthInit } from './hooks/useAuthInit'
+import { useThemeSync } from './hooks/useThemeSync'
 
 const LoginPage = lazy(() => import('./pages/LoginPage'))
 const RegisterPage = lazy(() => import('./pages/RegisterPage'))
@@ -54,6 +55,7 @@ function AppRoutes() {
 }
 
 export default function App() {
+  useThemeSync()
   return (
     <BrowserRouter>
       <AppRoutes />
