@@ -194,7 +194,12 @@ CORS_ORIGIN=http://localhost:5173
 - TailwindCSS classes utilitaires uniquement
 - Pas de fichiers CSS custom sauf reset minimal
 - Responsive : mobile-first (classes sans préfixe = mobile, `md:` = tablette, `lg:` = desktop)
-- Palette de couleurs cohérente via tailwind.config.ts (tokens projet)
+- Palette de couleurs cohérente via `@theme` dans `src/client/index.css` (tokens projet)
+- **Ne jamais écrire `border-[var(--color-*)]`, `text-[var(--color-*)]` ou `style={{ color: 'var(--color-*)' }}`** — Tailwind v4 génère automatiquement des classes depuis `@theme` : utiliser `border-accent-error`, `text-text-secondary`, `bg-bg-card`, `bg-bg-elevated`, `text-text-primary`, etc.
+- Tous les tokens de couleur (accents, surfaces, textes, modes transport) sont déclarés dans `@theme` de `index.css` — les classes correspondantes existent toujours.
+- **Pas de `:root` custom** — Tailwind v4 expose automatiquement tous les tokens `@theme` comme CSS custom properties sur `:root`. `color-scheme` va sur `html` dans `@layer base`.
+- **Les classes custom (`@layer components`) doivent exclusivement utiliser `@apply`** — jamais de déclarations CSS directes (`background-color: var(...)`, `color: var(...)`, `min-height: Npx`, etc.).
+- **Exception Leaflet** : les sélecteurs `.leaflet-*` utilisent des propriétés CSS directes et `!important` — incompatible avec `@apply`. Ils peuvent référencer les CSS vars via `var(--color-*)` exposées par `@theme`.
 
 ## Accessibilité (WCAG 2.1 AA) — Obligatoire
 

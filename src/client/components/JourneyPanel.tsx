@@ -99,8 +99,7 @@ function SegmentDetail({ segment }: { segment: JourneySegment }) {
 
   return (
     <div
-      className="ml-11 mb-2 rounded-xl border border-slate-100 bg-slate-50 p-3 space-y-3"
-      style={{ animation: 'var(--animate-slide-up)' }}
+      className="ml-11 mb-2 rounded-xl border border-slate-100 bg-slate-50 p-3 space-y-3 animate-slide-up"
     >
       {/* Prochains passages TC */}
       {isTc && segment.scheduledDeparture && (
