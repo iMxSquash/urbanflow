@@ -216,17 +216,29 @@
   --color-mode-train:   #a78bfa;
   --color-mode-car:     #dc2626;
 
-  /* Surfaces */
-  --color-bg:           #f8fafc;
-  --color-surface:      #ffffff;
-  --color-surface-muted: #f1f5f9;
-  --color-border:       #e2e8f0;
-  --color-border-strong: #cbd5e1;
+  color-scheme: light;
 
-  /* Textes */
-  --color-text:           #0f172a;
-  --color-text-secondary: #475569;
-  --color-text-muted:     #94a3b8;
+  /* Surfaces — Urban Day (défaut light) */
+  --color-bg-deep:      #ecfdf5;
+  --color-bg-base:      #f7fff9;
+  --color-bg-elevated:  #ffffff;
+  --color-bg-card:      #f0fdf4;
+  --color-border:       #d1fae5;
+  --color-border-strong: #a7f3d0;
+
+  /* Aliases legacy (Leaflet + composants existants) */
+  --color-bg:            #f7fff9;
+  --color-surface:       #ffffff;
+  --color-surface-muted: #ecfdf5;
+
+  /* Textes — Urban Day */
+  --color-text-primary:   #052e16;
+  --color-text-secondary: #14532d;
+  --color-text-muted:     #166534;
+  --color-text-disabled:  #86efac;
+
+  /* Alias legacy */
+  --color-text: #052e16;
 
   /* Typographie */
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
@@ -240,6 +252,36 @@
   /* Layout */
   --navbar-height:    64px;
   --bottomnav-height: 72px;
+}
+
+/* ─────────────────────────────────────────────
+ * THÈME DARK — Urban Night
+ * Appliqué via data-theme="dark" sur <html>
+ * ─────────────────────────────────────────────*/
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Surfaces — Urban Night */
+  --color-bg-deep:      #060c08;
+  --color-bg-base:      #0c1510;
+  --color-bg-elevated:  #142218;
+  --color-bg-card:      #1c2e20;
+  --color-border:       #1c2e20;
+  --color-border-strong: #243d27;
+
+  /* Aliases legacy */
+  --color-bg:            #0c1510;
+  --color-surface:       #142218;
+  --color-surface-muted: #1c2e20;
+
+  /* Textes — Urban Night */
+  --color-text-primary:   #f0fdf4;
+  --color-text-secondary: #bbf7d0;
+  --color-text-muted:     #6ee7b7;
+  --color-text-disabled:  #4d6b55;
+
+  /* Alias legacy */
+  --color-text: #f0fdf4;
 }
 
 /* ─────────────────────────────────────────────
@@ -258,8 +300,9 @@
   }
 
   body {
-    @apply bg-slate-50 text-slate-900 font-sans antialiased;
-    background-color: var(--color-bg);
+    @apply font-sans antialiased;
+    background-color: var(--color-bg-base);
+    color: var(--color-text-primary);
     font-family: var(--font-sans);
   }
 
@@ -290,15 +333,18 @@
 
   /* Titres */
   h1 {
-    @apply text-h1 font-bold text-slate-900;
+    @apply text-h1 font-bold;
+    color: var(--color-text-primary);
   }
 
   h2 {
-    @apply text-h2 font-semibold text-slate-900;
+    @apply text-h2 font-semibold;
+    color: var(--color-text-primary);
   }
 
   h3 {
-    @apply text-h3 font-semibold text-slate-800;
+    @apply text-h3 font-semibold;
+    color: var(--color-text-secondary);
   }
 }
 
