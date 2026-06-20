@@ -3,14 +3,14 @@ import 'dotenv/config'
 
 const { Pool } = pg
 
-if (!process.env.EXTERNAL_DATABASE_URL) {
-  throw new Error('EXTERNAL_DATABASE_URL is not set')
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL is not set')
 }
 
 export const pool = new Pool({
-  connectionString: process.env.EXTERNAL_DATABASE_URL,
+  connectionString: process.env.DATABASE_URL,
   // ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-  ssl: process.env.EXTERNAL_DATABASE_URL?.includes('localhost')
+  ssl: process.env.DATABASE_URL?.includes('localhost')
     ? false
     : { rejectUnauthorized: false },
   max: 10,
