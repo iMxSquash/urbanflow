@@ -1,0 +1,78 @@
+@startuml C3-communication
+
+skinparam DefaultFontName "Segoe UI"
+skinparam DefaultFontSize 12
+skinparam BackgroundColor #FFFFFF
+skinparam Padding 8
+
+skinparam object {
+  BackgroundColor #ECECEC
+  BorderColor #6C6C6C
+  FontColor #1A1A1A
+  FontSize 12
+  ArrowColor #6C6C6C
+  ArrowFontColor #333333
+  ArrowFontSize 10
+}
+
+skinparam note {
+  BackgroundColor #FAFAFA
+  BorderColor #6C6C6C
+  FontColor #333333
+  FontSize 10
+}
+
+' ── Objets internes ──────────────────────────────────────────────
+object ":Contrôleur HTTP" as CTRL
+object ":routing.service" as RS
+object ":selectProviders()" as SP
+object ":TransitousProvider" as TP
+object ":OsrmProvider" as OP
+object ":scoring.service" as SC
+object ":weatherCache\nMap JS · TTL 10 min" as WC
+
+' ── APIs externes (style différencié) ───────────────────────────
+object ":Transitous API\n[externe]" as TAPI #DCDCDC
+object ":OSRM API\n[externe]" as OAPI #DCDCDC
+object ":OpenWeather API\n[externe]" as WAPI #DCDCDC
+
+' ── Liens de collaboration ───────────────────────────────────────
+
+CTRL --> RS    : "1: getJourneys(from, to, options)"
+RS   --> CTRL  : "7: Journey[]"
+
+RS   --> SP    : "2: selectProviders(modes)"
+SP   --> RS    : "2.1: [TransitousProvider, OsrmProvider]"
+
+RS   --> TP    : "3: getJourneys() [parallèle]"
+TP   --> RS    : "3.3: Journey[] TC"
+
+TP   --> TAPI  : "3.1: HTTP GET /api/..."
+TAPI --> TP    : "3.2: Journey[] TC"
+
+RS   --> OP    : "4: getJourneys() [parallèle]"
+OP   --> RS    : "4.3: Journey[] actifs"
+
+OP   --> OAPI  : "4.1: HTTP GET /route/v1/..."
+OAPI --> OP    : "4.2: RouteGeometry + distance"
+
+RS   --> WC    : "5: getWeather(coordinates)"
+WC   --> RS    : "5.3: WeatherData"
+
+WC   --> WAPI  : "5.1: HTTP GET (si TTL expiré)"
+WAPI --> WC    : "5.2: WeatherData"
+
+RS   --> SC    : "6: scoreJourneys(journeys, preference, weather)"
+SC   --> RS    : "6.1: Journey[] triées"
+
+' ── Notes ───────────────────────────────────────────────────────
+note bottom of RS
+  Nœud central : 6 liens directs
+  Rôle d'orchestrateur (pattern Stratégie)
+end note
+
+note bottom of WC
+  Décide seul si appel\nextérieur nécessaire (5.1)
+end note
+
+@enduml
