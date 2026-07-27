@@ -115,7 +115,7 @@ Variable d'env `DEMO_MODE=true` fait basculer TOUS les appels API externes vers 
 |-----|---------------|-------|
 | Transitous | `TRANSITOUS_URL=https://api.transitous.org/api/` | Routage TC multimodal (cloud) |
 | OSRM public | `OSRM_URL=http://router.project-osrm.org` | Routage vélo/marche/scooter (shape + distance) |
-| OpenWeatherMap | `OPENWEATHER_API_KEY=xxx` | Météo pour scoring (non encore intégré) |
+| OpenWeatherMap | `OPENWEATHER_API_KEY=xxx` | Météo pour scoring (intégré — cache mémoire 10 min, re-scoring confort en fin de routing) |
 | GBFS Bicloo | URL fixe transport.data.gouv.fr | Stations vélos |
 | SIRI-Lite Naolib | `RequestorRef: opendata` | Prochains passages temps réel (non encore intégré) |
 | CartoDB Positron | URL fixe basemaps.cartocdn.com | Tuiles cartographiques |
@@ -288,7 +288,7 @@ Pondérations par préférence utilisateur :
 - Seuil marche réduit à 5 min pour la pénalité (−60 pts au lieu de −40)
 - Pénalité supplémentaire −50 pts si un segment vélo est présent
 
-**Non encore implémenté :** pondération météo (OpenWeather), pondération heure de pointe.
+**Non encore implémenté :** pondération heure de pointe.
 
 ## Git
 

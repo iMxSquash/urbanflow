@@ -1,6 +1,9 @@
 import type { TransportMode } from '@shared/types/index.js'
 
 // Source : Base Empreinte ADEME — g CO2e par km (par passager pour TC)
+// Facteurs en phase d'usage uniquement (émissions directes du déplacement),
+// hors fabrication et fin de vie (analyse de cycle de vie) : c'est ce qui justifie
+// 0 g CO2e/km pour vélo, marche et scooter électrique, qui n'émettent rien à l'usage.
 // `satisfies` garantit à la compilation que chaque TransportMode a un facteur CO2.
 // Ajouter un mode dans TRANSPORT_MODES sans l'ajouter ici → erreur TypeScript.
 export const CO2_FACTORS = {
