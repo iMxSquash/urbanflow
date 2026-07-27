@@ -112,14 +112,40 @@ export function clearTanCache(): void {
 
 export async function getTanLines(): Promise<TanLine[]> {
   if (linesCache) return linesCache
-  const lines = isDemoMode() ? await readDemoLines() : await fetchAllLines()
+  let lines: TanLine[]
+  if (isDemoMode()) {
+    lines = await readDemoLines()
+  } else {
+    try {
+      lines = await fetchAllLines()
+    } catch (err) {
+      console.warn(
+        '[transport] API Nantes indisponible pour les lignes, fallback demo-data :',
+        err instanceof Error ? err.message : String(err)
+      )
+      lines = await readDemoLines()
+    }
+  }
   linesCache = lines
   return lines
 }
 
 export async function getTanStops(): Promise<TanStop[]> {
   if (stopsCache) return stopsCache
-  const stops = isDemoMode() ? await readDemoStops() : await fetchAllStops()
+  let stops: TanStop[]
+  if (isDemoMode()) {
+    stops = await readDemoStops()
+  } else {
+    try {
+      stops = await fetchAllStops()
+    } catch (err) {
+      console.warn(
+        '[transport] API Nantes indisponible pour les arrêts, fallback demo-data :',
+        err instanceof Error ? err.message : String(err)
+      )
+      stops = await readDemoStops()
+    }
+  }
   stopsCache = stops
   return stops
 }
