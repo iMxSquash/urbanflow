@@ -1,0 +1,110 @@
+@startuml C2-sequence
+
+skinparam DefaultFontName "Segoe UI"
+skinparam DefaultFontSize 12
+skinparam BackgroundColor #FFFFFF
+skinparam SequenceGroupFontSize 11
+
+skinparam participant {
+  BackgroundColor #ECECEC
+  BorderColor #6C6C6C
+  FontColor #1A1A1A
+}
+
+skinparam actor {
+  BackgroundColor #ECECEC
+  BorderColor #6C6C6C
+  FontColor #1A1A1A
+}
+
+skinparam sequence {
+  ArrowColor #6C6C6C
+  ArrowFontColor #333333
+  ArrowFontSize 11
+  LifeLineBorderColor #6C6C6C
+  LifeLineBackgroundColor #FAFAFA
+  GroupBackgroundColor #F0F0F0
+  GroupBorderColor #6C6C6C
+  GroupFontColor #1A1A1A
+  GroupHeaderFontColor #1A1A1A
+  DividerBackgroundColor #FAFAFA
+  DividerBorderColor #6C6C6C
+  DividerFontColor #1A1A1A
+  BoxBackgroundColor #FAFAFA
+  BoxBorderColor #6C6C6C
+}
+
+skinparam note {
+  BackgroundColor #ECECEC
+  BorderColor #6C6C6C
+  FontColor #333333
+  FontSize 10
+}
+
+actor "Citoyen" as U
+participant "PWA\n(Front)" as F
+participant "Contrôleur HTTP\nPOST /api/routing/journeys" as CTRL
+participant "routing.service" as RS
+participant "selectProviders()" as SP
+participant "TransitousProvider" as TP
+participant "OsrmProvider" as OP
+participant "weatherCache" as WC
+participant "scoring.service" as SC
+
+U -> F : Saisit origine, destination,\nmodes et profil de préférence
+activate F
+
+F -> F : Valide la saisie\n(schéma Zod client)
+
+F -> CTRL : POST { from, to, modes,\npreference, pmrAccessibility }
+activate CTRL
+
+CTRL -> CTRL : Valide les entrées\n(middleware Zod serveur)
+
+CTRL -> RS : getJourneys(from, to, options)
+activate RS
+
+RS -> SP : selectProviders(modes)
+activate SP
+SP --> RS : [TransitousProvider, OsrmProvider]
+deactivate SP
+
+group Promise.all() [appels parallèles]
+  RS -> TP : getJourneys(from, to, options)
+  activate TP
+  TP --> RS : Journey[] (modes TC)
+  deactivate TP
+
+  RS -> OP : getJourneys(from, to, options)
+  activate OP
+  OP --> RS : Journey[] (modes actifs)
+  deactivate OP
+end
+
+RS -> RS : Applique les filtres durs\n(modes, maxWalkMinutes, PMR)
+
+RS -> WC : getWeather(coordinates)
+activate WC
+
+alt TTL expiré ou entrée absente
+  WC -> WC : Appel OpenWeatherMap API
+end
+
+WC --> RS : WeatherData
+deactivate WC
+
+RS -> SC : scoreJourneys(journeys, preference, weather)
+activate SC
+SC --> RS : Journey[] triées par score décroissant
+deactivate SC
+
+RS --> CTRL : Journey[]
+deactivate RS
+
+CTRL --> F : 200 OK { journeys: Journey[] }
+deactivate CTRL
+
+F -> U : Affiche les itinéraires triés
+deactivate F
+
+@enduml

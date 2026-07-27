@@ -1,0 +1,76 @@
+@startuml C1-cas-utilisation
+
+skinparam DefaultFontName "Segoe UI"
+skinparam DefaultFontSize 13
+skinparam BackgroundColor #FFFFFF
+skinparam useBetaStyle false
+
+skinparam actor {
+  BackgroundColor #ECECEC
+  BorderColor #6C6C6C
+  FontColor #1A1A1A
+  FontSize 13
+}
+
+skinparam usecase {
+  BackgroundColor #ECECEC
+  BorderColor #6C6C6C
+  FontColor #1A1A1A
+  FontSize 12
+  ArrowColor #6C6C6C
+}
+
+skinparam rectangle {
+  BackgroundColor #FAFAFA
+  BorderColor #6C6C6C
+  BorderThickness 2
+  FontColor #1A1A1A
+  FontSize 14
+  FontStyle bold
+}
+
+skinparam ArrowColor #6C6C6C
+skinparam ArrowFontColor #333333
+skinparam ArrowFontSize 11
+
+left to right direction
+
+actor "Citoyen" as C
+actor "Citoyen\nPMR" as PMR
+actor "Administrateur" as ADM
+
+C <|-- PMR : généralisation
+
+rectangle "UrbanFlow" {
+
+  usecase "S'inscrire" as UC1
+  usecase "Se connecter" as UC2
+  usecase "Saisir un itinéraire" as UC3
+  usecase "Choisir le profil\nde préférence\neco / rapide / équilibré" as UC4
+  usecase "Activer le filtre PMR" as UC5
+  usecase "Calculer les itinéraires" as UC6
+  usecase "Consulter les résultats triés" as UC7
+  usecase "Consulter le tableau de bord\nhistorique · CO2 · badges" as UC8
+  usecase "Supprimer son compte\n(RGPD)" as UC9
+  usecase "Gérer les utilisateurs" as UC10
+  usecase "Échanger des points\ncontre une récompense" as UC11
+
+}
+
+C --> UC1
+C --> UC2
+C --> UC3
+C --> UC4
+C --> UC7
+C --> UC8
+C --> UC9
+C --> UC11
+
+PMR --> UC5
+
+ADM --> UC10
+
+UC3 .> UC6 : <<include>>
+UC5 .> UC3 : <<extend>>
+
+@enduml
