@@ -313,7 +313,11 @@ export class TransitousProvider implements TransportProvider {
 
     let raw: OtpResponse
     try {
-      const res = await fetchWithTimeout(url, {}, 5_000)
+      const res = await fetchWithTimeout(
+        url,
+        { headers: { 'User-Agent': 'UrbanFlow/1.0 (+https://github.com/iMxSquash/urbanflow)' } },
+        5_000
+      )
 
       if (!res.ok) {
         const body = await res.text().catch(() => '')
