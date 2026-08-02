@@ -1,651 +1,447 @@
-# UrbanFlow 2.0 — Design System Reference
-> Tokens Tailwind CSS v4 · Référence de mise en oeuvre
+# UrbanFlow SmartRoute — Design System Reference
+> Direction créative "Estuaire" · Tokens Tailwind CSS v4 · Référence de mise en oeuvre
+>
+> Source de vérité : projet Claude Design ["Urbanflow design directions"](https://claude.ai/design/p/f442a1d6-2613-40e4-a799-50f42376ca1c) — fichiers `1a Estuaire - Palette.dc.html` et `1a Estuaire - Espacement et rayons.dc.html`. Ce fichier est une transcription fidèle de ces tokens, pas une réinterprétation.
 
 ## Tokens CSS à intégrer dans `index.css`
 
+Contrairement à la version précédente ("Urban Night"), **le mode clair est le mode par défaut** ("sable et vert profond") ; le mode sombre est une surcharge via `[data-theme="dark"]`.
+
 ```css
 @theme {
-  /* ── Surfaces (Urban Night) ─────────────── */
-  --color-bg-deep:      #060C08;
-  --color-bg-base:      #0C1510;
-  --color-bg-elevated:  #142218;
-  --color-bg-card:      #1C2E20;
-
-  /* ── Textes ──────────────────────────────── */
-  --color-text-primary:   #F0FDF4;
-  --color-text-secondary: #BBF7D0;
-  --color-text-muted:     #6EE7B7;
-  --color-text-disabled:  #4D6B55;
-
-  /* ── Accents ─────────────────────────────── */
-  --color-accent-eco:         #4ADE80;
-  --color-accent-eco-dim:     rgba(74, 222, 128, 0.12);
-  --color-accent-eco-glow:    rgba(74, 222, 128, 0.20);
-  --color-accent-transit:     #60A5FA;
-  --color-accent-transit-dim: rgba(96, 165, 250, 0.12);
-
-  /* ── Modes de transport ──────────────────── */
-  --color-mode-walk:     #94A3B8;
-  --color-mode-bike:     #4ADE80;
-  --color-mode-tram:     #818CF8;
-  --color-mode-bus:      #FCD34D;
-  --color-mode-scooter:  #22D3EE;
-  --color-mode-navibus:  #38BDF8;
-  --color-mode-train:    #A78BFA;
-
-  /* ── Sémantique ──────────────────────────── */
-  --color-success:      #22C55E;  /* 7.25:1 sur bg-elevated ✅ */
-  --color-warning:      #F59E0B;  /* 7.69:1 sur bg-elevated ✅ */
-  /* error/info : valeurs pour icônes, bordures, fond de chips (non texte) */
-  --color-error:        #EF4444;  /* 4.39:1 → AA large seulement, NE PAS utiliser comme texte normal */
-  --color-info:         #3B82F6;  /* 4.49:1 → AA large seulement, NE PAS utiliser comme texte normal */
-  /* Variantes texte (WCAG AA sur tous les fonds sombres) */
-  --color-error-text:   #F87171;  /* 5.97:1 sur bg-elevated ✅ AA */
-  --color-info-text:    #93C5FD;  /* 9.16:1 sur bg-elevated ✅ AAA */
-
-  /* ── Bordures ────────────────────────────── */
-  --color-border:       rgba(255, 255, 255, 0.07);
-  --color-border-strong: rgba(255, 255, 255, 0.13);
-  --color-border-eco:   rgba(74, 222, 128, 0.25);
-
-  /* ── Overlay ─────────────────────────────── */
-  --color-overlay: rgba(6, 12, 8, 0.85);
+  /* ── Police ──────────────────────────────── */
+  --font-sans: 'Instrument Sans', system-ui, -apple-system, sans-serif;
 
   /* ── Typographie ─────────────────────────── */
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --text-display: 2.75rem;   /* 44px — 700 — tabular-nums, tracking -0.03em */
+  --text-titre:   1.6875rem; /* 27px — 700 */
+  --text-section: 1.25rem;   /* 20px — 600 */
+  --text-corps:   1rem;      /* 16px — 400 — évite le zoom iOS */
+  --text-label:   0.8125rem; /* 13px — 600 */
+  --text-caption: 0.75rem;   /* 12px — 400 — jamais en dessous de cette taille */
 
-  /* Tailles */
-  --text-display: 2rem;      /* 32px — Extra Bold 800 — Chiffres dashboard */
-  --text-h1:      1.625rem;  /* 26px — Bold 700      — Titres de page */
-  --text-h2:      1.25rem;   /* 20px — Semi Bold 600 — Titres de section */
-  --text-h3:      1.0625rem; /* 17px — Semi Bold 600 — Sous-titres */
-  --text-body-lg: 1rem;      /* 16px — Regular 400   — Corps principal (évite zoom iOS) */
-  --text-body:    0.9375rem; /* 15px — Regular 400   — Corps standard */
-  --text-body-sm: 0.8125rem; /* 13px — Regular 400   — Méta, descriptions */
-  --text-caption: 0.6875rem; /* 11px — Medium 500    — Labels uppercase */
-
-  /* Graisses */
-  --font-weight-regular:   400;
-  --font-weight-medium:    500;
-  --font-weight-semibold:  600;
-  --font-weight-bold:      700;
-  --font-weight-extrabold: 800;
-
-  /* ── Spacing (base 4px) ──────────────────── */
-  --space-1:  4px;
-  --space-2:  8px;
-  --space-3:  12px;
-  --space-4:  16px;
-  --space-5:  20px;
-  --space-6:  24px;
-  --space-8:  32px;
-  --space-12: 48px;
+  /* ── Spacing (grille 4px, 8 paliers) ──────── */
+  --space-1: 4px;   /* gap bottom-nav, icône+coche */
+  --space-2: 8px;   /* gap chips, cartes de résultat */
+  --space-3: 12px;  /* gap vertical sheet, padding pill */
+  --space-4: 16px;  /* padding horizontal sheet mobile, marge écran */
+  --space-5: 20px;  /* header mobile, padding carte desktop */
+  --space-6: 24px;  /* gap entre blocs, padding modale */
+  --space-8: 32px;  /* padding vertical page desktop */
+  --space-10: 40px; /* padding horizontal page desktop */
 
   /* ── Rayons ──────────────────────────────── */
-  --radius-sm:   6px;
-  --radius-md:   12px;
-  --radius-lg:   16px;
-  --radius-xl:   24px;
-  --radius-full: 9999px;
+  --radius-xs: 6px;    /* checkboxes, mini pastilles de mode */
+  --radius-sm: 8px;    /* badges de segment, pastilles numérotées, barres de graphe */
+  --radius-md: 12px;   /* inputs, boutons secondaires, items de liste, boutons icône */
+  --radius-lg: 14px;   /* boutons primaires, item de nav actif, bandeaux d'alerte */
+  --radius-xl: 16px;   /* cartes de résultat/contenu (18px en desktop) */
+  --radius-2xl: 24px;  /* bottom sheet (coins hauts uniquement), modales, cartes desktop */
+  --radius-full: 9999px; /* chips mode/profil, toggles, avatars, jauges, poignée de sheet */
 
-  /* ── Ombres ──────────────────────────────── */
-  --shadow-1: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
-  --shadow-2: 0 4px 12px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.3);
-  --shadow-3: 0 12px 32px rgba(0,0,0,0.6), 0 4px 8px rgba(0,0,0,0.4);
-  --shadow-4: 0 24px 48px rgba(0,0,0,0.7);
-  --shadow-eco:     0 0 20px rgba(74,222,128,0.30), 0 0 40px rgba(74,222,128,0.10);
-  --shadow-transit: 0 0 20px rgba(96,165,250,0.25);
+  /* Règle d'imbrication : le rayon d'un enfant = rayon du parent − padding,
+     arrondi au palier inférieur. La bottom sheet n'arrondit que ses coins hauts. */
 
-  /* ── Easing ──────────────────────────────── */
-  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-in:     cubic-bezier(0.4, 0, 1, 1);
-  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --ease-ui:     cubic-bezier(0.4, 0, 0.2, 1);
+  /* ── Tailles de contrôle (cibles tactiles) ─── */
+  --control-xs: 28px;  /* badges/toggles non interactifs */
+  --control-sm: 36px;  /* chips de mode en sheet mi-hauteur, bouton fermer */
+  --control-md: 40px;  /* chips de mode pleine taille, boutons icône desktop */
+  --control-lg: 44px;  /* cible tactile minimum — chips profil, boutons icône flottants carte */
+  --control-xl: 48px;  /* champs de saisie, lignes de réglage, boutons secondaires */
+  --control-2xl: 52px; /* action principale de l'écran (une seule par vue) */
 
-  /* ── Durées d'animation ──────────────────── */
-  --dur-fast:   120ms;
-  --dur-normal: 200ms;
-  --dur-slow:   300ms;
-  --dur-xslow:  400ms;
+  /* ── Bordures ────────────────────────────── */
+  --border-width: 1px;
+  --border-width-selected: 1.5px;
+  --border-width-active: 2px;
+  --accent-width: 4px; /* liseré gauche coloré sur carte à mode de transport */
 
-  /* ── Z-index ─────────────────────────────── */
-  --z-map:      0;
-  --z-overlay:  10;
-  --z-sheet:    20;
-  --z-nav:      30;
-  --z-modal:    40;
-  --z-toast:    50;
-  --z-splash:   60;
+  /* ── Layout ──────────────────────────────── */
+  --screen-pad: 16px;      /* marge écran mobile */
+  --page-pad-x: 40px;      /* padding horizontal page desktop */
+  --page-pad-y: 32px;      /* padding vertical page desktop */
+  --content-max: 1040px;   /* largeur de lecture max desktop */
+  --nav-rail: 232px;       /* largeur sidebar desktop (remplace bottom nav) */
+  --search-panel: 400px;   /* panneau latéral desktop (min 380px) */
+  --modal-width: 560px;    /* largeur modale desktop (520-560px) */
 
-  /* ── Hauteurs fixes ──────────────────────── */
-  --h-topbar:  56px;
-  --h-bottomnav: 64px;
-  --h-input:   52px;
-  --h-btn:     52px;
+  /* ── Motion ──────────────────────────────── */
+  --ease-ui: cubic-bezier(0, 0, 0.2, 1);
+  --dur-fast: 120ms;   /* changement d'état d'un contrôle */
+  --dur-base: 180ms;   /* apparition de modale */
+  --dur-sheet: 200ms;  /* transition de position du bottom sheet */
+  /* Propriétés animées : transform / opacity UNIQUEMENT — jamais height, top, box-shadow.
+     Aucune animation décorative, boucle ou parallaxe (éco-conception). */
 
-  /* ── Animations keyframes ────────────────── */
-  @keyframes eco-pulse {
-    0%   { transform: scale(1); opacity: 0.8; }
-    70%  { transform: scale(2.2); opacity: 0; }
-    100% { transform: scale(2.2); opacity: 0; }
-  }
+  /* ── Couleurs — mode clair (défaut) ───────── */
+  --color-bg: #F6F4EF;
+  --color-surface: #FFFFFF;
+  --color-surface-muted: #FBFAF7;
+  --color-surface-sunken: #EDEAE2;
+  --color-border: #DCD7CB;
+  --color-border-strong: #C7BFAF;
 
-  @keyframes shimmer {
-    0%   { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
-  }
+  --color-text: #14231D;          /* 14,9:1 sur surface */
+  --color-text-muted: #47544D;    /* 7,1:1 */
+  --color-text-subtle: #6B7A72;   /* 4,6:1 */
+  --color-text-disabled: #8A9690;
 
-  @keyframes badge-unlock {
-    0%   { transform: scale(0.85); opacity: 0; }
-    40%  { transform: scale(1.08); opacity: 1; }
-    70%  { transform: scale(0.97); }
-    100% { transform: scale(1); }
-  }
+  --color-primary: #0B5C43;         /* 8,0:1 — action possible + gain éco. Jamais utilisé ailleurs. */
+  --color-primary-hover: #094B37;
+  --color-primary-surface: #E4EFE9;
+  --color-primary-weak: #A8C9BB;
+  --color-on-primary: #FFFFFF;
+  --color-on-primary-muted: #C7E0D5;
 
-  @keyframes slide-up {
-    from { transform: translateY(100%); }
-    to   { transform: translateY(0); }
-  }
+  --color-transit: #1D5E7A;         /* 6,1:1 — identifie le TC, jamais une action */
+  --color-transit-surface: #E7EEF2;
 
-  @keyframes fade-in {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-  }
+  --color-mode-walk: #5B6B63;            --color-mode-walk-surface: #EDEAE2;
+  --color-mode-bike: #0B5C43;            --color-mode-bike-surface: #E4EFE9;
+  --color-mode-scooter: #5C6E1A;         --color-mode-scooter-surface: #EFF1DC;
+  --color-mode-tram: #1D5E7A;            --color-mode-tram-surface: #E7EEF2;
+  --color-mode-bus: #6B3F8F;             --color-mode-bus-surface: #F0E8F5;
+  --color-mode-navibus: #0F6B6B;         --color-mode-navibus-surface: #E0F0F0;
+  --color-mode-train: #33449E;           --color-mode-train-surface: #E7EAF8;
+  --color-mode-car: #C7BFAF;             /* référence hachurée — jamais sélectionnable */
 
-  --animate-eco-pulse:    eco-pulse 2s ease-out infinite;
-  --animate-shimmer:      shimmer 1.5s linear infinite;
-  --animate-badge-unlock: badge-unlock 600ms ease-out forwards;
-  --animate-slide-up:     slide-up 300ms cubic-bezier(0.16,1,0.3,1) forwards;
-  --animate-fade-in:      fade-in 200ms ease-out forwards;
+  --color-warning: #7A4A08;         /* 7,3:1 — état inhabituel : mode démo, trajet écarté, hors ligne */
+  --color-on-warning: #FFFFFF;
+  --color-warning-border: #C99A4A;
+  --color-warning-surface: #F5EDE2;
+  --color-warning-surface-soft: #FBF3E4;
+
+  --color-danger: #B3261E;          /* 6,3:1 — réservé exclusivement à la suppression de compte */
+  --color-danger-text: #8C1D18;     /* 9,0:1 */
+  --color-danger-text-muted: #7A2620;
+  --color-danger-surface: #FDF4F3;
+  --color-danger-surface-icon: #FDECEA;
+
+  --map-tint: rgba(11, 92, 67, 0.10);           /* multiply, CartoDB Positron */
+  --scrim: rgba(20, 35, 29, 0.52);              /* 0.60 en desktop */
+  --shadow-card: 0 2px 12px rgba(20, 35, 29, 0.06);
+  --shadow-sheet: 0 -6px 28px rgba(20, 35, 29, 0.14);
+  --shadow-modal: 0 20px 60px rgba(20, 35, 29, 0.35);
+  --focus-ring: 0 0 0 2px #F6F4EF, 0 0 0 4px #0B5C43;
 }
 
-/* ── prefers-reduced-motion ────────────────────────────────── */
-/* WCAG 2.3.3 (AAA) + éco-conception : désactive toutes les    */
-/* animations non essentielles pour les utilisateurs sensibles */
-/* ET réduit la charge GPU des appareils bas de gamme.         */
+/* ── Système de thème : clair par défaut, sombre en surcharge ─── */
+:root { color-scheme: light; }
+[data-theme="dark"] { color-scheme: dark; }
+
+[data-theme="dark"],
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg: #0D1512;
+    --color-surface: #16211D;
+    --color-surface-muted: #12251E;
+    --color-surface-sunken: #1F2C27;
+    --color-border: #2C3B35;
+    --color-border-strong: #24483A;
+
+    --color-text: #EEF2EF;          /* 16,6:1 */
+    --color-text-muted: #A2B0A9;    /* 8,1:1 */
+    --color-text-subtle: #8C8279;   /* 5,0:1 */
+    --color-text-disabled: #6B7A72;
+
+    --color-primary: #4FCB9B;         /* 8,3:1 */
+    --color-primary-hover: #3FB587;
+    --color-primary-surface: #0F3A2C;
+    --color-primary-weak: #2F7A5E;
+    --color-on-primary: #062018;      /* 10,4:1 */
+    --color-on-primary-muted: #A8C9BB;
+
+    --color-transit: #6BB6D6;         /* 7,4:1 */
+    --color-transit-surface: #16303C;
+
+    --color-mode-walk: #A2B0A9;            --color-mode-walk-surface: #1F2C27;
+    --color-mode-bike: #4FCB9B;            --color-mode-bike-surface: #0F3A2C;
+    --color-mode-scooter: #B8CC5A;         --color-mode-scooter-surface: #2A2E12;
+    --color-mode-tram: #6BB6D6;            --color-mode-tram-surface: #16303C;
+    --color-mode-bus: #C09BE0;             --color-mode-bus-surface: #2C1F38;
+    --color-mode-navibus: #58C4C4;         --color-mode-navibus-surface: #123434;
+    --color-mode-train: #8FA0F0;           --color-mode-train-surface: #1B2044;
+    --color-mode-car: #3A4A43;
+
+    --color-warning: #E9A93C;         /* 8,9:1 */
+    --color-on-warning: #1F1401;      /* 10,9:1 */
+    --color-warning-border: #7A5E22;
+    --color-warning-surface: #2A2113;
+    --color-warning-surface-soft: #241C10;
+
+    --color-danger: #F0736B;          /* 7,0:1 */
+    --color-danger-text: #F0736B;
+    --color-danger-text-muted: #E4A9A4;
+    --color-danger-surface: #2A1614;
+    --color-danger-surface-icon: #3A1D1A;
+
+    --map-tint: rgba(15, 58, 44, 0.30);           /* screen, CartoDB Dark Matter */
+    --scrim: rgba(13, 21, 18, 0.72);
+    --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.28);
+    --shadow-sheet: 0 -6px 28px rgba(0, 0, 0, 0.40);
+    --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.45);
+    --focus-ring: 0 0 0 2px #0D1512, 0 0 0 4px #4FCB9B;
+  }
+}
+
+/* ── prefers-reduced-motion ─────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-
-  /* Exceptions : les spinners et skeletons doivent rester visibles */
-  .spinner-ring { animation-duration: 1s !important; animation-iteration-count: infinite !important; }
 }
 ```
+
+**Règles d'usage des couleurs (Estuaire) :**
+- Le vert (`--color-primary`) est réservé à l'action possible et au gain écologique. Jamais utilisé pour autre chose.
+- Le bleu (`--color-transit`) identifie le transport en commun. Jamais une couleur d'action.
+- L'ambre (`--color-warning`) signale un état inhabituel (mode démo, trajet écarté par un filtre, hors ligne, récompense expirée) — toujours accompagné d'une icône et d'un libellé.
+- Le rouge (`--color-danger`) est réservé exclusivement à la suppression de compte.
+- Aucune information n'est jamais portée par la seule couleur (WCAG 1.4.1) : chaque mode de transport garde son icône propre même sur fond identique.
+- Seuls 3 niveaux d'ombre existent (`shadow-card`, `shadow-sheet`, `shadow-modal`). Toute autre séparation visuelle passe par une bordure 1px — pas de glassmorphism/backdrop-blur dans cette direction.
+- Teinte de carte : Positron (clair) `saturate(.55) contrast(1.02)` + survol `multiply` 10% `--color-primary` ; Dark Matter (sombre) `saturate(.5) brightness(.92)` + survol `screen` 30% `#0F3A2C`. Aucun style vectoriel custom chargé (teinte 100% CSS, coût réseau nul).
 
 ## Classes utilitaires Tailwind custom
 
 ```css
-/* Surfaces */
-@utility bg-base      { background-color: var(--color-bg-base); }
-@utility bg-elevated  { background-color: var(--color-bg-elevated); }
-@utility bg-card      { background-color: var(--color-bg-card); }
-@utility bg-overlay   { background-color: var(--color-overlay); }
+@utility bg-surface        { background-color: var(--color-surface); }
+@utility bg-surface-muted  { background-color: var(--color-surface-muted); }
+@utility bg-surface-sunken { background-color: var(--color-surface-sunken); }
 
-/* Textes */
-@utility text-primary-dark   { color: var(--color-text-primary); }
-@utility text-secondary-dark { color: var(--color-text-secondary); }
-@utility text-muted-dark     { color: var(--color-text-muted); }
+@utility text-eco        { color: var(--color-primary); }
+@utility text-transit    { color: var(--color-transit); }
+@utility bg-eco-surface  { background-color: var(--color-primary-surface); }
+@utility border-eco      { border-color: var(--color-primary); }
 
-/* Accents */
-@utility text-eco        { color: var(--color-accent-eco); }
-@utility text-transit    { color: var(--color-accent-transit); }
-@utility bg-eco-dim      { background-color: var(--color-accent-eco-dim); }
-@utility border-eco      { border-color: var(--color-border-eco); }
+@utility shadow-card  { box-shadow: var(--shadow-card); }
+@utility shadow-sheet { box-shadow: var(--shadow-sheet); }
+@utility shadow-modal { box-shadow: var(--shadow-modal); }
 
-/* Ombres */
-@utility shadow-eco      { box-shadow: var(--shadow-eco); }
-@utility shadow-transit  { box-shadow: var(--shadow-transit); }
-
-/* Animations */
-@utility animate-eco-pulse    { animation: var(--animate-eco-pulse); }
-@utility animate-shimmer      { animation: var(--animate-shimmer); }
-@utility animate-badge-unlock { animation: var(--animate-badge-unlock); }
-@utility animate-slide-up     { animation: var(--animate-slide-up); }
-
-/* Backdrop blur — avec @supports fallback (éco + a11y) */
-/* Sur appareils sans GPU ou avec prefers-reduced-motion, */
-/* le fond opaque remplace le blur pour éviter le jank.   */
-@utility glass {
-  @supports (backdrop-filter: blur(1px)) {
-    backdrop-filter: blur(16px);
-    background-color: rgba(12, 21, 16, 0.80); /* semi-transparent ssi blur supporté */
-  }
-  @supports not (backdrop-filter: blur(1px)) {
-    background-color: rgba(12, 21, 16, 0.97); /* opaque fallback */
-  }
-}
-@utility glass-sm {
-  @supports (backdrop-filter: blur(1px)) {
-    backdrop-filter: blur(8px);
-    background-color: rgba(20, 34, 24, 0.82);
-  }
-  @supports not (backdrop-filter: blur(1px)) {
-    background-color: rgba(20, 34, 24, 0.97);
-  }
-}
-
-/* Tabular numbers */
 @utility tabular { font-variant-numeric: tabular-nums; }
-
-/* Letter spacing labels */
-@utility tracking-label { letter-spacing: 0.08em; text-transform: uppercase; }
 ```
 
 ## Classes de composants (@layer components)
 
 ```css
 @layer components {
-  /* ── Bouton primaire ─────────────────────── */
+  /* ── Bouton primaire — une seule action principale par écran ── */
   .btn-primary {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    height: var(--h-btn);
-    padding: 0 24px;
-    background: var(--color-accent-eco);
-    color: #060C08; /* 11.33:1 ✅ AAA */
-    font-size: var(--text-body-lg);
+    gap: var(--space-2);
+    height: var(--control-2xl);
+    padding: 0 var(--space-6);
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    font-size: var(--text-corps);
     font-weight: 600;
-    border-radius: var(--radius-md);
-    border: 2px solid transparent;
+    border-radius: var(--radius-lg);
+    border: none;
     cursor: pointer;
-    box-shadow: var(--shadow-eco);
-    transition: transform var(--dur-fast) var(--ease-out),
-                box-shadow var(--dur-fast) var(--ease-out),
-                opacity var(--dur-fast);
+    transition: background var(--dur-fast) var(--ease-ui),
+                transform var(--dur-fast) var(--ease-ui);
     touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
 
-    &:hover { filter: brightness(1.08); }
-    &:active { transform: scale(0.97); box-shadow: 0 0 12px rgba(74,222,128,0.2); }
-    &:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; pointer-events: none; }
+    &:hover { background: var(--color-primary-hover); }
+    &:active { transform: scale(0.97); }
+    &:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
 
-    /* WCAG 2.4.7 Focus Visible — anneau éco bien visible */
-    &:focus-visible {
-      outline: none;
-      border-color: #F0FDF4;
-      box-shadow: var(--shadow-eco), 0 0 0 3px #F0FDF4;
-    }
+    /* WCAG 2.4.7 Focus Visible */
+    &:focus-visible { outline: none; box-shadow: var(--focus-ring); }
   }
 
-  /* ── Bouton secondaire ───────────────────── */
+  /* ── Bouton secondaire ────────────────────── */
   .btn-secondary {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    height: var(--h-btn);
-    padding: 0 24px;
+    gap: var(--space-2);
+    height: var(--control-xl);
+    padding: 0 var(--space-5);
     background: transparent;
-    color: var(--color-text-primary);
-    font-size: var(--text-body-lg);
+    color: var(--color-text);
+    font-size: var(--text-corps);
     font-weight: 500;
     border-radius: var(--radius-md);
-    border: 1px solid var(--color-border-strong);
+    border: var(--border-width) solid var(--color-border-strong);
     cursor: pointer;
-    transition: background var(--dur-normal) var(--ease-ui),
-                transform var(--dur-fast) var(--ease-out);
-    touch-action: manipulation;
+    transition: background var(--dur-base) var(--ease-ui);
 
-    &:hover { background: rgba(255,255,255,0.05); }
-    &:active { transform: scale(0.97); }
-    &:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
-
-    /* WCAG 2.4.7 Focus Visible */
-    &:focus-visible {
-      outline: none;
-      border-color: var(--color-accent-eco);
-      box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.4);
-    }
+    &:hover { background: var(--color-surface-muted); }
+    &:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+    &:focus-visible { outline: none; box-shadow: var(--focus-ring); }
   }
 
-  /* ── Bouton icône ────────────────────────── */
+  /* ── Bouton icône ─────────────────────────── */
   .btn-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
-    background: var(--color-bg-card);
-    color: var(--color-text-secondary);
-    border: 1px solid var(--color-border);
+    width: var(--control-lg);
+    height: var(--control-lg);
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+    border: var(--border-width) solid var(--color-border);
     border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
     cursor: pointer;
+    transition: color var(--dur-fast) var(--ease-ui);
 
-    /* backdrop-filter via @supports (fallback opaque si non supporté) */
-    @supports (backdrop-filter: blur(1px)) { backdrop-filter: blur(12px); }
-
-    transition: border-color var(--dur-normal), color var(--dur-normal),
-                transform var(--dur-fast) var(--ease-out);
-    touch-action: manipulation;
-
-    &:hover { border-color: var(--color-border-strong); color: var(--color-text-primary); }
-    &:active { transform: scale(0.95); background: var(--color-bg-elevated); }
-
-    /* WCAG 2.4.7 Focus Visible — anneau eco sur les boutons icône */
-    &:focus-visible {
-      outline: none;
-      border-color: var(--color-accent-eco);
-      box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.4);
-    }
+    &:hover { color: var(--color-text); }
+    &:focus-visible { outline: none; box-shadow: var(--focus-ring); }
   }
 
-  /* ── Carte de composant ──────────────────── */
+  /* ── Carte de composant (résultat, contenu) ── */
   .card {
-    background: var(--color-bg-elevated);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-2);
+    background: var(--color-surface);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-card);
   }
 
-  /* ── Chip de mode ────────────────────────── */
+  /* Carte accentuée par mode de transport (liseré gauche, radius inchangé) */
+  .card-mode-accent {
+    border-left: var(--accent-width) solid var(--mode-color, var(--color-primary));
+  }
+
+  /* ── Chip de mode / profil (pill) ─────────── */
   .chip-mode {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    height: 32px;
-    padding: 0 12px;
+    gap: var(--space-2);
+    height: var(--control-md);
+    padding: 0 var(--space-3);
     border-radius: var(--radius-full);
-    font-size: var(--text-body-sm);
-    font-weight: 500;
-    border: 1px solid;
+    font-size: var(--text-label);
+    font-weight: 600;
+    border: var(--border-width) solid var(--color-border);
+    background: var(--color-surface);
+
+    &[aria-selected="true"] {
+      border-width: var(--border-width-selected);
+      border-color: var(--mode-color, var(--color-primary));
+      background: var(--mode-surface, var(--color-primary-surface));
+    }
   }
 
-  /* ── Input ───────────────────────────────── */
+  /* Marche : toujours en trait pointillé sur la carte, quelle que soit la teinte */
+  .trace-walk { stroke-dasharray: 4 4; }
+
+  /* Tracé d'itinéraire : halo blanc/sombre 2px pour la lisibilité sur la carte */
+  .trace-segment { stroke-width: 4px; paint-order: stroke; stroke: var(--color-surface); }
+
+  /* ── Input ─────────────────────────────────── */
   .input {
     display: flex;
     align-items: center;
-    gap: 12px;
-    height: var(--h-input);
-    padding: 0 16px;
-    background: var(--color-bg-elevated);
-    color: var(--color-text-primary);
-    font-size: var(--text-body-lg); /* 16px — évite le zoom iOS */
-    border: 1px solid var(--color-border);
+    gap: var(--space-3);
+    height: var(--control-xl);
+    padding: 0 var(--space-4);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-size: var(--text-corps); /* 16px — évite le zoom iOS */
+    border: var(--border-width) solid var(--color-border);
     border-radius: var(--radius-md);
-    /* NE PAS mettre outline:none sans compensation — WCAG 2.4.7 */
     outline: none;
-    transition: border-color var(--dur-normal), box-shadow var(--dur-normal);
+    transition: border-color var(--dur-base) var(--ease-ui);
 
-    &::placeholder { color: var(--color-text-muted); } /* 10.83:1 ✅ AAA */
-
-    /* :focus-visible au lieu de :focus — anneau visible uniquement clavier,
-       mais box-shadow active au clic aussi pour feedback visuel mobile */
-    &:focus {
-      border-color: var(--color-accent-eco);
-      box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.25);
-    }
-    &:focus-visible {
-      border-color: var(--color-accent-eco);
-      box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.45); /* anneau renforcé clavier */
-    }
+    &::placeholder { color: var(--color-text-subtle); }
+    &:focus-visible { border-color: var(--color-primary); box-shadow: var(--focus-ring); }
   }
 
-  /* ── Bottom sheet ────────────────────────── */
+  /* ── Bottom sheet (mobile) — devient un panneau latéral ≥1024px ── */
+  /* <div role="dialog" aria-labelledby="sheet-title"> non modal */
   .bottom-sheet {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    background: var(--color-bg-base);
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-    box-shadow: var(--shadow-4);
-    z-index: var(--z-sheet);
-    max-height: 65vh;
-    overflow-y: auto;
-    overscroll-behavior: contain;
+    background: var(--color-surface);
+    border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+    box-shadow: var(--shadow-sheet);
+    padding: var(--space-2) var(--space-4) var(--space-3);
+    transition: transform var(--dur-sheet) var(--ease-ui);
+
+    @media (min-width: 1024px) {
+      position: static;
+      width: var(--search-panel);
+      min-width: 380px;
+      border-radius: var(--radius-2xl);
+      box-shadow: var(--shadow-card);
+    }
   }
 
-  /* ── Skeleton ────────────────────────────── */
-  .skeleton {
-    background: linear-gradient(
-      90deg,
-      var(--color-bg-card) 0%,
-      rgba(255,255,255,0.06) 40%,
-      rgba(255,255,255,0.06) 60%,
-      var(--color-bg-card) 100%
-    );
-    background-size: 300% 100%;
-    animation: shimmer 1.5s linear infinite;
-    border-radius: var(--radius-sm);
+  /* ── Modale ────────────────────────────────── */
+  /* <div role="dialog" aria-modal="true" aria-labelledby="modal-title"> */
+  .modal {
+    background: var(--color-surface);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-modal);
+    padding: var(--space-6);
+
+    @media (min-width: 1024px) {
+      width: var(--modal-width);
+      margin-inline: auto;
+    }
   }
 
-  /* ── Toast ───────────────────────────────── */
-  .toast {
-    position: fixed;
-    bottom: calc(var(--h-bottomnav) + env(safe-area-inset-bottom) + 8px);
-    left: 16px;
-    right: 16px;
-    background: var(--color-bg-card);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    padding: 14px 16px;
-    box-shadow: var(--shadow-3);
-    z-index: var(--z-toast);
-    animation: var(--animate-slide-up);
-  }
-
-  /* ── Bottom navigation ───────────────────── */
-  /* aria : <nav aria-label="Navigation principale" role="navigation"> */
+  /* ── Bottom navigation (mobile) — devient une sidebar ≥1024px ── */
+  /* <nav aria-label="Navigation principale"> */
   .bottom-nav {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    height: calc(var(--h-bottomnav) + env(safe-area-inset-bottom));
     padding-bottom: env(safe-area-inset-bottom);
-    border-top: 1px solid var(--color-border);
+    background: var(--color-surface);
+    border-top: var(--border-width) solid var(--color-border);
     display: flex;
     align-items: center;
     justify-content: space-around;
-    z-index: var(--z-nav);
 
-    /* backdrop-filter avec fallback opaque */
-    @supports (backdrop-filter: blur(1px)) {
-      background: rgba(12, 21, 16, 0.92);
-      backdrop-filter: blur(20px);
-    }
-    @supports not (backdrop-filter: blur(1px)) {
-      background: rgba(12, 21, 16, 0.99);
+    @media (min-width: 1024px) {
+      position: static;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: stretch;
+      width: var(--nav-rail);
+      height: 100vh;
+      border-top: none;
+      border-right: var(--border-width) solid var(--color-border);
     }
   }
 
-  /* ── Toast ── aria-live="polite" requis sur le conteneur ── */
+  /* ── Toast ─────────────────────────────────── */
   /* <div role="status" aria-live="polite" aria-atomic="true"> */
   .toast {
     position: fixed;
-    bottom: calc(var(--h-bottomnav) + env(safe-area-inset-bottom) + 8px);
-    left: 16px;
-    right: 16px;
-    background: var(--color-bg-card);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    padding: 14px 16px;
-    box-shadow: var(--shadow-3);
-    z-index: var(--z-toast);
-    animation: var(--animate-slide-up);
+    left: var(--space-4);
+    right: var(--space-4);
+    bottom: calc(var(--control-2xl) + env(safe-area-inset-bottom) + var(--space-2));
+    background: var(--color-surface);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-3) var(--space-4);
+    box-shadow: var(--shadow-sheet);
   }
 
-  /* ── Bottom sheet ── aria-modal="true" requis ── */
-  /* <div role="dialog" aria-modal="true" aria-labelledby="sheet-title"> */
-  .bottom-sheet {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: var(--color-bg-base);
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-    box-shadow: var(--shadow-4);
-    z-index: var(--z-sheet);
-    max-height: 65vh;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    /* Focus trap requis côté JS quand la sheet est ouverte (WCAG 2.1.2) */
+  /* ── Skeleton (chargement) ─────────────────── */
+  .skeleton {
+    background: linear-gradient(90deg,
+      var(--color-surface-sunken) 0%,
+      var(--color-surface-muted) 50%,
+      var(--color-surface-sunken) 100%);
+    background-size: 200% 100%;
+    border-radius: var(--radius-sm);
+    animation: shimmer 1.5s linear infinite;
   }
-}
-
-/* ══════════════════════════════════════════════════════════════
- * LIGHT MODE — "Urban Day"
- * Activé via <html data-theme="light"> (géré par le store Zustand)
- * Fallback : @media (prefers-color-scheme: light) si pas de préférence
- * ══════════════════════════════════════════════════════════════ */
-
-/* Système de thème : par défaut dark, bascule en light via data-theme */
-:root {
-  color-scheme: dark;
-}
-[data-theme="light"] {
-  color-scheme: light;
-}
-
-@layer base {
-  /* Sélecteur [data-theme="light"] ET media fallback si aucune préférence */
-  [data-theme="light"],
-  @media (prefers-color-scheme: light) {
-    :root:not([data-theme="dark"]) {
-
-      /* ── Surfaces ──────────────────────────── */
-      --color-bg-deep:      #ECFDF5;  /* vert-50 légèrement saturé */
-      --color-bg-base:      #F7FFF9;  /* fond principal, blanc verdâtre doux */
-      --color-bg-elevated:  #FFFFFF;  /* cartes — fond pur blanc */
-      --color-bg-card:      #F0FDF4;  /* cartes imbriquées — vert-50 */
-
-      /* ── Textes ─────────────────────────────── */
-      /* Tous vérifiés WCAG AA sur #FFFFFF */
-      --color-text-primary:   #052E16;  /* 14.91:1 ✅ AAA — vert-950 */
-      --color-text-secondary: #14532D;  /*  9.11:1 ✅ AAA — vert-900 */
-      --color-text-muted:     #166534;  /*  7.13:1 ✅ AAA — vert-800 */
-      --color-text-disabled:  #86EFAC;  /*  1.40:1 — exempt (inactif WCAG 1.4.3) */
-
-      /* ── Accents ─────────────────────────────── */
-      --color-accent-eco:         #4ADE80;  /* badge/chip bg uniquement, PAS texte */
-      --color-accent-eco-cta:     #166534;  /* fond bouton CTA → texte blanc 7.13:1 ✅ */
-      --color-accent-eco-text:    #15803D;  /* texte éco sur fond clair 5.02:1 ✅ */
-      --color-accent-eco-dim:     rgba(74, 222, 128, 0.18);
-      --color-accent-eco-glow:    rgba(21, 128, 61, 0.15);
-      --color-accent-transit:     #1D4ED8;  /* bleu-700 6.70:1 ✅ */
-      --color-accent-transit-dim: rgba(29, 78, 216, 0.10);
-
-      /* ── Modes de transport — texte foncé (light mode) ─── */
-      /* Utilisés dans les chips à la place des couleurs vives */
-      --color-mode-walk-text:    #374151;  /* gray-700   9.09:1 ✅ */
-      --color-mode-bike-text:    #15803D;  /* green-700  4.57:1 ✅ */
-      --color-mode-tram-text:    #4338CA;  /* indigo-700 6.81:1 ✅ */
-      --color-mode-bus-text:     #92400E;  /* amber-800  6.67:1 ✅ */
-      --color-mode-scooter-text: #155E75;  /* cyan-800   6.54:1 ✅ */
-      --color-mode-navibus-text: #0369A1;  /* sky-700    5.28:1 ✅ */
-      --color-mode-train-text:   #6D28D9;  /* violet-700 6.19:1 ✅ */
-
-      /* ── Sémantique ─────────────────────────── */
-      --color-success:      #15803D;  /* 5.02:1 ✅ */
-      --color-warning:      #92400E;  /* 7.09:1 ✅ AAA */
-      --color-error:        #DC2626;  /* 4.83:1 ✅ AA — texte ET icônes */
-      --color-error-text:   #DC2626;  /* identique en light */
-      --color-info:         #1D4ED8;  /* 6.70:1 ✅ AA */
-      --color-info-text:    #1D4ED8;  /* identique en light */
-
-      /* ── Bordures ─────────────────────────────── */
-      --color-border:        rgba(5, 46, 22, 0.10);   /* vert très doux */
-      --color-border-strong: rgba(5, 46, 22, 0.20);
-      --color-border-eco:    rgba(22, 101, 52, 0.30);
-
-      /* ── Overlay (modale) ─────────────────────── */
-      --color-overlay: rgba(5, 46, 22, 0.55);
-
-      /* ── Ombres — plus légères en light ──────── */
-      --shadow-1: 0 1px 3px rgba(5,46,22,0.08), 0 1px 2px rgba(5,46,22,0.05);
-      --shadow-2: 0 4px 12px rgba(5,46,22,0.10), 0 2px 4px rgba(5,46,22,0.06);
-      --shadow-3: 0 12px 32px rgba(5,46,22,0.12), 0 4px 8px rgba(5,46,22,0.08);
-      --shadow-4: 0 24px 48px rgba(5,46,22,0.15);
-
-      /* Glow light — subtil drop shadow vert au lieu de neon */
-      --shadow-eco:     0 4px 16px rgba(21, 128, 61, 0.25), 0 2px 6px rgba(21,128,61,0.15);
-      --shadow-transit: 0 4px 16px rgba(29, 78, 216, 0.20);
-
-      /* ── Carte : tuiles Positron en light mode ──── */
-      /* Côté React : passer l'URL via un token CSS ou prop conditionnelle */
-      /* CartoDB Positron : https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png */
-    }
-  }
-}
-
-/* ── Surcharges de composants pour le light mode ────────────── */
-[data-theme="light"],
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
-
-    /* Bouton primaire : fond vert foncé + texte blanc */
-    .btn-primary {
-      background: var(--color-accent-eco-cta); /* #166534 */
-      color: #FFFFFF;
-      box-shadow: var(--shadow-eco);
-
-      &:hover { filter: brightness(1.10); }
-      &:focus-visible {
-        border-color: #052E16;
-        box-shadow: var(--shadow-eco), 0 0 0 3px rgba(5, 46, 22, 0.4);
-      }
-    }
-
-    /* Input : fond blanc, bordure verte subtile */
-    .input {
-      background: var(--color-bg-elevated);
-      border-color: var(--color-border);
-      color: var(--color-text-primary);
-
-      &::placeholder { color: var(--color-text-muted); } /* 7.13:1 ✅ */
-      &:focus {
-        border-color: var(--color-accent-eco-text);
-        box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.20);
-      }
-      &:focus-visible {
-        box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.40);
-      }
-    }
-
-    /* Bottom sheet : fond blanc mat */
-    .bottom-sheet {
-      background: var(--color-bg-elevated);
-      border-top: 1px solid var(--color-border);
-    }
-
-    /* Skeleton : shimmer clair */
-    .skeleton {
-      background: linear-gradient(
-        90deg,
-        var(--color-bg-card) 0%,
-        rgba(5, 46, 22, 0.04) 40%,
-        rgba(5, 46, 22, 0.04) 60%,
-        var(--color-bg-card) 100%
-      );
-      background-size: 300% 100%;
-    }
-
-    /* Bottom navigation : fond blanc avec séparateur */
-    .bottom-nav {
-      border-top: 1px solid var(--color-border);
-
-      @supports (backdrop-filter: blur(1px)) {
-        background: rgba(247, 255, 249, 0.92);
-        backdrop-filter: blur(20px);
-      }
-      @supports not (backdrop-filter: blur(1px)) {
-        background: rgba(247, 255, 249, 0.99);
-      }
-    }
-
-    /* Carte Leaflet : remplacer les tuiles Dark Matter par Positron */
-    /* À implémenter côté React via store de thème : */
-    /* const tileUrl = theme === 'light'
-         ? 'https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
-         : 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' */
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
   }
 }
 ```
