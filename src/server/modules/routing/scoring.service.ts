@@ -72,6 +72,14 @@ export function computeComfortScore(
     base = Math.max(0, base - 50)
   }
 
+  // Dénivelé : aucune donnée d'altimétrie réelle disponible (OSRM public ne fournit
+  // pas de profil DEM pour le profil driving utilisé, cf. CLAUDE.md). Approximation :
+  // pénalise le confort dès qu'un segment vélo est présent — seul mode réellement
+  // affecté par le relief dans ce produit — plutôt que d'ignorer le réglage.
+  if (options.avoidElevation && segments.some((s) => s.mode === 'bike')) {
+    base = Math.max(0, base - 30)
+  }
+
   // Météo : pluie/neige/orage → pénalise le vélo, prime les TC couverts
   if (weather) {
     const isWet = ['rain', 'snow', 'thunderstorm'].includes(weather.condition)
