@@ -88,8 +88,9 @@ export function ModeChip({ mode, selected = false, size = 'md', onClick }: ModeC
         type="button"
         className="chip-mode"
         data-size={size === 'sm' ? 'sm' : undefined}
+        data-selected={selected ? 'true' : undefined}
         style={style}
-        aria-selected={selected}
+        aria-pressed={selected}
         onClick={onClick}
       >
         {content}
@@ -98,7 +99,12 @@ export function ModeChip({ mode, selected = false, size = 'md', onClick }: ModeC
   }
 
   return (
-    <span className="chip-mode" data-size={size === 'sm' ? 'sm' : undefined} style={style}>
+    <span
+      className="chip-mode"
+      data-size={size === 'sm' ? 'sm' : undefined}
+      data-selected={selected ? 'true' : undefined}
+      style={style}
+    >
       {content}
     </span>
   )

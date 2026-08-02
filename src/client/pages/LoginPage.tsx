@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { login } from '../services/auth.service'
 import { useAuthStore } from '../stores/auth.store'
+import { AuthShell, AuthFooterNotice } from '../components/AuthShell'
 
 interface FormErrors {
   email?: string
@@ -27,9 +28,12 @@ function validate(email: string, password: string): FormErrors {
 export default function LoginPage() {
   const navigate = useNavigate()
   const setAuth = useAuthStore((s) => s.setAuth)
+  const continueAsGuest = useAuthStore((s) => s.continueAsGuest)
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [rememberMe, setRememberMe] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<FormErrors>({})
   const [apiError, setApiError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -66,116 +70,110 @@ export default function LoginPage() {
     if (submitted) setFieldErrors(validate(email, v))
   }
 
+  function handleContinueAsGuest() {
+    continueAsGuest()
+    navigate('/')
+  }
+
   return (
-    <main className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-h2 font-bold text-slate-900">Connexion</h1>
-          <p className="mt-2 text-body-sm text-slate-600">Accédez à votre espace UrbanFlow</p>
-        </div>
-
-        <div className="card p-6 md:p-8">
-          {/* Zone d'erreur API — toujours dans le DOM pour que aria-live fonctionne */}
-          <div role="alert" aria-atomic="true" className="mb-2">
-            {apiError && (
-              <div className="bg-red-50 border border-red-200 rounded-input px-4 py-3 mb-4 text-red-700 text-body-sm">
-                {apiError}
-              </div>
-            )}
+    <AuthShell active="login">
+      <div role="alert" aria-atomic="true">
+        {apiError && (
+          <div className="bg-danger-surface rounded-md px-4 py-3 mb-2 text-danger-text text-body-sm">
+            {apiError}
           </div>
-
-          <form onSubmit={handleSubmit} aria-label="Formulaire de connexion" noValidate>
-            {/* Email */}
-            <div className="mb-4">
-              <label htmlFor="login-email" className="label">
-                Adresse email
-              </label>
-              <input
-                id="login-email"
-                type="email"
-                autoComplete="email"
-                className={`input ${fieldErrors.email ? 'border-red-400 focus:ring-red-500' : ''}`}
-                value={email}
-                onChange={(e) => handleEmailChange(e.target.value)}
-                aria-required="true"
-                aria-invalid={!!fieldErrors.email}
-                aria-describedby="login-email-error"
-                disabled={isLoading}
-              />
-              <div
-                id="login-email-error"
-                aria-live="polite"
-                aria-atomic="true"
-                className="mt-1.5 min-h-5"
-              >
-                {fieldErrors.email && (
-                  <p className="text-body-sm text-red-600">{fieldErrors.email}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Mot de passe */}
-            <div className="mb-6">
-              <label htmlFor="login-password" className="label">
-                Mot de passe
-              </label>
-              <input
-                id="login-password"
-                type="password"
-                autoComplete="current-password"
-                className={`input ${fieldErrors.password ? 'border-red-400 focus:ring-red-500' : ''}`}
-                value={password}
-                onChange={(e) => handlePasswordChange(e.target.value)}
-                aria-required="true"
-                aria-invalid={!!fieldErrors.password}
-                aria-describedby="login-password-error"
-                disabled={isLoading}
-              />
-              <div
-                id="login-password-error"
-                aria-live="polite"
-                aria-atomic="true"
-                className="mt-1.5 min-h-5"
-              >
-                {fieldErrors.password && (
-                  <p className="text-body-sm text-red-600">{fieldErrors.password}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Bouton submit */}
-            <button
-              type="submit"
-              className="btn-primary w-full"
-              aria-disabled={isLoading}
-              aria-busy={isLoading}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <span
-                    aria-hidden="true"
-                    className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
-                  />
-                  <span>Connexion en cours…</span>
-                </>
-              ) : (
-                'Se connecter'
-              )}
-            </button>
-          </form>
-
-          <div className="flex items-center justify-center gap-1 text-body-sm text-slate-600 mt-6">
-            Pas encore de compte ?
-            <Link
-              to="/register"
-              className="inline-flex items-center px-1 min-h-[48px] text-eco-700 font-medium underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-600 focus-visible:rounded"
-            >
-              Créer un compte
-            </Link>
-          </div>
-        </div>
+        )}
       </div>
-    </main>
+
+      <form onSubmit={handleSubmit} aria-label="Formulaire de connexion" noValidate className="flex flex-col gap-4">
+        <div>
+          <label htmlFor="login-email" className="label">
+            Adresse email
+          </label>
+          <input
+            id="login-email"
+            type="email"
+            autoComplete="email"
+            className={`input ${fieldErrors.email ? 'border-danger focus-visible:ring-danger' : ''}`}
+            value={email}
+            onChange={(e) => handleEmailChange(e.target.value)}
+            aria-required="true"
+            aria-invalid={!!fieldErrors.email}
+            aria-describedby="login-email-error"
+            disabled={isLoading}
+          />
+          <div id="login-email-error" aria-live="polite" aria-atomic="true" className="mt-1.5 min-h-5">
+            {fieldErrors.email && <p className="text-body-sm text-danger-text">{fieldErrors.email}</p>}
+          </div>
+        </div>
+
+        <div>
+          <label htmlFor="login-password" className="label">
+            Mot de passe
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              id="login-password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              className={`input ${fieldErrors.password ? 'border-danger focus-visible:ring-danger' : ''}`}
+              value={password}
+              onChange={(e) => handlePasswordChange(e.target.value)}
+              aria-required="true"
+              aria-invalid={!!fieldErrors.password}
+              aria-describedby="login-password-error"
+              disabled={isLoading}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="shrink-0 text-caption font-semibold text-primary px-2 h-12"
+            >
+              {showPassword ? 'Masquer' : 'Afficher'}
+            </button>
+          </div>
+          <div id="login-password-error" aria-live="polite" aria-atomic="true" className="mt-1.5 min-h-5">
+            {fieldErrors.password && <p className="text-body-sm text-danger-text">{fieldErrors.password}</p>}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <label className="flex items-center gap-2 cursor-pointer text-body-sm text-text">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="size-[22px] rounded-xs accent-primary"
+            />
+            Rester connecté
+          </label>
+          <a href="#" className="text-body-sm font-semibold text-primary">
+            Mot de passe oublié
+          </a>
+        </div>
+
+        <button
+          type="submit"
+          className="btn-primary w-full"
+          aria-disabled={isLoading}
+          aria-busy={isLoading}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <>
+              <span
+                aria-hidden="true"
+                className="inline-block w-4 h-4 border-2 border-on-primary border-t-transparent rounded-full animate-spin"
+              />
+              <span>Connexion en cours…</span>
+            </>
+          ) : (
+            'Se connecter'
+          )}
+        </button>
+      </form>
+
+      <AuthFooterNotice onContinueAsGuest={handleContinueAsGuest} />
+    </AuthShell>
   )
 }

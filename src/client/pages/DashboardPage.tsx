@@ -1,59 +1,23 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { BadgeGrid } from '../components/BadgeGrid'
 import { getDashboardStats, getUserBadges } from '../services/gamification.service'
 import type { BadgeWithStatus, DashboardStats } from '../services/gamification.service'
+import { BottomNav } from '../components/BottomNav'
 
 const WeeklyCo2Chart = lazy(() => import('../components/WeeklyCo2Chart'))
-const ModePieChart = lazy(() => import('../components/ModePieChart'))
+const ModeBreakdownTable = lazy(() => import('../components/ModeBreakdownTable'))
 
-// ── Formatage ──────────────────────────────────────────────────────────────────
-
-function formatCo2(grams: number): string {
-  if (grams === 0) return '0 g'
-  return grams >= 1000 ? `${(grams / 1000).toFixed(1)} kg` : `${grams} g`
+function formatCo2Kg(grams: number): string {
+  return `${(grams / 1000).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} kg`
 }
 
-// ── Squelettes ─────────────────────────────────────────────────────────────────
-
-function StatSkeleton() {
-  return (
-    <div className="card p-4 space-y-2" aria-hidden="true">
-      <div className="skeleton h-3 w-20 rounded" />
-      <div className="skeleton h-8 w-24 rounded" />
-      <div className="skeleton h-3 w-16 rounded" />
-    </div>
-  )
-}
-
-function ChartSkeleton({ height = 'h-44' }: { height?: string }) {
+function ChartSkeleton({ height = 'h-27' }: { height?: string }) {
   return (
     <div className={`${height} flex items-center justify-center`} aria-hidden="true">
-      <div className="skeleton w-full h-full rounded-xl" />
+      <div className="skeleton w-full h-full rounded-lg" />
     </div>
   )
 }
-
-// ── Stat card ──────────────────────────────────────────────────────────────────
-
-interface StatCardProps {
-  label: string
-  value: string
-  sub: string
-  accent: string
-}
-
-function StatCard({ label, value, sub, accent }: StatCardProps) {
-  return (
-    <div className={`card p-4 border-l-4 ${accent}`}>
-      <p className="text-caption text-slate-500 mb-1">{label}</p>
-      <p className="text-display font-bold text-slate-900 leading-none">{value}</p>
-      <p className="text-caption text-slate-400 mt-1">{sub}</p>
-    </div>
-  )
-}
-
-// ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
@@ -75,141 +39,118 @@ export default function DashboardPage() {
 
   const now = new Date()
   const monthLabel = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+  const unlockedCount = badges.filter((b) => b.unlocked).length
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-navbar">
-        <div className="max-w-2xl mx-auto flex items-center gap-3 px-4 h-16">
-          <Link
-            to="/"
-            aria-label="Retour à la carte"
-            className="shrink-0 w-12 h-12 flex items-center justify-center rounded-button text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-600"
-          >
-            <svg
-              aria-hidden="true"
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M12 16l-6-6 6-6" />
-            </svg>
-          </Link>
-          <div>
-            <h1 className="text-h2 font-bold text-slate-900 leading-tight">Tableau de bord</h1>
-            <p className="text-caption text-slate-400 capitalize">{monthLabel}</p>
-          </div>
+    <div className="min-h-screen bg-bg pb-[calc(var(--height-bottomnav)+1rem)] lg:pb-6">
+      <header className="bg-primary px-5 pt-4.5 pb-5 flex flex-col gap-3.5">
+        <div className="flex items-center justify-between">
+          <h1 className="text-h3 font-bold text-on-primary">Mes progrès</h1>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-on-primary/15 text-caption font-semibold text-on-primary capitalize">
+            {monthLabel}
+          </span>
+        </div>
+        <div className="flex items-end gap-4">
+          <span className="flex flex-col">
+            <span className="text-caption text-on-primary-muted">Points</span>
+            <span className="text-[38px] font-bold text-on-primary leading-none tracking-[-0.03em] tabular-nums">
+              {loading || !stats ? '—' : stats.summary.totalPoints.toLocaleString('fr-FR')}
+            </span>
+          </span>
+          <span className="flex flex-col pb-0.5">
+            <span className="text-caption text-on-primary-muted">CO₂ évité ce mois</span>
+            <span className="text-h2 font-bold text-on-primary leading-tight tabular-nums">
+              {loading || !stats ? '—' : formatCo2Kg(stats.summary.co2SavedGrams)}
+            </span>
+          </span>
         </div>
       </header>
 
-      {/* ── Contenu ─────────────────────────────────────────────────────────── */}
-      <main className="max-w-2xl mx-auto px-4 py-6 lg:px-6 space-y-6">
-        {/* Erreur globale */}
+      <main className="max-w-2xl mx-auto px-4 py-4 flex flex-col gap-3.5">
         {error && (
-          <div
-            role="alert"
-            className="bg-red-50 border border-red-200 rounded-card px-4 py-3 text-red-700 text-body-sm"
-          >
+          <div role="alert" className="bg-danger-surface rounded-xl px-4 py-3 text-danger-text text-body-sm">
             {error}
           </div>
         )}
 
-        {/* ── Section 1 : Résumé mensuel ────────────────────────────────── */}
-        <section aria-labelledby="summary-heading">
-          <h2 id="summary-heading" className="text-h3 font-semibold text-slate-900 mb-3">
-            Ce mois-ci
-          </h2>
+        <section className="card p-3.5" aria-labelledby="weekly-heading">
+          <div className="flex items-baseline justify-between mb-3">
+            <h2 id="weekly-heading" className="text-body-lg font-bold">
+              CO₂ évité par semaine
+            </h2>
+            <span className="text-caption text-text-muted">en kg</span>
+          </div>
           {loading ? (
-            <div className="grid grid-cols-3 gap-3">
-              <StatSkeleton />
-              <StatSkeleton />
-              <StatSkeleton />
-            </div>
+            <ChartSkeleton />
           ) : stats ? (
-            <div className="grid grid-cols-3 gap-3">
-              <StatCard
-                label="CO₂ économisé"
-                value={formatCo2(stats.summary.co2SavedGrams)}
-                sub="vs voiture"
-                accent="border-eco-500"
-              />
-              <StatCard
-                label="Trajets"
-                value={String(stats.summary.tripCount)}
-                sub={stats.summary.tripCount > 1 ? 'enregistrés' : 'enregistré'}
-                accent="border-transit-400"
-              />
-              <StatCard
-                label="Points"
-                value={String(stats.summary.totalPoints)}
-                sub="cumulés"
-                accent="border-amber-400"
-              />
-            </div>
-          ) : null}
-          {!loading && stats && (
-            <Link
-              to="/rewards"
-              className="mt-3 inline-flex items-center gap-1.5 text-body-sm font-medium text-eco-700 hover:text-eco-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-600 rounded-button px-1"
-            >
-              Échanger mes points contre des récompenses
-              <svg
-                aria-hidden="true"
-                width="14"
-                height="14"
-                viewBox="0 0 20 20"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M8 4l6 6-6 6" />
-              </svg>
-            </Link>
-          )}
-        </section>
-
-        {/* ── Section 2 : CO2 hebdomadaire ─────────────────────────────── */}
-        <section className="card p-4 lg:p-5" aria-labelledby="weekly-heading">
-          <h2 id="weekly-heading" className="text-h3 font-semibold text-slate-900 mb-0.5">
-            Économies CO₂ par semaine
-          </h2>
-          <p className="text-caption text-slate-400 mb-4">
-            4 dernières semaines · g CO₂e économisés
-          </p>
-          {loading ? (
-            <ChartSkeleton height="h-44" />
-          ) : stats ? (
-            <Suspense fallback={<ChartSkeleton height="h-44" />}>
+            <Suspense fallback={<ChartSkeleton />}>
               <WeeklyCo2Chart data={stats.weeklyCo2} />
             </Suspense>
           ) : null}
         </section>
 
-        {/* ── Section 3 : Répartition des modes ────────────────────────── */}
-        <section className="card p-4 lg:p-5" aria-labelledby="modes-heading">
-          <h2 id="modes-heading" className="text-h3 font-semibold text-slate-900 mb-0.5">
-            Modes utilisés
+        <section className="card p-3.5" aria-labelledby="modes-heading">
+          <h2 id="modes-heading" className="text-body-lg font-bold mb-2.5">
+            Répartition par mode
           </h2>
-          <p className="text-caption text-slate-400 mb-4">Ce mois · mode principal par trajet</p>
           {loading ? (
-            <ChartSkeleton height="h-52" />
+            <ChartSkeleton height="h-40" />
           ) : stats ? (
-            <Suspense fallback={<ChartSkeleton height="h-52" />}>
-              <ModePieChart data={stats.modeBreakdown} tripCount={stats.summary.tripCount} />
+            <Suspense fallback={<ChartSkeleton height="h-40" />}>
+              <ModeBreakdownTable data={stats.modeBreakdown} />
             </Suspense>
           ) : null}
         </section>
 
-        {/* ── Section 4 : Badges ───────────────────────────────────────── */}
-        <BadgeGrid badges={badges} loading={loading} />
+        <Link
+          to="/dashboard/badges"
+          className="card p-3.5 flex items-center gap-3 no-underline hover:bg-surface-muted transition-colors duration-fast"
+        >
+          <svg
+            aria-hidden="true"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.75"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-primary shrink-0"
+          >
+            <polyline points="8 21 12 17 16 21" />
+            <line x1="12" y1="17" x2="12" y2="11" />
+            <path d="M7 4H4a2 2 0 0 0-2 2v1c0 4 3 7 6 8" />
+            <path d="M17 4h3a2 2 0 0 1 2 2v1c0 4-3 7-6 8" />
+            <rect x="7" y="2" width="10" height="9" rx="1" />
+          </svg>
+          <span className="flex-1 text-body-sm font-semibold">Mes badges</span>
+          <span className="text-caption text-text-muted tabular-nums">
+            {loading ? '…' : `${unlockedCount} / ${badges.length}`}
+          </span>
+          <svg
+            aria-hidden="true"
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-text-muted shrink-0"
+          >
+            <path d="M9 6l6 6-6 6" />
+          </svg>
+        </Link>
+
+        <p className="text-caption text-text-subtle leading-relaxed">
+          Facteurs d'émission : Base Empreinte ADEME — voiture 253 g/km, bus 109, tramway 4, navibus 50,
+          train 14, vélo · marche · trottinette 0 g/km. Calcul déterministe, sans estimation automatique.
+        </p>
       </main>
+
+      <BottomNav />
     </div>
   )
 }

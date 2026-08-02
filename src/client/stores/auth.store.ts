@@ -10,10 +10,12 @@ interface AuthState {
   accessToken: string | null
   user: AuthUser | null
   isInitialized: boolean
+  isGuest: boolean
   setAuth: (token: string) => void
   clearAuth: () => void
   setInitialized: () => void
   refreshIfNeeded: () => Promise<string | null>
+  continueAsGuest: () => void
 }
 
 function parseJwtPayload(token: string): AuthUser | null {
@@ -48,10 +50,12 @@ export const useAuthStore = create<AuthState>((set) => {
     accessToken: null,
     user: null,
     isInitialized: false,
+    isGuest: false,
 
-    setAuth: (token) => set({ accessToken: token, user: parseJwtPayload(token) }),
-    clearAuth: () => set({ accessToken: null, user: null }),
+    setAuth: (token) => set({ accessToken: token, user: parseJwtPayload(token), isGuest: false }),
+    clearAuth: () => set({ accessToken: null, user: null, isGuest: false }),
     setInitialized: () => set({ isInitialized: true }),
+    continueAsGuest: () => set({ isGuest: true, isInitialized: true }),
 
     refreshIfNeeded: () => {
       if (!pendingRefresh) {

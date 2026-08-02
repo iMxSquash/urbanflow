@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { getMyRedemptions, getRewardCatalog, purchaseReward } from '../services/rewards.service'
 import type {
   RewardCatalog,
@@ -7,6 +6,7 @@ import type {
   RewardType,
   UserRedemption,
 } from '../services/rewards.service'
+import { BottomNav } from '../components/BottomNav'
 
 // ── Formatage ──────────────────────────────────────────────────────────────────
 
@@ -15,73 +15,127 @@ function formatPoints(points: number): string {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('fr-FR', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
+  return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 }
 
-const REWARD_TYPE_META: Record<RewardType, { label: string; color: string; bg: string }> = {
-  discount_code: { label: 'Code de réduction', color: 'text-transit-700', bg: 'bg-transit-50' },
-  museum_ticket: { label: 'Billet musée', color: 'text-eco-700', bg: 'bg-eco-100' },
+function RewardTypeIcon({ type, cls }: { type: RewardType; cls: string }) {
+  if (type === 'museum_ticket') {
+    return (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={cls} aria-hidden="true">
+        <rect x="4" y="7" width="16" height="13" rx="2.5" />
+        <path d="M8 7V5a4 4 0 0 1 8 0v2M9 13h6" />
+      </svg>
+    )
+  }
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={cls} aria-hidden="true">
+      <rect x="3" y="6" width="18" height="12" rx="2.5" />
+      <path d="M3 10h18M7 14h4" />
+    </svg>
+  )
 }
 
 // ── Squelettes ─────────────────────────────────────────────────────────────────
 
 function RewardCardSkeleton() {
   return (
-    <div className="card p-4 space-y-3" aria-hidden="true">
-      <div className="skeleton h-5 w-28 rounded-full" />
-      <div className="skeleton h-5 w-3/4 rounded" />
-      <div className="skeleton h-3 w-full rounded" />
-      <div className="skeleton h-3 w-2/3 rounded" />
-      <div className="skeleton h-9 w-full rounded-button" />
+    <div className="card p-3.5 flex flex-col gap-3" aria-hidden="true">
+      <div className="flex gap-3">
+        <div className="skeleton size-11 rounded-md shrink-0" />
+        <div className="flex-1 space-y-2">
+          <div className="skeleton h-4 w-2/3 rounded" />
+          <div className="skeleton h-3 w-full rounded" />
+        </div>
+      </div>
+      <div className="skeleton h-11 w-full rounded-md" />
     </div>
   )
 }
 
 function RedemptionSkeleton() {
-  return <div className="skeleton h-16 w-full rounded-card" aria-hidden="true" />
+  return <div className="skeleton h-20 w-full rounded-xl" aria-hidden="true" />
 }
 
 // ── RewardCard ─────────────────────────────────────────────────────────────────
 
 interface RewardCardProps {
   reward: RewardCatalogItem
+  totalPoints: number
   purchasing: boolean
   onPurchase: (rewardId: string) => void
 }
 
-function RewardCard({ reward, purchasing, onPurchase }: RewardCardProps) {
-  const meta = REWARD_TYPE_META[reward.rewardType]
+function RewardCard({ reward, totalPoints, purchasing, onPurchase }: RewardCardProps) {
+  const remaining = totalPoints - reward.pointsCost
+  const progressPct = Math.min(100, Math.round((totalPoints / reward.pointsCost) * 100))
 
   return (
-    <article className="card p-4 flex flex-col gap-3">
-      <span
-        className={`self-start inline-flex items-center px-2.5 py-1 rounded-full text-caption font-semibold ${meta.bg} ${meta.color}`}
-      >
-        {meta.label}
-      </span>
-      <div>
-        <h3 className="text-body font-semibold text-slate-900">{reward.name}</h3>
-        <p className="text-body-sm text-slate-500 mt-1">{reward.description}</p>
-        <p className="text-caption text-slate-400 mt-1">{reward.partnerName}</p>
-      </div>
-      <div className="mt-auto flex items-center justify-between gap-3 pt-1">
-        <span className="text-body font-bold text-slate-900">
-          {formatPoints(reward.pointsCost)}
-        </span>
-        <button
-          type="button"
-          disabled={!reward.affordable || purchasing}
-          aria-disabled={!reward.affordable || purchasing}
-          onClick={() => onPurchase(reward.id)}
-          className="btn-primary px-4"
+    <article className={`card p-3.5 flex flex-col gap-2.5 ${!reward.affordable ? 'bg-surface-muted' : ''}`}>
+      <div className="flex items-start gap-3">
+        <span
+          className={[
+            'size-11 rounded-md flex items-center justify-center shrink-0',
+            reward.affordable ? 'bg-primary-surface' : 'bg-surface-sunken',
+          ].join(' ')}
         >
-          {purchasing ? 'Échange…' : reward.affordable ? 'Échanger' : 'Solde insuffisant'}
-        </button>
+          <RewardTypeIcon type={reward.rewardType} cls={reward.affordable ? 'text-primary' : 'text-text-disabled'} />
+        </span>
+        <div className="flex-1 min-w-0">
+          <h3 className={`text-body-sm font-bold leading-tight ${!reward.affordable ? 'text-text-muted' : ''}`}>
+            {reward.name}
+          </h3>
+          <p className="text-caption text-text-muted mt-0.5">{reward.description}</p>
+        </div>
       </div>
+
+      {reward.affordable ? (
+        <div className="flex items-center gap-2.5">
+          <span className="inline-flex items-center px-2.5 py-1.5 rounded-sm bg-primary-surface text-primary text-caption font-bold tabular-nums">
+            {formatPoints(reward.pointsCost)}
+          </span>
+          <span className="text-caption text-text-muted">Il vous reste {formatPoints(remaining)} après échange</span>
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center gap-2.5">
+            <span className="inline-flex items-center px-2.5 py-1.5 rounded-sm bg-surface-sunken text-text-muted text-caption font-bold tabular-nums">
+              {formatPoints(reward.pointsCost)}
+            </span>
+            <span className="inline-flex items-center gap-1.5 text-caption font-semibold text-warning">
+              <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="4" y="10" width="16" height="10" rx="2.5" />
+                <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+              </svg>
+              Encore {formatPoints(reward.pointsCost - totalPoints)}
+            </span>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span
+              role="progressbar"
+              aria-valuenow={progressPct}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`Progression vers ${reward.name}`}
+              className="block h-1.5 rounded-full bg-surface-sunken"
+            >
+              <span className="block h-1.5 rounded-full bg-text-disabled" style={{ width: `${progressPct}%` }} />
+            </span>
+            <span className="text-caption text-text-muted tabular-nums">
+              {formatPoints(totalPoints)} / {formatPoints(reward.pointsCost)}
+            </span>
+          </div>
+        </>
+      )}
+
+      <button
+        type="button"
+        disabled={!reward.affordable || purchasing}
+        aria-disabled={!reward.affordable || purchasing}
+        onClick={() => onPurchase(reward.id)}
+        className={reward.affordable ? 'btn-primary w-full' : 'btn-secondary w-full'}
+      >
+        {purchasing ? 'Échange…' : 'Échanger'}
+      </button>
     </article>
   )
 }
@@ -89,30 +143,50 @@ function RewardCard({ reward, purchasing, onPurchase }: RewardCardProps) {
 // ── RedemptionRow ──────────────────────────────────────────────────────────────
 
 function RedemptionRow({ redemption }: { redemption: UserRedemption }) {
-  const meta = REWARD_TYPE_META[redemption.rewardType]
+  const [copied, setCopied] = useState(false)
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(redemption.code)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      /* clipboard indisponible — pas bloquant */
+    }
+  }
 
   return (
-    <li className="card p-4 flex items-center justify-between gap-4">
-      <div className="min-w-0">
-        <p className="text-body-sm font-semibold text-slate-900 truncate">
-          {redemption.rewardName}
-        </p>
-        <p className="text-caption text-slate-400 mt-0.5">
-          {formatDate(redemption.redeemedAt)} · {formatPoints(redemption.pointsSpent)}
-        </p>
+    <li className="card p-3.5 flex flex-col gap-2.5">
+      <div className="flex items-center gap-3">
+        <span className="size-11 rounded-md bg-primary-surface flex items-center justify-center shrink-0">
+          <RewardTypeIcon type={redemption.rewardType} cls="text-primary" />
+        </span>
+        <div className="flex-1 min-w-0">
+          <p className="text-body-sm font-bold truncate">{redemption.rewardName}</p>
+          <p className="text-caption text-text-muted">
+            {formatPoints(redemption.pointsSpent)} · échangé le {formatDate(redemption.redeemedAt)}
+          </p>
+        </div>
       </div>
-      <code
-        className={`shrink-0 px-2.5 py-1 rounded-full text-caption font-mono font-semibold ${meta.bg} ${meta.color}`}
-      >
-        {redemption.code}
-      </code>
+      <div className="flex items-center justify-between gap-2.5 p-2.5 rounded-md bg-surface-sunken">
+        <code className="text-body-sm font-bold font-mono tracking-wider">{redemption.code}</code>
+        <button type="button" onClick={() => void handleCopy()} className="h-9 px-3 rounded-sm bg-text text-bg text-caption font-semibold">
+          {copied ? 'Copié' : 'Copier'}
+        </button>
+        <span role="status" aria-live="polite" className="sr-only">
+          {copied ? 'Code copié' : ''}
+        </span>
+      </div>
     </li>
   )
 }
 
 // ── Page ───────────────────────────────────────────────────────────────────────
 
+type Tab = 'catalog' | 'history'
+
 export default function RewardsPage() {
+  const [tab, setTab] = useState<Tab>('catalog')
   const [catalog, setCatalog] = useState<RewardCatalog | null>(null)
   const [redemptions, setRedemptions] = useState<UserRedemption[]>([])
   const [loading, setLoading] = useState(true)
@@ -120,9 +194,7 @@ export default function RewardsPage() {
 
   const [purchasingId, setPurchasingId] = useState<string | null>(null)
   const [purchaseError, setPurchaseError] = useState<string | null>(null)
-  const [lastPurchase, setLastPurchase] = useState<{ rewardName: string; code: string } | null>(
-    null
-  )
+  const [lastPurchase, setLastPurchase] = useState<{ rewardName: string; pointsSpent: number; totalPoints: number } | null>(null)
 
   const load = useCallback(() => {
     return Promise.all([getRewardCatalog(), getMyRedemptions()]).then(([c, r]) => {
@@ -146,15 +218,12 @@ export default function RewardsPage() {
 
       setPurchasingId(rewardId)
       setPurchaseError(null)
-      setLastPurchase(null)
       try {
         const result = await purchaseReward(rewardId)
-        setLastPurchase({ rewardName: reward.name, code: result.code })
+        setLastPurchase({ rewardName: reward.name, pointsSpent: result.pointsSpent, totalPoints: result.totalPoints })
         await load()
       } catch (err) {
-        setPurchaseError(
-          err instanceof Error ? err.message : "Impossible d'échanger cette récompense"
-        )
+        setPurchaseError(err instanceof Error ? err.message : "Impossible d'échanger cette récompense")
       } finally {
         setPurchasingId(null)
       }
@@ -163,140 +232,158 @@ export default function RewardsPage() {
   )
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-navbar">
-        <div className="max-w-2xl mx-auto flex items-center gap-3 px-4 h-16">
-          <Link
-            to="/dashboard"
-            aria-label="Retour au tableau de bord"
-            className="shrink-0 w-12 h-12 flex items-center justify-center rounded-button text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-600"
+    <div className="min-h-screen bg-bg pb-[calc(var(--height-bottomnav)+1rem)] lg:pb-6">
+      <header className="bg-surface border-b border-border sticky top-0 z-navbar">
+        <div className="max-w-2xl mx-auto flex flex-col gap-3 px-4 py-3.5">
+          <div className="flex items-center justify-between">
+            <h1 className="text-h3 font-bold">Récompenses</h1>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary-surface border border-primary text-primary text-body-sm font-bold tabular-nums">
+              <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 8v8M9 12h6" />
+              </svg>
+              {loading ? '…' : formatPoints(catalog?.totalPoints ?? 0)}
+            </span>
+          </div>
+          <div
+            role="tablist"
+            aria-label="Catalogue ou historique"
+            className="flex gap-1.5 p-1 bg-surface-sunken rounded-full"
+            onKeyDown={(e) => {
+              if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return
+              e.preventDefault()
+              setTab((t) => (t === 'catalog' ? 'history' : 'catalog'))
+            }}
           >
-            <svg
-              aria-hidden="true"
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+            <button
+              type="button"
+              id="tab-catalog"
+              role="tab"
+              aria-selected={tab === 'catalog'}
+              aria-controls="panel-catalog"
+              tabIndex={tab === 'catalog' ? 0 : -1}
+              onClick={() => setTab('catalog')}
+              className={`flex-1 h-10 rounded-full text-body-sm font-semibold transition-colors duration-fast ${tab === 'catalog' ? 'bg-primary text-on-primary' : 'text-text'}`}
             >
-              <path d="M12 16l-6-6 6-6" />
-            </svg>
-          </Link>
-          <div>
-            <h1 className="text-h2 font-bold text-slate-900 leading-tight">
-              Boutique de récompenses
-            </h1>
-            <p className="text-caption text-slate-400">
-              {loading
-                ? 'Chargement du solde…'
-                : `Solde : ${formatPoints(catalog?.totalPoints ?? 0)}`}
-            </p>
+              Catalogue
+            </button>
+            <button
+              type="button"
+              id="tab-history"
+              role="tab"
+              aria-selected={tab === 'history'}
+              aria-controls="panel-history"
+              tabIndex={tab === 'history' ? 0 : -1}
+              onClick={() => setTab('history')}
+              className={`flex-1 h-10 rounded-full text-body-sm font-semibold transition-colors duration-fast ${tab === 'history' ? 'bg-primary text-on-primary' : 'text-text'}`}
+            >
+              Historique
+            </button>
           </div>
         </div>
       </header>
 
-      {/* ── Contenu ─────────────────────────────────────────────────────────── */}
-      <main className="max-w-2xl mx-auto px-4 py-6 lg:px-6 space-y-6">
-        {/* Erreur de chargement */}
+      <main className="max-w-2xl mx-auto px-4 py-4 flex flex-col gap-3">
         {error && (
-          <div
-            role="alert"
-            className="bg-red-50 border border-red-200 rounded-card px-4 py-3 text-red-700 text-body-sm"
-          >
+          <div role="alert" className="bg-danger-surface rounded-xl px-4 py-3 text-danger-text text-body-sm">
             {error}
           </div>
         )}
-
-        {/* Confirmation d'achat */}
-        {lastPurchase && (
-          <div
-            role="status"
-            className="bg-eco-50 border border-eco-200 rounded-card px-4 py-3 text-eco-800 text-body-sm space-y-1"
-          >
-            <p className="font-semibold">« {lastPurchase.rewardName} » échangé avec succès !</p>
-            <p>
-              Votre code : <code className="font-mono font-semibold">{lastPurchase.code}</code> —
-              retrouvez-le dans « Mes récompenses » ci-dessous.
-            </p>
-          </div>
-        )}
-
-        {/* Erreur d'achat */}
         {purchaseError && (
-          <div
-            role="alert"
-            className="bg-red-50 border border-red-200 rounded-card px-4 py-3 text-red-700 text-body-sm"
-          >
+          <div role="alert" className="bg-danger-surface rounded-xl px-4 py-3 text-danger-text text-body-sm">
             {purchaseError}
           </div>
         )}
 
-        {/* ── Section 1 : Catalogue ─────────────────────────────────────── */}
-        <section aria-labelledby="catalog-heading">
-          <h2 id="catalog-heading" className="text-h3 font-semibold text-slate-900 mb-3">
-            Catalogue
-          </h2>
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <RewardCardSkeleton />
-              <RewardCardSkeleton />
-              <RewardCardSkeleton />
-              <RewardCardSkeleton />
-            </div>
-          ) : catalog && catalog.rewards.length > 0 ? (
-            <ul
-              className="grid grid-cols-1 sm:grid-cols-2 gap-3"
-              aria-label="Catalogue des récompenses"
-            >
-              {catalog.rewards.map((reward) => (
-                <li key={reward.id}>
-                  <RewardCard
-                    reward={reward}
-                    purchasing={purchasingId === reward.id}
-                    onPurchase={handlePurchase}
-                  />
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-body-sm text-slate-400 text-center py-6">
-              Aucune récompense disponible pour le moment
-            </p>
-          )}
-        </section>
+        {tab === 'catalog' ? (
+          <section id="panel-catalog" role="tabpanel" aria-labelledby="tab-catalog">
+            {loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <RewardCardSkeleton />
+                <RewardCardSkeleton />
+                <RewardCardSkeleton />
+                <RewardCardSkeleton />
+              </div>
+            ) : catalog && catalog.rewards.length > 0 ? (
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3" aria-label="Catalogue des récompenses">
+                {catalog.rewards.map((reward) => (
+                  <li key={reward.id}>
+                    <RewardCard
+                      reward={reward}
+                      totalPoints={catalog.totalPoints}
+                      purchasing={purchasingId === reward.id}
+                      onPurchase={handlePurchase}
+                    />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-body-sm text-text-muted text-center py-6">
+                Aucune récompense disponible pour le moment
+              </p>
+            )}
 
-        {/* ── Section 2 : Historique ────────────────────────────────────── */}
-        <section aria-labelledby="history-heading" className="card p-4 lg:p-6">
-          <h2 id="history-heading" className="text-h3 font-semibold text-slate-900 mb-1">
-            Mes récompenses
-          </h2>
-          <p className="text-body-sm text-slate-500 mb-4">
-            {loading
-              ? '…'
-              : `${redemptions.length} récompense${redemptions.length > 1 ? 's' : ''} échangée${redemptions.length > 1 ? 's' : ''}`}
-          </p>
-          {loading ? (
-            <div className="space-y-2" aria-hidden="true">
-              <RedemptionSkeleton />
-              <RedemptionSkeleton />
+            <div className="mt-3 flex items-start gap-2.5 p-3 rounded-md bg-surface-sunken">
+              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" className="text-text-muted shrink-0 mt-0.5">
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 8h.01M11 12h1v4h1" />
+              </svg>
+              <span className="text-caption text-text-muted leading-relaxed">
+                Les points sont attribués à la fin de chaque trajet terminé : 1 pt par 100 g de CO₂ évités,
+                plafonné à 150 pts par trajet.
+              </span>
             </div>
-          ) : redemptions.length === 0 ? (
-            <p className="text-body-sm text-slate-400 text-center py-6">
-              Aucune récompense échangée pour le moment
-            </p>
-          ) : (
-            <ul className="space-y-2" aria-label="Historique des récompenses">
-              {redemptions.map((redemption) => (
-                <RedemptionRow key={redemption.id} redemption={redemption} />
-              ))}
-            </ul>
-          )}
-        </section>
+          </section>
+        ) : (
+          <section id="panel-history" role="tabpanel" aria-labelledby="tab-history">
+            {loading ? (
+              <div className="flex flex-col gap-2.5" aria-hidden="true">
+                <RedemptionSkeleton />
+                <RedemptionSkeleton />
+              </div>
+            ) : redemptions.length === 0 ? (
+              <p className="text-body-sm text-text-muted text-center py-6">
+                Aucune récompense échangée pour le moment
+              </p>
+            ) : (
+              <ul className="flex flex-col gap-2.5" aria-label="Historique des récompenses">
+                {redemptions.map((redemption) => (
+                  <RedemptionRow key={redemption.id} redemption={redemption} />
+                ))}
+              </ul>
+            )}
+            <p className="text-caption text-text-subtle mt-3">Historique conservé 12 mois, comme les données de trajet.</p>
+          </section>
+        )}
       </main>
+
+      {lastPurchase && (
+        <div role="status" className="toast justify-between">
+          <span className="size-9 rounded-full bg-primary flex items-center justify-center shrink-0">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-on-primary">
+              <path d="M20 6L9 17l-5-5" />
+            </svg>
+          </span>
+          <span className="flex-1 flex flex-col gap-0.5">
+            <span className="text-body-sm font-bold">{lastPurchase.rewardName} échangé</span>
+            <span className="text-caption text-text-muted">
+              −{formatPoints(lastPurchase.pointsSpent)} · solde {formatPoints(lastPurchase.totalPoints)}
+            </span>
+          </span>
+          <button
+            type="button"
+            aria-label="Fermer la notification"
+            onClick={() => setLastPurchase(null)}
+            className="size-8 rounded-full flex items-center justify-center shrink-0 bg-surface-sunken"
+          >
+            <svg aria-hidden="true" width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M1 1l12 12M13 1L1 13" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      <BottomNav />
     </div>
   )
 }

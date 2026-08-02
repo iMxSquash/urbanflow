@@ -1,7 +1,12 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useConsentStore } from '../stores/consent.store'
 import { useDemoStore } from '../stores/demo.store'
+import { useThemeStore } from '../stores/theme.store'
+import type { ThemePreference } from '../stores/theme.store'
+import { useInstallPrompt } from '../hooks/useInstallPrompt'
+import { DeleteAccountModal } from '../components/DeleteAccountModal'
+import LogoutButton from '../components/LogoutButton'
 import type { Coordinates } from '@shared/types/index'
 
 interface DemoScenario {
@@ -32,20 +37,47 @@ const DEMO_SCENARIOS: DemoScenario[] = [
   },
 ]
 
-function ConsentBadge({ granted }: { granted: boolean }) {
+const THEME_OPTIONS: Array<{ value: ThemePreference; label: string }> = [
+  { value: 'light', label: 'Clair' },
+  { value: 'dark', label: 'Sombre' },
+  { value: 'auto', label: 'Auto' },
+]
+
+function SettingsRow({
+  icon,
+  title,
+  subtitle,
+  action,
+  border = true,
+}: {
+  icon: React.ReactNode
+  title: string
+  subtitle?: string
+  action: React.ReactNode
+  border?: boolean
+}) {
   return (
-    <span
-      className={[
-        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-caption font-medium',
-        granted ? 'bg-eco-50 text-eco-700' : 'bg-slate-100 text-slate-500',
-      ].join(' ')}
-    >
-      <span
+    <div className={`flex items-center gap-3 px-3.5 py-3 ${border ? 'border-b border-surface-sunken' : ''}`}>
+      <svg
         aria-hidden="true"
-        className={['w-1.5 h-1.5 rounded-full', granted ? 'bg-eco-500' : 'bg-slate-400'].join(' ')}
-      />
-      {granted ? 'Activée' : 'Désactivée'}
-    </span>
+        width="19"
+        height="19"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="text-text-muted shrink-0"
+      >
+        {icon}
+      </svg>
+      <span className="flex-1 flex flex-col gap-0.5 min-w-0">
+        <span className="text-body-sm font-semibold">{title}</span>
+        {subtitle && <span className="text-caption text-text-muted">{subtitle}</span>}
+      </span>
+      {action}
+    </div>
   )
 }
 
@@ -62,6 +94,12 @@ export default function ParametresPage() {
     toggleProviders,
     setWeather,
   } = useDemoStore()
+  const theme = useThemeStore((s) => s.theme)
+  const setTheme = useThemeStore((s) => s.setTheme)
+  const { canInstall, promptInstall } = useInstallPrompt()
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const themeGroupRef = useRef<HTMLSpanElement>(null)
 
   const geoGranted = geolocationConsent === 'granted'
 
@@ -79,52 +117,37 @@ export default function ParametresPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-navbar">
+    <div className="min-h-screen bg-bg">
+      <header className="bg-surface border-b border-border sticky top-0 z-navbar">
         <div className="max-w-2xl mx-auto flex items-center gap-3 px-4 h-16">
-          <Link
-            to="/"
-            aria-label="Retour à la carte"
-            className="shrink-0 w-12 h-12 flex items-center justify-center rounded-button text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-fast"
-          >
-            <svg
-              aria-hidden="true"
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M12 16l-6-6 6-6" />
+          <Link to="/profile" aria-label="Retour au profil" className="btn-icon">
+            <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 18l-6-6 6-6" />
             </svg>
           </Link>
-          <h1 className="text-h2 font-bold text-slate-900">Paramètres</h1>
+          <h1 className="text-h3 font-bold">Paramètres</h1>
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-6 lg:px-6 space-y-6">
+      <main className="max-w-2xl mx-auto px-4 py-4 flex flex-col gap-4">
         {/* ── Mode démo ────────────────────────────────────────────────── */}
         {demoMode !== null && (
           <section
-            className={[
-              'card p-4 lg:p-6 border',
-              demoMode ? 'border-amber-200 bg-amber-50' : 'border-slate-200',
-            ].join(' ')}
+            className={demoMode ? 'rounded-xl p-3.5 flex flex-col gap-4 bg-warning-surface border-[1.5px] border-warning-border' : 'card p-3.5'}
             aria-labelledby="demo-heading"
           >
-            {/* Niveau 1 — météo simulée */}
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h2 id="demo-heading" className="text-h3 font-semibold text-slate-900">
-                  Mode démo
-                </h2>
-                <p className="text-body-sm text-slate-500 mt-0.5">
-                  {demoMode ? 'Météo simulée — trajets réels' : 'APIs réelles'}
-                </p>
-              </div>
+            <div className="flex items-center gap-2.5">
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" className={`shrink-0 ${demoMode ? 'text-warning' : 'text-text-muted'}`}>
+                <path d="M12 9v4M12 17h.01M10.3 3.9 2.6 17.4A1.8 1.8 0 0 0 4.2 20h15.6a1.8 1.8 0 0 0 1.6-2.6L13.7 3.9a1.8 1.8 0 0 0-3.4 0z" />
+              </svg>
+              <span className="flex-1 flex flex-col gap-0.5">
+                <span id="demo-heading" className={`text-body-sm font-bold ${demoMode ? 'text-warning' : ''}`}>
+                  Mode démo {demoMode ? 'actif' : ''}
+                </span>
+                <span className={`text-caption ${demoMode ? 'text-warning' : 'text-text-muted'}`}>
+                  {demoMode ? 'Données statiques · horaires et CO₂ fictifs' : 'APIs réelles'}
+                </span>
+              </span>
               <button
                 type="button"
                 role="switch"
@@ -133,25 +156,18 @@ export default function ParametresPage() {
                 disabled={demoLoading}
                 onClick={() => void toggle(!demoMode)}
                 className={[
-                  'relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-eco-500 disabled:opacity-50',
-                  demoMode ? 'bg-amber-400' : 'bg-slate-300',
+                  'shrink-0 w-[46px] h-7 rounded-full flex items-center p-[3px] transition-colors duration-fast disabled:opacity-50',
+                  demoMode ? 'bg-warning justify-end' : 'bg-border justify-start',
                 ].join(' ')}
               >
-                <span
-                  aria-hidden="true"
-                  className={[
-                    'pointer-events-none inline-block h-6 w-6 rounded-full bg-white shadow-sm ring-0 transition-transform duration-200',
-                    demoMode ? 'translate-x-5' : 'translate-x-0',
-                  ].join(' ')}
-                />
+                <span className="w-[22px] h-[22px] rounded-full bg-surface" />
               </button>
             </div>
 
             {demoMode && (
-              <div className="mt-5 pt-4 border-t border-amber-200 space-y-5">
-                {/* Météo simulée */}
+              <div className="flex flex-col gap-4 pt-3 border-t border-warning-border">
                 <div>
-                  <p className="text-body-sm font-medium text-slate-700 mb-2">Météo simulée</p>
+                  <p className="text-body-sm font-semibold mb-2">Météo simulée</p>
                   <div className="flex gap-2" role="group" aria-label="Choisir la météo simulée">
                     <button
                       type="button"
@@ -159,13 +175,11 @@ export default function ParametresPage() {
                       disabled={demoLoading}
                       aria-pressed={weather === 'sunny'}
                       className={[
-                        'flex items-center gap-2 px-4 py-2 rounded-button text-body-sm font-medium transition-colors duration-fast border',
-                        weather === 'sunny'
-                          ? 'bg-amber-100 border-amber-400 text-amber-800'
-                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50',
+                        'flex-1 h-10 rounded-md text-body-sm font-semibold border transition-colors duration-fast',
+                        weather === 'sunny' ? 'bg-surface border-warning-border text-warning' : 'bg-surface border-border text-text-muted',
                       ].join(' ')}
                     >
-                      <span aria-hidden="true">☀️</span> Soleil
+                      Soleil
                     </button>
                     <button
                       type="button"
@@ -173,27 +187,22 @@ export default function ParametresPage() {
                       disabled={demoLoading}
                       aria-pressed={weather === 'rainy'}
                       className={[
-                        'flex items-center gap-2 px-4 py-2 rounded-button text-body-sm font-medium transition-colors duration-fast border',
-                        weather === 'rainy'
-                          ? 'bg-sky-100 border-sky-400 text-sky-800'
-                          : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50',
+                        'flex-1 h-10 rounded-md text-body-sm font-semibold border transition-colors duration-fast',
+                        weather === 'rainy' ? 'bg-surface border-transit text-transit' : 'bg-surface border-border text-text-muted',
                       ].join(' ')}
                     >
-                      <span aria-hidden="true">🌧️</span> Pluie
+                      Pluie
                     </button>
                   </div>
                 </div>
 
-                {/* Niveau 2 — simulation des providers */}
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-body-sm font-medium text-slate-900">Simuler les trajets</p>
-                    <p className="text-caption text-slate-500 mt-0.5">
-                      {providersDemo
-                        ? 'Fichiers JSON — aucun appel Transitous / OSRM / Bicloo'
-                        : 'Transitous, OSRM et Bicloo en direct'}
-                    </p>
-                  </div>
+                <div className="flex items-center gap-3">
+                  <span className="flex-1 flex flex-col gap-0.5">
+                    <span className="text-body-sm font-semibold">Simuler les trajets</span>
+                    <span className="text-caption text-warning">
+                      {providersDemo ? 'Fichiers JSON — aucun appel externe' : 'Transitous, OSRM et Bicloo en direct'}
+                    </span>
+                  </span>
                   <button
                     type="button"
                     role="switch"
@@ -202,26 +211,17 @@ export default function ParametresPage() {
                     disabled={demoLoading}
                     onClick={() => void toggleProviders(!providersDemo)}
                     className={[
-                      'relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-eco-500 disabled:opacity-50',
-                      providersDemo ? 'bg-amber-400' : 'bg-slate-300',
+                      'shrink-0 w-[46px] h-7 rounded-full flex items-center p-[3px] transition-colors duration-fast disabled:opacity-50',
+                      providersDemo ? 'bg-warning justify-end' : 'bg-border justify-start',
                     ].join(' ')}
                   >
-                    <span
-                      aria-hidden="true"
-                      className={[
-                        'pointer-events-none inline-block h-6 w-6 rounded-full bg-white shadow-sm ring-0 transition-transform duration-200',
-                        providersDemo ? 'translate-x-5' : 'translate-x-0',
-                      ].join(' ')}
-                    />
+                    <span className="w-[22px] h-[22px] rounded-full bg-surface" />
                   </button>
                 </div>
 
-                {/* Scénarios — visibles uniquement si providers démo actif */}
                 {providersDemo && (
                   <div>
-                    <p className="text-body-sm font-medium text-slate-700 mb-2">
-                      Lancer un scénario
-                    </p>
+                    <p className="text-body-sm font-semibold mb-2">Lancer un scénario</p>
                     <div className="flex flex-col gap-2">
                       {DEMO_SCENARIOS.map((scenario) => (
                         <button
@@ -242,33 +242,16 @@ export default function ParametresPage() {
                               })
                             })
                           }}
-                          className="flex items-center justify-between gap-3 px-4 py-3 rounded-card bg-white border border-slate-200 text-left hover:border-eco-400 hover:bg-eco-50 transition-colors duration-fast group disabled:opacity-50"
+                          className="flex items-center justify-between gap-3 px-3.5 py-3 rounded-md bg-surface border border-border text-left disabled:opacity-50"
                         >
-                          <div className="min-w-0">
-                            <p className="text-body-sm font-medium text-slate-800 truncate">
-                              {scenario.fromLabel}
-                              <span className="text-slate-400 mx-1" aria-hidden="true">
-                                →
-                              </span>
-                              {scenario.toLabel}
-                            </p>
-                            <p className="text-caption text-slate-500 mt-0.5">
-                              {scenario.description}
-                            </p>
-                          </div>
-                          <svg
-                            aria-hidden="true"
-                            width="16"
-                            height="16"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="shrink-0 text-slate-400 group-hover:text-eco-600 transition-colors"
-                          >
-                            <path d="M3 8h10M8 3l5 5-5 5" />
+                          <span className="min-w-0">
+                            <span className="block text-body-sm font-semibold truncate">
+                              {scenario.fromLabel} <span className="text-text-muted">→</span> {scenario.toLabel}
+                            </span>
+                            <span className="block text-caption text-text-muted mt-0.5">{scenario.description}</span>
+                          </span>
+                          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-text-muted">
+                            <path d="M9 6l6 6-6 6" />
                           </svg>
                         </button>
                       ))}
@@ -280,124 +263,163 @@ export default function ParametresPage() {
           </section>
         )}
 
-        {/* ── Confidentialité ───────────────────────────────────────────── */}
-        <section className="card p-4 lg:p-6" aria-labelledby="privacy-heading">
-          <h2 id="privacy-heading" className="text-h3 font-semibold text-slate-900">
-            Confidentialité & données
-          </h2>
-          <p className="text-body-sm text-slate-500 mt-0.5 mb-5">
-            Gérez vos consentements conformément au RGPD
-          </p>
+        {/* ── Application ──────────────────────────────────────────────── */}
+        <div className="flex flex-col gap-2">
+          <span className="text-caption font-bold tracking-[0.06em] uppercase text-text-subtle">Application</span>
+          <div className="card overflow-hidden">
+            <SettingsRow
+              icon={
+                <>
+                  <rect x="6" y="2.5" width="12" height="19" rx="2.5" />
+                  <path d="M12 6v7M9 10l3 3 3-3" />
+                </>
+              }
+              title="Installer UrbanFlow"
+              subtitle="Accès hors-ligne · 1,2 Mo"
+              action={
+                canInstall ? (
+                  <button type="button" onClick={() => void promptInstall()} className="h-9 px-3.5 rounded-md border-[1.5px] border-primary text-primary text-caption font-semibold shrink-0">
+                    Installer
+                  </button>
+                ) : (
+                  <span className="text-caption text-text-muted shrink-0">Déjà installée</span>
+                )
+              }
+            />
+            <SettingsRow
+              icon={
+                <>
+                  <circle cx="12" cy="12" r="4.5" />
+                  <path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M5 5l1.8 1.8M17.2 17.2 19 19M5 19l1.8-1.8M17.2 6.8 19 5" />
+                </>
+              }
+              title="Thème"
+              border={false}
+              action={
+                <span
+                  ref={themeGroupRef}
+                  role="radiogroup"
+                  aria-label="Thème de l'application"
+                  className="flex gap-1 p-[3px] bg-surface-sunken rounded-full shrink-0"
+                  onKeyDown={(e) => {
+                    if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return
+                    e.preventDefault()
+                    const currentIndex = THEME_OPTIONS.findIndex((opt) => opt.value === theme)
+                    const delta = e.key === 'ArrowRight' ? 1 : -1
+                    const nextIndex = (currentIndex + delta + THEME_OPTIONS.length) % THEME_OPTIONS.length
+                    setTheme(THEME_OPTIONS[nextIndex].value)
+                    const buttons = themeGroupRef.current?.querySelectorAll<HTMLButtonElement>('[role="radio"]')
+                    buttons?.[nextIndex]?.focus()
+                  }}
+                >
+                  {THEME_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={theme === opt.value}
+                      tabIndex={theme === opt.value ? 0 : -1}
+                      onClick={() => setTheme(opt.value)}
+                      className={[
+                        'px-2.5 py-1.5 rounded-full text-caption transition-colors duration-fast',
+                        theme === opt.value ? 'bg-surface font-bold' : 'font-semibold text-text-muted',
+                      ].join(' ')}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </span>
+              }
+            />
+          </div>
+        </div>
 
-          <div className="divide-y divide-slate-100">
-            {/* Géolocalisation */}
-            <div className="flex items-center justify-between gap-4 py-4 first:pt-0 last:pb-0">
-              <div className="min-w-0">
-                <p className="text-body-sm font-medium text-slate-900">Géolocalisation</p>
-                <p className="text-caption text-slate-500 mt-0.5">
-                  Affiche votre position en temps réel sur la carte
-                </p>
-              </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <ConsentBadge granted={geoGranted} />
-                {geoGranted ? (
-                  <button
-                    type="button"
-                    onClick={handleRevokeGeo}
-                    className="btn-ghost text-caption px-3 text-red-600 hover:bg-red-50"
-                    style={{ minHeight: '36px' }}
-                  >
+        {/* ── Confidentialité ──────────────────────────────────────────── */}
+        <div className="flex flex-col gap-2">
+          <span className="text-caption font-bold tracking-[0.06em] uppercase text-text-subtle">Confidentialité</span>
+          <div className="card overflow-hidden">
+            <SettingsRow
+              icon={
+                <>
+                  <path d="M12 22s7-6.5 7-12A7 7 0 0 0 5 10c0 5.5 7 12 7 12z" />
+                  <circle cx="12" cy="10" r="2.4" />
+                </>
+              }
+              title="Géolocalisation"
+              subtitle={geoGranted ? 'Autorisée trajet par trajet' : 'Désactivée'}
+              action={
+                geoGranted ? (
+                  <button type="button" onClick={handleRevokeGeo} className="text-caption font-semibold text-danger-text shrink-0">
                     Révoquer
                   </button>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={handleActivateGeo}
-                    className="btn-secondary text-caption px-3"
-                    style={{ minHeight: '36px' }}
-                  >
+                  <button type="button" onClick={handleActivateGeo} className="text-caption font-semibold text-primary shrink-0">
                     Activer
                   </button>
-                )}
-              </div>
-            </div>
+                )
+              }
+            />
+            <SettingsRow
+              icon={
+                <>
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7v5l3.5 2" />
+                </>
+              }
+              title="Conservation des données"
+              subtitle="Trajets et historique supprimés après 12 mois"
+              action={null}
+              border={false}
+            />
           </div>
+        </div>
 
-          {!geoGranted && (
-            <p className="mt-4 text-caption text-slate-400 bg-slate-50 rounded-card px-3 py-2">
-              En activant la géolocalisation vous serez redirigé vers la carte où une modale de
-              consentement vous sera présentée.
-            </p>
-          )}
-        </section>
-
-        {/* ── Vos droits RGPD ───────────────────────────────────────────── */}
-        <section className="card p-4 lg:p-6" aria-labelledby="rights-heading">
-          <h2 id="rights-heading" className="text-h3 font-semibold text-slate-900">
-            Vos droits
+        {/* ── Vos droits RGPD ──────────────────────────────────────────── */}
+        <section className="card p-3.5" aria-labelledby="rights-heading">
+          <h2 id="rights-heading" className="text-body-sm font-bold mb-1">
+            Vos droits (RGPD)
           </h2>
-          <p className="text-body-sm text-slate-500 mt-0.5 mb-4">
-            Conformément au Règlement Général sur la Protection des Données (RGPD)
-          </p>
-
-          <ul className="space-y-3 text-body-sm text-slate-600">
-            <li className="flex gap-2">
-              <span aria-hidden="true" className="text-eco-500 shrink-0">
-                ✓
-              </span>
-              <span>
-                <strong className="font-medium text-slate-800">Droit d'accès</strong> — vos données
-                de profil et de mobilité sont visibles dans votre profil
-              </span>
+          <ul className="flex flex-col gap-1.5 mt-2">
+            <li className="flex gap-2 text-caption text-text-muted">
+              <span aria-hidden="true" className="text-primary shrink-0">✓</span>
+              <span><b className="text-text">Droit d'accès</b> — vos données sont visibles dans votre profil</span>
             </li>
-            <li className="flex gap-2">
-              <span aria-hidden="true" className="text-eco-500 shrink-0">
-                ✓
-              </span>
-              <span>
-                <strong className="font-medium text-slate-800">Droit à l'effacement</strong> — vous
-                pouvez supprimer votre compte et toutes vos données à tout moment
-              </span>
+            <li className="flex gap-2 text-caption text-text-muted">
+              <span aria-hidden="true" className="text-primary shrink-0">✓</span>
+              <span><b className="text-text">Droit à l'effacement</b> — suppression du compte à tout moment ci-dessous</span>
             </li>
-            <li className="flex gap-2">
-              <span aria-hidden="true" className="text-eco-500 shrink-0">
-                ✓
-              </span>
-              <span>
-                <strong className="font-medium text-slate-800">Données GPS</strong> — aucune donnée
-                de position n'est transmise à des tiers ni stockée au-delà de la session
-              </span>
-            </li>
-            <li className="flex gap-2">
-              <span aria-hidden="true" className="text-eco-500 shrink-0">
-                ✓
-              </span>
-              <span>
-                <strong className="font-medium text-slate-800">Conservation</strong> — les données
-                de trajets sont conservées 12 mois maximum
-              </span>
+            <li className="flex gap-2 text-caption text-text-muted">
+              <span aria-hidden="true" className="text-primary shrink-0">✓</span>
+              <span><b className="text-text">Données GPS</b> — jamais transmises à des tiers ni stockées au-delà de la session</span>
             </li>
           </ul>
         </section>
 
-        {/* ── Supprimer le compte ───────────────────────────────────────── */}
-        <section className="card p-4 lg:p-6 border border-red-100" aria-labelledby="delete-heading">
-          <h2 id="delete-heading" className="text-h3 font-semibold text-slate-900">
-            Supprimer mon compte
-          </h2>
-          <p className="text-body-sm text-slate-500 mt-0.5 mb-4">
-            Suppression définitive de votre compte et de toutes vos données (droit à l'effacement
-            RGPD)
-          </p>
-          <Link
-            to="/profile"
-            className="btn-ghost text-caption px-4 text-red-600 hover:bg-red-50 border border-red-200"
-            style={{ minHeight: '36px', display: 'inline-flex', alignItems: 'center' }}
-          >
-            Accéder à la gestion du compte
-          </Link>
-        </section>
+        {/* ── Déconnexion / suppression ────────────────────────────────── */}
+        <div className="flex flex-col gap-3">
+          <LogoutButton />
+
+          <div className="h-px bg-border" />
+
+          <div className="rounded-xl p-3.5 flex flex-col gap-2.5 bg-danger-surface border-[1.5px] border-danger">
+            <span className="flex flex-col gap-1">
+              <span className="text-body-sm font-bold text-danger-text">Supprimer mon compte</span>
+              <span className="text-caption text-danger-text-muted leading-relaxed">
+                Compte, trajets, points et récompenses effacés définitivement. Action irréversible.
+              </span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowDeleteModal(true)}
+              className="h-11 rounded-md border-[1.5px] border-danger bg-surface text-danger text-body-sm font-bold"
+            >
+              Supprimer mon compte
+            </button>
+          </div>
+        </div>
       </main>
+
+      {showDeleteModal && <DeleteAccountModal onClose={() => setShowDeleteModal(false)} />}
     </div>
   )
 }

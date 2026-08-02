@@ -2,7 +2,7 @@ import 'leaflet/dist/leaflet.css'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MapContainer, TileLayer } from 'react-leaflet'
-import { Link, useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import { ErrorBanner } from '../components/ErrorBanner'
 import { GeolocationConsent } from '../components/GeolocationConsent'
 import { EcoMapLayer } from '../components/EcoMapLayer'
@@ -10,10 +10,12 @@ import { JourneyLayer } from '../components/JourneyLayer'
 import { JourneySummaryModal } from '../components/JourneySummaryModal'
 import { MapLayerToggle } from '../components/MapLayerToggle'
 import { MapSheet, type SearchOptions, type SheetState } from '../components/MapSheet'
-import LogoutButton from '../components/LogoutButton'
 import { TrackingConsentModal } from '../components/TrackingConsentModal'
 import { TripToast } from '../components/TripToast'
 import { UserLocationMarker } from '../components/UserLocationMarker'
+import { OfflinePanel } from '../components/OfflinePanel'
+import { useOnlineStatus } from '../hooks/useOnlineStatus'
+import { saveLastJourney } from '../utils/last-journey-cache'
 import { recordTrip } from '../services/gamification.service'
 import type { RecordTripResult } from '../services/gamification.service'
 import { useGamificationStore } from '../stores/gamification.store'
@@ -58,6 +60,7 @@ interface ActiveTrackingState {
 
 export default function MapPage() {
   const { geolocationConsent, grantGeolocation, denyGeolocation } = useConsentStore()
+  const isOnline = useOnlineStatus()
   const { position: geoPosition, error: geoError, loading: geoLoading, locate } = useGeolocation()
   const [addressPosition, setAddressPosition] = useState<Coordinates | null>(null)
   const [fromLabel, setFromLabel] = useState<string | null>(null)
@@ -178,6 +181,20 @@ export default function MapPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userPosition, toCoords, options])
 
+  // Cache local du meilleur itinéraire — reste consultable hors ligne.
+  useEffect(() => {
+    if (journeys.length === 0 || !toLabel) return
+    const best = journeys[0]
+    saveLastJourney({
+      fromLabel: geoPosition ? 'Ma position' : (fromLabel ?? 'Votre position'),
+      toLabel,
+      durationMin: best.totalDurationMin,
+      co2SavedGrams: best.co2SavingG,
+      savedAt: new Date().toISOString(),
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [journeys, toLabel])
+
   // Détection d'arrivée
   useEffect(() => {
     if (!arrived || trackingPhase !== 'active' || arrivalHandledRef.current) return
@@ -294,80 +311,16 @@ export default function MapPage() {
   const showGeoError = !!geoError && !geoLoading && geolocationConsent !== 'denied'
 
   return (
-    <div className="flex flex-col h-screen">
-      <header className="h-16 bg-white border-b border-slate-200 px-4 flex items-center justify-between shrink-0 z-navbar">
-        <span className="text-h3 font-bold text-slate-900">UrbanFlow</span>
-        <nav className="flex items-center gap-2">
-          <Link to="/profile" className="btn-secondary text-body-sm px-3">
-            Mon profil
-          </Link>
-          <Link
-            to="/dashboard"
-            aria-label="Tableau de bord"
-            className="w-10 h-10 flex items-center justify-center rounded-button text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-fast"
-          >
-            <svg
-              aria-hidden="true"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.75"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="18" y1="20" x2="18" y2="10" />
-              <line x1="12" y1="20" x2="12" y2="4" />
-              <line x1="6" y1="20" x2="6" y2="14" />
-            </svg>
-          </Link>
-          <Link
-            to="/rewards"
-            aria-label="Boutique de récompenses"
-            className="w-10 h-10 flex items-center justify-center rounded-button text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-fast"
-          >
-            <svg
-              aria-hidden="true"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.75"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect x="3" y="8" width="18" height="13" rx="1" />
-              <path d="M3 8h18M12 8v13M7.5 8a2.5 2.5 0 0 1 0-5C9 3 12 5 12 8M16.5 8a2.5 2.5 0 0 0 0-5C15 3 12 5 12 8" />
-            </svg>
-          </Link>
-          <Link
-            to="/parametres"
-            aria-label="Paramètres"
-            className="w-10 h-10 flex items-center justify-center rounded-button text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-fast"
-          >
-            <svg
-              aria-hidden="true"
-              width="18"
-              height="18"
-              viewBox="0 0 20 20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.75"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="10" cy="10" r="3" />
-              <path d="M10 2v1.5M10 16.5V18M2 10h1.5M16.5 10H18M4.22 4.22l1.06 1.06M14.72 14.72l1.06 1.06M4.22 15.78l1.06-1.06M14.72 5.28l1.06-1.06" />
-            </svg>
-          </Link>
-          <LogoutButton />
-        </nav>
-      </header>
+    <div className="h-screen">
+      {/* Ne recouvre pas un suivi de trajet déjà en cours — le GPS et le
+       * segment affiché ne dépendent pas du réseau une fois le trajet chargé. */}
+      {!isOnline && trackingPhase !== 'active' && <OfflinePanel />}
 
+      {/* Pas de top app-bar : "la carte reste le sujet" (MAQUETTE.md §1). La
+       * navigation passe entièrement par le bottom sheet (BottomNav) et,
+       * pour Paramètres, par le raccourci en tête du profil. */}
       <main
-        className="flex-1 relative overflow-hidden isolate"
+        className="h-full relative overflow-hidden isolate"
         role="application"
         aria-label="Carte de mobilité de Nantes"
       >

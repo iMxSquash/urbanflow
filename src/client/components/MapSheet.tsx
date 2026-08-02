@@ -4,6 +4,7 @@ import { TRANSPORT_MODES, USER_PREFERENCES } from '@shared/types/index'
 import { AddressSearch } from './AddressSearch'
 import { BottomNav } from './BottomNav'
 import { DatetimePicker } from './DatetimePicker'
+import { EmptyResultsPanel } from './EmptyResultsPanel'
 import { JourneyPanel, type JourneyTrackingPhase } from './JourneyPanel'
 import { JourneyResults } from './JourneyResults'
 import { ModeChip } from './ModeChip'
@@ -307,27 +308,36 @@ function MidView({
           <path d="M6 9l6 6 6-6" />
         </svg>
       </button>
-      <button
-        type="button"
-        onClick={onViewResults}
-        disabled={journeyLoading || count === 0}
-        className="btn-secondary w-full justify-between"
-      >
-        <span aria-live="polite">{summary}</span>
-        <svg
-          aria-hidden="true"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+      {!journeyLoading && journeyError && count === 0 ? (
+        <EmptyResultsPanel
+          time={options.datetime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+          options={options}
+          onOptionsChange={onOptionsChange}
+          onOpenSettings={onOpenSettings}
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={onViewResults}
+          disabled={journeyLoading || count === 0}
+          className="btn-secondary w-full justify-between"
         >
-          <path d="M5 12h14M12 5l7 7-7 7" />
-        </svg>
-      </button>
+          <span aria-live="polite">{summary}</span>
+          <svg
+            aria-hidden="true"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </button>
+      )}
     </div>
   )
 }

@@ -2,22 +2,25 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import ProtectedRoute from './components/ProtectedRoute'
 import { useAuthInit } from './hooks/useAuthInit'
+import { useThemeSync } from './hooks/useThemeSync'
 
 const LoginPage = lazy(() => import('./pages/LoginPage'))
 const RegisterPage = lazy(() => import('./pages/RegisterPage'))
+const OnboardingPage = lazy(() => import('./pages/OnboardingPage'))
 const ProfilePage = lazy(() => import('./pages/ProfilePage'))
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
+const DashboardBadgesPage = lazy(() => import('./pages/DashboardBadgesPage'))
 const RewardsPage = lazy(() => import('./pages/RewardsPage'))
 const MapPage = lazy(() => import('./pages/MapPage'))
 const ParametresPage = lazy(() => import('./pages/ParametresPage'))
 
 function PageSpinner() {
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+    <div className="min-h-screen bg-bg flex items-center justify-center">
       <div
         role="status"
         aria-label="Chargement de la page"
-        className="w-8 h-8 border-4 border-eco-200 border-t-eco-700 rounded-full animate-spin"
+        className="w-8 h-8 border-4 border-primary-surface border-t-primary rounded-full animate-spin"
       />
     </div>
   )
@@ -25,6 +28,7 @@ function PageSpinner() {
 
 function AppRoutes() {
   const isInitialized = useAuthInit()
+  useThemeSync()
 
   if (!isInitialized) {
     return <PageSpinner />
@@ -40,8 +44,10 @@ function AppRoutes() {
         {/* Routes protégées — redirige vers /login si non authentifié */}
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<MapPage />} />
+          <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/dashboard/badges" element={<DashboardBadgesPage />} />
           <Route path="/rewards" element={<RewardsPage />} />
           <Route path="/parametres" element={<ParametresPage />} />
         </Route>
