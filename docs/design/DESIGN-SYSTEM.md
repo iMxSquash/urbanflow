@@ -125,62 +125,70 @@ Contrairement à la version précédente ("Urban Night"), **le mode clair est le
   --focus-ring: 0 0 0 2px #F6F4EF, 0 0 0 4px #0B5C43;
 }
 
-/* ── Système de thème : clair par défaut, sombre en surcharge ─── */
+/* ── Système de thème : clair par défaut, sombre en surcharge ───
+ * Un sélecteur combinant un attribut et un @media dans la même liste
+ * (`[data-theme="dark"], @media (...) { ... }`) n'est pas du CSS valide —
+ * lightningcss l'ignore silencieusement. Les deux cas sont déclarés
+ * séparément ci-dessous (valeurs dupliquées mais fonctionnelles). */
 :root { color-scheme: light; }
 [data-theme="dark"] { color-scheme: dark; }
 
-[data-theme="dark"],
+[data-theme="dark"] {
+  --color-bg: #0D1512;
+  --color-surface: #16211D;
+  --color-surface-muted: #12251E;
+  --color-surface-sunken: #1F2C27;
+  --color-border: #2C3B35;
+  --color-border-strong: #24483A;
+
+  --color-text: #EEF2EF;          /* 16,6:1 */
+  --color-text-muted: #A2B0A9;    /* 8,1:1 */
+  --color-text-subtle: #8C8279;   /* 5,0:1 */
+  --color-text-disabled: #6B7A72;
+
+  --color-primary: #4FCB9B;         /* 8,3:1 */
+  --color-primary-hover: #3FB587;
+  --color-primary-surface: #0F3A2C;
+  --color-primary-weak: #2F7A5E;
+  --color-on-primary: #062018;      /* 10,4:1 */
+  --color-on-primary-muted: #A8C9BB;
+
+  --color-transit: #6BB6D6;         /* 7,4:1 */
+  --color-transit-surface: #16303C;
+
+  --color-mode-walk: #A2B0A9;            --color-mode-walk-surface: #1F2C27;
+  --color-mode-bike: #4FCB9B;            --color-mode-bike-surface: #0F3A2C;
+  --color-mode-scooter: #B8CC5A;         --color-mode-scooter-surface: #2A2E12;
+  --color-mode-tram: #6BB6D6;            --color-mode-tram-surface: #16303C;
+  --color-mode-bus: #C09BE0;             --color-mode-bus-surface: #2C1F38;
+  --color-mode-navibus: #58C4C4;         --color-mode-navibus-surface: #123434;
+  --color-mode-train: #8FA0F0;           --color-mode-train-surface: #1B2044;
+  --color-mode-car: #3A4A43;
+
+  --color-warning: #E9A93C;         /* 8,9:1 */
+  --color-on-warning: #1F1401;      /* 10,9:1 */
+  --color-warning-border: #7A5E22;
+  --color-warning-surface: #2A2113;
+  --color-warning-surface-soft: #241C10;
+
+  --color-danger: #F0736B;          /* 7,0:1 */
+  --color-danger-text: #F0736B;
+  --color-danger-text-muted: #E4A9A4;
+  --color-danger-surface: #2A1614;
+  --color-danger-surface-icon: #3A1D1A;
+
+  --map-tint: rgba(15, 58, 44, 0.30);           /* screen, CartoDB Dark Matter */
+  --scrim: rgba(13, 21, 18, 0.72);
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.28);
+  --shadow-sheet: 0 -6px 28px rgba(0, 0, 0, 0.40);
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.45);
+  --focus-ring: 0 0 0 2px #0D1512, 0 0 0 4px #4FCB9B;
+}
+
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --color-bg: #0D1512;
-    --color-surface: #16211D;
-    --color-surface-muted: #12251E;
-    --color-surface-sunken: #1F2C27;
-    --color-border: #2C3B35;
-    --color-border-strong: #24483A;
-
-    --color-text: #EEF2EF;          /* 16,6:1 */
-    --color-text-muted: #A2B0A9;    /* 8,1:1 */
-    --color-text-subtle: #8C8279;   /* 5,0:1 */
-    --color-text-disabled: #6B7A72;
-
-    --color-primary: #4FCB9B;         /* 8,3:1 */
-    --color-primary-hover: #3FB587;
-    --color-primary-surface: #0F3A2C;
-    --color-primary-weak: #2F7A5E;
-    --color-on-primary: #062018;      /* 10,4:1 */
-    --color-on-primary-muted: #A8C9BB;
-
-    --color-transit: #6BB6D6;         /* 7,4:1 */
-    --color-transit-surface: #16303C;
-
-    --color-mode-walk: #A2B0A9;            --color-mode-walk-surface: #1F2C27;
-    --color-mode-bike: #4FCB9B;            --color-mode-bike-surface: #0F3A2C;
-    --color-mode-scooter: #B8CC5A;         --color-mode-scooter-surface: #2A2E12;
-    --color-mode-tram: #6BB6D6;            --color-mode-tram-surface: #16303C;
-    --color-mode-bus: #C09BE0;             --color-mode-bus-surface: #2C1F38;
-    --color-mode-navibus: #58C4C4;         --color-mode-navibus-surface: #123434;
-    --color-mode-train: #8FA0F0;           --color-mode-train-surface: #1B2044;
-    --color-mode-car: #3A4A43;
-
-    --color-warning: #E9A93C;         /* 8,9:1 */
-    --color-on-warning: #1F1401;      /* 10,9:1 */
-    --color-warning-border: #7A5E22;
-    --color-warning-surface: #2A2113;
-    --color-warning-surface-soft: #241C10;
-
-    --color-danger: #F0736B;          /* 7,0:1 */
-    --color-danger-text: #F0736B;
-    --color-danger-text-muted: #E4A9A4;
-    --color-danger-surface: #2A1614;
-    --color-danger-surface-icon: #3A1D1A;
-
-    --map-tint: rgba(15, 58, 44, 0.30);           /* screen, CartoDB Dark Matter */
-    --scrim: rgba(13, 21, 18, 0.72);
-    --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.28);
-    --shadow-sheet: 0 -6px 28px rgba(0, 0, 0, 0.40);
-    --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.45);
-    --focus-ring: 0 0 0 2px #0D1512, 0 0 0 4px #4FCB9B;
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    color-scheme: dark;
+    /* … mêmes valeurs que le bloc [data-theme="dark"] ci-dessus … */
   }
 }
 
