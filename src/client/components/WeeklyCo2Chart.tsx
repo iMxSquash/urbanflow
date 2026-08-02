@@ -13,7 +13,10 @@ function formatWeekLabel(weekStart: string): string {
 }
 
 function formatCo2(grams: number): string {
-  return (grams / 1000).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+  return (grams / 1000).toLocaleString('fr-FR', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  })
 }
 
 /** Barres CSS — valeurs toujours visibles (pas de tooltip requis), semaine en

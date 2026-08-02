@@ -18,7 +18,11 @@ interface ModeBreakdownTableProps {
  * (MAQUETTE.md §4, a11y : préféré à un graphique image). */
 export default function ModeBreakdownTable({ data }: ModeBreakdownTableProps) {
   if (data.length === 0) {
-    return <p className="text-body-sm text-text-muted text-center py-6">Aucun trajet enregistré ce mois</p>
+    return (
+      <p className="text-body-sm text-text-muted text-center py-6">
+        Aucun trajet enregistré ce mois
+      </p>
+    )
   }
 
   const total = data.reduce((sum, d) => sum + d.count, 0)
@@ -32,7 +36,9 @@ export default function ModeBreakdownTable({ data }: ModeBreakdownTableProps) {
 
   return (
     <table className="w-full border-collapse">
-      <caption className="sr-only">Répartition des trajets par mode de transport ce mois-ci</caption>
+      <caption className="sr-only">
+        Répartition des trajets par mode de transport ce mois-ci
+      </caption>
       <thead>
         <tr>
           <th scope="col" className="text-left text-caption font-semibold text-text-subtle pb-1.5">
@@ -63,7 +69,9 @@ export default function ModeBreakdownTable({ data }: ModeBreakdownTableProps) {
                     }}
                   />
                 </span>
-                <span className="text-caption text-text-muted tabular-nums w-8 text-right">{row.pct}%</span>
+                <span className="text-caption text-text-muted tabular-nums w-8 text-right">
+                  {row.pct}%
+                </span>
               </span>
             </td>
             <td className="py-1 text-right text-body-sm font-semibold tabular-nums">{row.count}</td>

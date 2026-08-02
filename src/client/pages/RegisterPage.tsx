@@ -127,8 +127,15 @@ export default function RegisterPage() {
             aria-describedby="register-email-error"
             disabled={isLoading}
           />
-          <div id="register-email-error" aria-live="polite" aria-atomic="true" className="mt-1.5 min-h-5">
-            {fieldErrors.email && <p className="text-body-sm text-danger-text">{fieldErrors.email}</p>}
+          <div
+            id="register-email-error"
+            aria-live="polite"
+            aria-atomic="true"
+            className="mt-1.5 min-h-5"
+          >
+            {fieldErrors.email && (
+              <p className="text-body-sm text-danger-text">{fieldErrors.email}</p>
+            )}
           </div>
         </div>
 
@@ -154,8 +161,15 @@ export default function RegisterPage() {
           <p id="register-password-hint" className="mt-1 text-caption text-text-muted">
             8 caractères minimum, 1 majuscule, 1 chiffre
           </p>
-          <div id="register-password-error" aria-live="polite" aria-atomic="true" className="mt-1 min-h-5">
-            {fieldErrors.password && <p className="text-body-sm text-danger-text">{fieldErrors.password}</p>}
+          <div
+            id="register-password-error"
+            aria-live="polite"
+            aria-atomic="true"
+            className="mt-1 min-h-5"
+          >
+            {fieldErrors.password && (
+              <p className="text-body-sm text-danger-text">{fieldErrors.password}</p>
+            )}
           </div>
         </div>
 
@@ -178,8 +192,15 @@ export default function RegisterPage() {
             aria-describedby="register-confirm-error"
             disabled={isLoading}
           />
-          <div id="register-confirm-error" aria-live="polite" aria-atomic="true" className="mt-1.5 min-h-5">
-            {fieldErrors.confirm && <p className="text-body-sm text-danger-text">{fieldErrors.confirm}</p>}
+          <div
+            id="register-confirm-error"
+            aria-live="polite"
+            aria-atomic="true"
+            className="mt-1.5 min-h-5"
+          >
+            {fieldErrors.confirm && (
+              <p className="text-body-sm text-danger-text">{fieldErrors.confirm}</p>
+            )}
           </div>
         </div>
 

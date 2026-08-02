@@ -40,8 +40,8 @@ export const GeolocationConsent: FC<GeolocationConsentProps> = ({ onGrant, onDen
       </h2>
 
       <p id="geoloc-desc" className="text-body-sm text-text-muted leading-relaxed mb-3">
-        Votre position sert uniquement à trouver le point de départ et à suivre le trajet en
-        cours. Elle n'est pas partagée et n'est pas conservée après le trajet.
+        Votre position sert uniquement à trouver le point de départ et à suivre le trajet en cours.
+        Elle n'est pas partagée et n'est pas conservée après le trajet.
       </p>
 
       <ul className="flex flex-col gap-2 mb-4">
@@ -83,8 +83,8 @@ export const GeolocationConsent: FC<GeolocationConsentProps> = ({ onGrant, onDen
           <path d="M8 10V7a4 4 0 0 1 8 0v3" />
         </svg>
         <p className="text-caption text-text-muted leading-relaxed">
-          Refuser ne bloque rien : vous pourrez saisir votre départ à la main et utiliser toutes
-          les fonctions.
+          Refuser ne bloque rien : vous pourrez saisir votre départ à la main et utiliser toutes les
+          fonctions.
         </p>
       </div>
 

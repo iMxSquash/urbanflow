@@ -85,7 +85,12 @@ export default function LoginPage() {
         )}
       </div>
 
-      <form onSubmit={handleSubmit} aria-label="Formulaire de connexion" noValidate className="flex flex-col gap-4">
+      <form
+        onSubmit={handleSubmit}
+        aria-label="Formulaire de connexion"
+        noValidate
+        className="flex flex-col gap-4"
+      >
         <div>
           <label htmlFor="login-email" className="label">
             Adresse email
@@ -102,8 +107,15 @@ export default function LoginPage() {
             aria-describedby="login-email-error"
             disabled={isLoading}
           />
-          <div id="login-email-error" aria-live="polite" aria-atomic="true" className="mt-1.5 min-h-5">
-            {fieldErrors.email && <p className="text-body-sm text-danger-text">{fieldErrors.email}</p>}
+          <div
+            id="login-email-error"
+            aria-live="polite"
+            aria-atomic="true"
+            className="mt-1.5 min-h-5"
+          >
+            {fieldErrors.email && (
+              <p className="text-body-sm text-danger-text">{fieldErrors.email}</p>
+            )}
           </div>
         </div>
 
@@ -132,8 +144,15 @@ export default function LoginPage() {
               {showPassword ? 'Masquer' : 'Afficher'}
             </button>
           </div>
-          <div id="login-password-error" aria-live="polite" aria-atomic="true" className="mt-1.5 min-h-5">
-            {fieldErrors.password && <p className="text-body-sm text-danger-text">{fieldErrors.password}</p>}
+          <div
+            id="login-password-error"
+            aria-live="polite"
+            aria-atomic="true"
+            className="mt-1.5 min-h-5"
+          >
+            {fieldErrors.password && (
+              <p className="text-body-sm text-danger-text">{fieldErrors.password}</p>
+            )}
           </div>
         </div>
 

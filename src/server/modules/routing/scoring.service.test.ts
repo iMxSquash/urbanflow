@@ -170,14 +170,22 @@ describe('computeComfortScore', () => {
   describe('avoidElevation — pénalité vélo (approximation sans données DEM)', () => {
     it('avoidElevation + vélo → pénalité −30', () => {
       const segments = [seg('bike', 3, 12)]
-      const options: JourneyOptions = { preference: 'balanced', modes: ['bike'], avoidElevation: true }
+      const options: JourneyOptions = {
+        preference: 'balanced',
+        modes: ['bike'],
+        avoidElevation: true,
+      }
       // base = 100 (vélo = mode préféré) − 30
       expect(computeComfortScore(segments, options)).toBe(70)
     })
 
     it('avoidElevation sans vélo (bus seul) → aucune pénalité', () => {
       const segments = [seg('bus', 3, 15)]
-      const options: JourneyOptions = { preference: 'balanced', modes: ['bus'], avoidElevation: true }
+      const options: JourneyOptions = {
+        preference: 'balanced',
+        modes: ['bus'],
+        avoidElevation: true,
+      }
       expect(computeComfortScore(segments, options)).toBe(100)
     })
 

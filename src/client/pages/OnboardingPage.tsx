@@ -6,7 +6,15 @@ import { ModeChip } from '../components/ModeChip'
 import { PROFILE_PRESETS } from '../constants/profile-presets'
 import type { TransportMode, UserPreference } from '@shared/types/index'
 
-const ONBOARDING_MODES: TransportMode[] = ['walk', 'bike', 'tramway', 'bus', 'scooter', 'navibus', 'train']
+const ONBOARDING_MODES: TransportMode[] = [
+  'walk',
+  'bike',
+  'tramway',
+  'bus',
+  'scooter',
+  'navibus',
+  'train',
+]
 const DEFAULT_MODES: TransportMode[] = ['walk', 'bike', 'tramway', 'bus']
 
 /** Onboarding préférences + PWA — étape 2 sur 2 (étape 1 = inscription).
@@ -100,7 +108,9 @@ export default function OnboardingPage() {
         </div>
 
         <div>
-          <h1 className="text-h3 font-bold tracking-tight mb-1.5">Comment préférez-vous vous déplacer ?</h1>
+          <h1 className="text-h3 font-bold tracking-tight mb-1.5">
+            Comment préférez-vous vous déplacer ?
+          </h1>
           <p className="text-body-sm text-text-muted">
             Ce sera votre réglage par défaut. Modifiable à chaque recherche.
           </p>

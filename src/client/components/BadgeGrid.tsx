@@ -5,7 +5,18 @@ import type { BadgeWithStatus } from '../services/gamification.service'
 
 function IconFlag({ cls }: { cls: string }) {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={cls} aria-hidden="true">
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cls}
+      aria-hidden="true"
+    >
       <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
       <line x1="4" y1="22" x2="4" y2="15" />
     </svg>
@@ -14,7 +25,18 @@ function IconFlag({ cls }: { cls: string }) {
 
 function IconCompass({ cls }: { cls: string }) {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={cls} aria-hidden="true">
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cls}
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="10" />
       <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
     </svg>
@@ -23,7 +45,14 @@ function IconCompass({ cls }: { cls: string }) {
 
 function IconStar({ cls }: { cls: string }) {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className={cls} aria-hidden="true">
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={cls}
+      aria-hidden="true"
+    >
       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
     </svg>
   )
@@ -31,7 +60,18 @@ function IconStar({ cls }: { cls: string }) {
 
 function IconBike({ cls }: { cls: string }) {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={cls} aria-hidden="true">
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cls}
+      aria-hidden="true"
+    >
       <circle cx="6" cy="17" r="3" />
       <circle cx="18" cy="17" r="3" />
       <path d="M9 17h5l-2-7 3-2M13 8h3" />
@@ -41,7 +81,18 @@ function IconBike({ cls }: { cls: string }) {
 
 function IconLeaf({ cls }: { cls: string }) {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={cls} aria-hidden="true">
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cls}
+      aria-hidden="true"
+    >
       <path d="M17 8C8 10 5.9 16.17 3.82 22c2 0 7.68-1 13-6 2-2 3-5 3-8s-1-5-1-5l-1.82 5z" />
     </svg>
   )
@@ -49,7 +100,18 @@ function IconLeaf({ cls }: { cls: string }) {
 
 function IconNavibus({ cls }: { cls: string }) {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={cls} aria-hidden="true">
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cls}
+      aria-hidden="true"
+    >
       <path d="M3.5 16l1.5-5h14l1.5 5M6.5 11V7h11v4M3.5 20c1.4 0 2.4-1 3.8-1s2.4 1 3.8 1 2.4-1 3.8-1 2.4 1 3.8 1" />
     </svg>
   )
@@ -57,7 +119,18 @@ function IconNavibus({ cls }: { cls: string }) {
 
 function IconTrophy({ cls }: { cls: string }) {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className={cls} aria-hidden="true">
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cls}
+      aria-hidden="true"
+    >
       <polyline points="8 21 12 17 16 21" />
       <line x1="12" y1="17" x2="12" y2="11" />
       <path d="M7 4H4a2 2 0 0 0-2 2v1c0 4 3 7 6 8" />
@@ -69,7 +142,18 @@ function IconTrophy({ cls }: { cls: string }) {
 
 function IconCheck({ cls }: { cls: string }) {
   return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={cls} aria-hidden="true">
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cls}
+      aria-hidden="true"
+    >
       <path d="M20 6L9 17l-5-5" />
     </svg>
   )

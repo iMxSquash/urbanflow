@@ -32,8 +32,15 @@ export function AuthShell({ active, children }: AuthShellProps) {
         </div>
 
         <div className="flex-1 flex flex-col gap-4 p-5 -mt-6 rounded-t-2xl bg-surface">
-          <nav aria-label="Connexion ou inscription" className="flex gap-1.5 p-1 bg-surface-sunken rounded-full">
-            <Link to="/login" aria-current={active === 'login' ? 'page' : undefined} className={tabClass(active === 'login')}>
+          <nav
+            aria-label="Connexion ou inscription"
+            className="flex gap-1.5 p-1 bg-surface-sunken rounded-full"
+          >
+            <Link
+              to="/login"
+              aria-current={active === 'login' ? 'page' : undefined}
+              className={tabClass(active === 'login')}
+            >
               Connexion
             </Link>
             <Link

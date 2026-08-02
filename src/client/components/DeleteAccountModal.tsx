@@ -63,8 +63,21 @@ export function DeleteAccountModal({ onClose }: DeleteAccountModalProps) {
 
   return (
     <Modal titleId="delete-title" descriptionId="delete-desc" onClose={onClose}>
-      <div className="w-13 h-13 bg-danger-surface-icon rounded-xl flex items-center justify-center mb-4" aria-hidden="true">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-danger">
+      <div
+        className="w-13 h-13 bg-danger-surface-icon rounded-xl flex items-center justify-center mb-4"
+        aria-hidden="true"
+      >
+        <svg
+          width="26"
+          height="26"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="text-danger"
+        >
           <path d="M4 7h16M9 7V5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5v2M6 7l1 13a1.5 1.5 0 0 0 1.5 1.4h7A1.5 1.5 0 0 0 17 20l1-13M10 11v6M14 11v6" />
         </svg>
       </div>
@@ -91,7 +104,8 @@ export function DeleteAccountModal({ onClose }: DeleteAccountModalProps) {
             {inventory.redemptionCount > 0 && (
               <li className="flex items-start gap-2 text-body-sm text-danger-text-muted">
                 <IconCross />
-                {inventory.redemptionCount} récompense{inventory.redemptionCount > 1 ? 's' : ''} échangée
+                {inventory.redemptionCount} récompense{inventory.redemptionCount > 1 ? 's' : ''}{' '}
+                échangée
                 {inventory.redemptionCount > 1 ? 's' : ''}
               </li>
             )}

@@ -34,8 +34,8 @@ export const TrackingConsentModal: FC<TrackingConsentModalProps> = ({ onAccept, 
       </h2>
 
       <p id="tracking-desc" className="text-body-sm text-text-muted leading-relaxed mb-2">
-        UrbanFlow peut suivre votre position GPS pendant ce trajet pour afficher votre avancement
-        en temps réel et détecter automatiquement votre arrivée.
+        UrbanFlow peut suivre votre position GPS pendant ce trajet pour afficher votre avancement en
+        temps réel et détecter automatiquement votre arrivée.
       </p>
       <p className="text-body-sm text-text-subtle leading-relaxed mb-6">
         Ce suivi s'arrête automatiquement à destination. Votre position n'est ni conservée ni
