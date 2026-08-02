@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import type { Journey, TransportMode } from '@shared/types/index'
+import { ModeChip } from './ModeChip'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -47,29 +48,6 @@ function uniqueModes(journey: Journey): TransportMode[] {
       seen.add(m)
       return true
     })
-}
-
-// ── Mode badge config ──────────────────────────────────────────────────────
-
-const MODE_LABEL: Record<TransportMode, string> = {
-  walk: 'Marche',
-  bike: 'Vélo',
-  tramway: 'Tramway',
-  bus: 'Bus',
-  scooter: 'Trottinette',
-  navibus: 'Navibus',
-  train: 'Train',
-}
-
-// Combines .mode-badge base class with color-specific classes from index.css
-const MODE_BADGE_CLASS: Record<TransportMode, string> = {
-  walk: 'mode-badge mode-badge-walk',
-  bike: 'mode-badge mode-badge-bike',
-  tramway: 'mode-badge mode-badge-tram',
-  bus: 'mode-badge mode-badge-bus',
-  navibus: 'mode-badge mode-badge-navibus',
-  scooter: 'mode-badge bg-cyan-50 text-cyan-700',
-  train: 'mode-badge bg-violet-50 text-violet-700',
 }
 
 // ── Rank badge config ──────────────────────────────────────────────────────
@@ -247,7 +225,7 @@ function JourneyCard({ journey, ranks, onSelect, animDelay }: JourneyCardProps) 
           <ul className="flex flex-wrap gap-1" aria-label="Modes de transport utilisés">
             {modes.map((mode) => (
               <li key={mode}>
-                <span className={MODE_BADGE_CLASS[mode]}>{MODE_LABEL[mode]}</span>
+                <ModeChip mode={mode} size="sm" />
               </li>
             ))}
           </ul>

@@ -3,16 +3,13 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MapContainer, TileLayer } from 'react-leaflet'
 import { Link, useLocation } from 'react-router-dom'
-import { AddressSearch } from '../components/AddressSearch'
-import { DatetimePicker } from '../components/DatetimePicker'
 import { ErrorBanner } from '../components/ErrorBanner'
 import { GeolocationConsent } from '../components/GeolocationConsent'
 import { EcoMapLayer } from '../components/EcoMapLayer'
 import { JourneyLayer } from '../components/JourneyLayer'
-import { JourneyPanel } from '../components/JourneyPanel'
-import { JourneyResults } from '../components/JourneyResults'
 import { JourneySummaryModal } from '../components/JourneySummaryModal'
 import { MapLayerToggle } from '../components/MapLayerToggle'
+import { MapSheet, type SearchOptions, type SheetState } from '../components/MapSheet'
 import LogoutButton from '../components/LogoutButton'
 import { TrackingConsentModal } from '../components/TrackingConsentModal'
 import { TripToast } from '../components/TripToast'
@@ -28,7 +25,7 @@ import { useConsentStore } from '../stores/consent.store'
 import { useMapLayersStore } from '../stores/map-layers.store'
 import { useProfileStore } from '../stores/profile.store'
 import { WeatherBadge } from '../components/WeatherBadge'
-import type { Coordinates } from '@shared/types/index'
+import type { Coordinates, TransportMode } from '@shared/types/index'
 
 const BiclooLayer = lazy(() => import('../components/BiclooLayer'))
 const TanLinesLayer = lazy(() => import('../components/TanLinesLayer'))
@@ -41,7 +38,11 @@ const CARTO_ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors ' +
   '&copy; <a href="https://carto.com/attributions">CARTO</a>'
 
-type TrackingPhase = 'idle' | 'consent' | 'active' | 'done'
+const DEFAULT_MODES: TransportMode[] = ['walk', 'tramway', 'bus']
+
+// Phase du parcours de suivi — distincte de l'état du sheet (SheetState) : ce
+// state pilote les modales portées hors du sheet (consentement, résumé).
+type TrackingModalPhase = 'idle' | 'consent' | 'active' | 'done'
 
 interface DemoScenarioState {
   from: Coordinates
@@ -59,6 +60,10 @@ export default function MapPage() {
   const { geolocationConsent, grantGeolocation, denyGeolocation } = useConsentStore()
   const { position: geoPosition, error: geoError, loading: geoLoading, locate } = useGeolocation()
   const [addressPosition, setAddressPosition] = useState<Coordinates | null>(null)
+  const [fromLabel, setFromLabel] = useState<string | null>(null)
+  const [toCoords, setToCoords] = useState<Coordinates | null>(null)
+  const [toLabel, setToLabel] = useState<string | null>(null)
+  const [sheetState, setSheetState] = useState<SheetState>('collapsed')
   const {
     journeys,
     selectedJourney,
@@ -75,11 +80,20 @@ export default function MapPage() {
   const [activeSegmentIdx, setActiveSegmentIdx] = useState<number | null>(null)
   const [ecoMapActive, setEcoMapActive] = useState(false)
   const [tripResult, setTripResult] = useState<RecordTripResult | null>(null)
-  const [datetime, setDatetime] = useState<Date>(() => new Date())
-  const [datetimeType, setDatetimeType] = useState<'departure' | 'arrival'>('departure')
 
-  // Tracking state
-  const [trackingPhase, setTrackingPhase] = useState<TrackingPhase>('idle')
+  const [options, setOptions] = useState<SearchOptions>(() => ({
+    preference: 'balanced',
+    modes: DEFAULT_MODES,
+    maxWalkMinutes: 15,
+    pmrAccessibility: false,
+    avoidElevation: false,
+    datetime: new Date(),
+    datetimeType: 'departure',
+  }))
+  const profileSyncedRef = useRef(false)
+
+  // Tracking (modale hors sheet)
+  const [trackingPhase, setTrackingPhase] = useState<TrackingModalPhase>('idle')
   const [activeTracking, setActiveTracking] = useState<ActiveTrackingState | null>(null)
   const [summaryResult, setSummaryResult] = useState<RecordTripResult | null>(null)
   const [summaryDurationMin, setSummaryDurationMin] = useState(0)
@@ -112,27 +126,57 @@ export default function MapPage() {
     }
   }, [geolocationConsent, locate])
 
+  // Réglages de recherche : initialisés une fois depuis le profil persistant,
+  // puis modifiables localement sans jamais réécrire le profil (override par
+  // recherche — cf. MIGRATION-TODO.md étape 2).
+  useEffect(() => {
+    if (!profile || profileSyncedRef.current) return
+    profileSyncedRef.current = true
+    setOptions((o) => ({
+      ...o,
+      preference: profile.preference,
+      modes: profile.preferredModes,
+      maxWalkMinutes: profile.maxWalkMinutes,
+      pmrAccessibility: profile.pmrAccessibility,
+    }))
+  }, [profile])
+
   // Scénario démo
   useEffect(() => {
     const state = (location.state as { demoScenario?: DemoScenarioState } | null)?.demoScenario
     if (!state || scenarioApplied.current) return
     scenarioApplied.current = true
     setAddressPosition(state.from)
+    setFromLabel(state.fromLabel)
+    setToCoords(state.to)
+    setToLabel(state.toLabel)
+    setSheetState('mid')
+  }, [location.state])
+
+  // Position affichée : pendant le suivi on suit la position GPS temps réel
+  const userPosition = geoPosition ?? addressPosition
+  const displayPosition =
+    trackingPhase === 'active' ? (trackingPosition ?? userPosition) : userPosition
+
+  // Calcul automatique dès que départ + arrivée sont connus, et à chaque
+  // changement de réglages (modes, PMR, marche max, dénivelé, horaire).
+  useEffect(() => {
+    if (!userPosition || !toCoords) return
     void calculate(
-      state.from,
-      state.to,
-      profile
-        ? {
-            preference: profile.preference,
-            preferredModes: profile.preferredModes,
-            maxWalkMinutes: profile.maxWalkMinutes,
-            pmrAccessibility: profile.pmrAccessibility,
-          }
-        : undefined,
-      datetime,
-      datetimeType
+      userPosition,
+      toCoords,
+      {
+        preference: options.preference,
+        preferredModes: options.modes,
+        maxWalkMinutes: options.maxWalkMinutes,
+        pmrAccessibility: options.pmrAccessibility,
+        avoidElevation: options.avoidElevation,
+      },
+      options.datetime,
+      options.datetimeType
     )
-  }, [location.state, calculate, profile, datetime, datetimeType])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userPosition, toCoords, options])
 
   // Détection d'arrivée
   useEffect(() => {
@@ -147,24 +191,6 @@ export default function MapPage() {
     locate()
   }
 
-  function handleDestinationSelect(dest: Coordinates) {
-    if (!userPosition) return
-    void calculate(
-      userPosition,
-      dest,
-      profile
-        ? {
-            preference: profile.preference,
-            preferredModes: profile.preferredModes,
-            maxWalkMinutes: profile.maxWalkMinutes,
-            pmrAccessibility: profile.pmrAccessibility,
-          }
-        : undefined,
-      datetime,
-      datetimeType
-    )
-  }
-
   // "Partir maintenant" → ouvre la modale de consentement suivi
   function handleDepartClick() {
     setTrackingPhase('consent')
@@ -177,6 +203,7 @@ export default function MapPage() {
     arrivalHandledRef.current = false
     setActiveTracking({ startTime: Date.now(), destination })
     setTrackingPhase('active')
+    setSheetState('tracking')
   }
 
   // L'utilisateur refuse le suivi → enregistrement immédiat sans points
@@ -220,32 +247,51 @@ export default function MapPage() {
     void handleArrival()
   }
 
+  // Fermeture du résumé de fin de trajet — retour à un état replié propre
   function handleSummaryClose() {
     setSummaryResult(null)
     setActiveSegmentIdx(null)
     deselectJourney()
+    clearJourney()
+    setAddressPosition(null)
+    setFromLabel(null)
+    setToCoords(null)
+    setToLabel(null)
+    setSheetState('collapsed')
   }
 
-  function handlePanelClose() {
+  // Fermeture du panneau détail/suivi : abandon complet si suivi actif,
+  // sinon retour aux résultats (l'itinéraire reste calculé).
+  function handleClosePanel() {
     if (trackingPhase === 'active') {
       stopTracking()
       setActiveTracking(null)
+      setTrackingPhase('idle')
+      clearJourney()
+      setAddressPosition(null)
+      setFromLabel(null)
+      setToCoords(null)
+      setToLabel(null)
+      setSheetState('collapsed')
+    } else {
+      setActiveSegmentIdx(null)
+      deselectJourney()
+      setSheetState('results')
     }
-    setTrackingPhase('idle')
-    setActiveSegmentIdx(null)
-    deselectJourney()
   }
 
-  // Position affichée : pendant le suivi on suit la position GPS temps réel
-  const userPosition = geoPosition ?? addressPosition
-  const displayPosition =
-    trackingPhase === 'active' ? (trackingPosition ?? userPosition) : userPosition
+  const defaultOptions: SearchOptions = {
+    preference: profile?.preference ?? 'balanced',
+    modes: profile?.preferredModes ?? DEFAULT_MODES,
+    maxWalkMinutes: profile?.maxWalkMinutes ?? 15,
+    pmrAccessibility: profile?.pmrAccessibility ?? false,
+    avoidElevation: false,
+    datetime: new Date(),
+    datetimeType: 'departure',
+  }
 
-  const showAddressSearch = geolocationConsent === 'denied' && !geoPosition
+  const effectiveFromLabel = geoPosition ? 'Ma position' : fromLabel
   const showGeoError = !!geoError && !geoLoading && geolocationConsent !== 'denied'
-  const showDestSearch =
-    !!userPosition && journeys.length === 0 && !selectedJourney && !journeyLoading
-  const searchRight = weather ? 'right-24 sm:right-36' : 'right-3'
 
   return (
     <div className="flex flex-col h-screen">
@@ -325,58 +371,9 @@ export default function MapPage() {
         role="application"
         aria-label="Carte de mobilité de Nantes"
       >
-        {showAddressSearch && (
-          <div className={`absolute top-3 left-3 ${searchRight} z-1100`}>
-            <AddressSearch onSelect={setAddressPosition} />
-          </div>
-        )}
-
-        {showDestSearch && (
-          <div
-            className={[
-              `absolute left-3 ${searchRight} z-1100 flex flex-col gap-2`,
-              showAddressSearch ? 'top-16' : 'top-3',
-            ].join(' ')}
-          >
-            <AddressSearch onSelect={handleDestinationSelect} placeholder="Où allez-vous ?" />
-            <DatetimePicker
-              datetime={datetime}
-              type={datetimeType}
-              onDatetimeChange={(dt) => {
-                setDatetime(dt)
-                clearJourney()
-              }}
-              onTypeChange={(t) => {
-                setDatetimeType(t)
-                clearJourney()
-              }}
-            />
-          </div>
-        )}
-
         {weather && (
           <div className="absolute top-3 right-3 z-1100">
             <WeatherBadge weather={weather} variant="map" />
-          </div>
-        )}
-
-        {journeyLoading && (
-          <div
-            role="status"
-            aria-label="Calcul de l'itinéraire en cours"
-            className="absolute top-3 left-1/2 -translate-x-1/2 z-1100 bg-white rounded-full px-4 py-2 shadow-card flex items-center gap-2 text-body-sm text-slate-600 whitespace-nowrap"
-          >
-            <div
-              className="w-4 h-4 border-2 border-slate-200 border-t-eco-600 rounded-full animate-spin"
-              aria-hidden="true"
-            />
-            Calcul de l'itinéraire…
-          </div>
-        )}
-
-        {journeyError && !journeyLoading && (
-          <div className="absolute top-3 left-3 right-3 z-1100">
-            <ErrorBanner message={journeyError} onClose={clearJourney} />
           </div>
         )}
 
@@ -466,39 +463,36 @@ export default function MapPage() {
           onToggleEco={() => setEcoMapActive((v) => !v)}
         />
 
-        {journeys.length > 0 && !selectedJourney && (
-          <div
-            className={[
-              'absolute z-1100 bg-white overflow-y-auto',
-              'bottom-0 left-0 right-0 max-h-[60vh] rounded-t-2xl',
-              'shadow-[0_-8px_32px_rgba(0,0,0,0.12)]',
-              'lg:top-0 lg:right-0 lg:bottom-0 lg:left-auto lg:w-80 lg:max-h-none lg:rounded-none',
-              'lg:shadow-[-8px_0_32px_rgba(0,0,0,0.08)]',
-            ].join(' ')}
-            role="complementary"
-            aria-label="Résultats des itinéraires"
-          >
-            <div className="flex justify-center pt-3 lg:hidden" aria-hidden="true">
-              <div className="w-8 h-1 bg-slate-200 rounded-full" />
-            </div>
-            <div className="p-4 lg:p-5">
-              <JourneyResults journeys={journeys} onSelect={selectJourney} onClose={clearJourney} />
-            </div>
-          </div>
-        )}
-
-        {selectedJourney && (
-          <JourneyPanel
-            journey={selectedJourney}
-            onClose={handlePanelClose}
-            onDepartClick={handleDepartClick}
-            onEndTrip={handleEndTrip}
-            trackingPhase={trackingPhase === 'active' ? 'active' : 'idle'}
-            weather={weather}
-            activeSegmentIdx={activeSegmentIdx}
-            onSegmentSelect={setActiveSegmentIdx}
-          />
-        )}
+        <MapSheet
+          state={sheetState}
+          onStateChange={setSheetState}
+          fromLabel={effectiveFromLabel}
+          toLabel={toLabel}
+          hasFrom={!!userPosition}
+          onFromSelect={(c, label) => {
+            setAddressPosition(c)
+            setFromLabel(label)
+          }}
+          onToSelect={(c, label) => {
+            setToCoords(c)
+            setToLabel(label)
+          }}
+          options={options}
+          defaultOptions={defaultOptions}
+          onOptionsChange={setOptions}
+          journeys={journeys}
+          journeyLoading={journeyLoading}
+          journeyError={journeyError}
+          selectedJourney={selectedJourney}
+          onSelectJourney={selectJourney}
+          onClosePanel={handleClosePanel}
+          activeSegmentIdx={activeSegmentIdx}
+          onSegmentSelect={setActiveSegmentIdx}
+          trackingPhase={trackingPhase === 'active' ? 'active' : 'idle'}
+          weather={weather}
+          onDepartClick={handleDepartClick}
+          onEndTrip={handleEndTrip}
+        />
 
         {/* Toast confirmation départ sans suivi */}
         {tripResult && (
@@ -529,7 +523,7 @@ export default function MapPage() {
           document.body
         )}
 
-      {/* Résumé final après arrivée */}
+      {/* Résumé final après arrivée (état 8 — modale centrée) */}
       {trackingPhase === 'done' &&
         summaryResult &&
         selectedJourney &&

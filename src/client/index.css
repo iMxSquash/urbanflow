@@ -1,13 +1,13 @@
 /*
- * globals.css — UrbanFlow SmartRoute
+ * globals.css — UrbanFlow
  * Tailwind v4 CSS-first configuration
  * À importer dans src/client/main.tsx
  */
 
-@import "@fontsource/inter/latin-400.css";
-@import "@fontsource/inter/latin-500.css";
-@import "@fontsource/inter/latin-600.css";
-@import "@fontsource/inter/latin-700.css";
+@import "@fontsource/instrument-sans/latin-400.css";
+@import "@fontsource/instrument-sans/latin-500.css";
+@import "@fontsource/instrument-sans/latin-600.css";
+@import "@fontsource/instrument-sans/latin-700.css";
 @import "tailwindcss";
 
 @theme {
@@ -65,8 +65,28 @@
   --color-danger-surface:      #FDF4F3;
   --color-danger-surface-icon: #FDECEA;
 
+  /* Rampes eco-50..900 et transit-50..900 — dérivées des tokens --color-primary
+   * et --color-transit ci-dessus, pour les composants encore écrits avec la
+   * syntaxe Tailwind à paliers (bg-eco-50, text-transit-700...). Paliers
+   * 600/50 = valeurs Estuaire exactes ; les autres paliers interpolent. */
+  --color-eco-50:  #E4EFE9;  --color-eco-100: #CFE3D7;
+  --color-eco-200: #A8C9BB;  --color-eco-300: #7FB39D;
+  --color-eco-400: #3D8567;  --color-eco-500: #146B4E;
+  --color-eco-600: #0B5C43;  --color-eco-700: #094B37;
+  --color-eco-800: #073D2C;  --color-eco-900: #052E21;
+
+  --color-transit-50:  #E7EEF2;  --color-transit-100: #CFE0E8;
+  --color-transit-200: #A9C8D6;  --color-transit-300: #7CACC0;
+  --color-transit-400: #4589A6;  --color-transit-500: #206E8C;
+  --color-transit-600: #1D5E7A;  --color-transit-700: #17495F;
+  --color-transit-800: #123A4B;  --color-transit-900: #0D2C39;
+
+  /* Alias de rayon pour les composants existants (rounded-card/rounded-button) */
+  --radius-card:   16px; /* = radius-xl, cartes de résultat/contenu */
+  --radius-button: 12px; /* = radius-md, boutons icône */
+
   /* ─── Typographie ────────────────────────── */
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Instrument Sans', system-ui, -apple-system, sans-serif;
 
   --text-display:  2.25rem;
   --text-h1:       1.875rem;
@@ -75,6 +95,7 @@
   --text-body-lg:  1.125rem;
   --text-body:     1rem;
   --text-body-sm:  0.875rem;
+  --text-label:    0.8125rem; /* 13px — labels de champ, chips (DESIGN-SYSTEM.md) */
   --text-caption:  0.75rem;
 
   /* ─── Espacement — grille 4px Estuaire ────────
@@ -110,9 +131,11 @@
   /* ─── Ombres — 3 niveaux d'élévation Estuaire (pas plus) ───
    * Toute autre séparation visuelle passe par une bordure 1px.
    * Valeurs sombres en surcharge [data-theme="dark"] plus bas. */
-  --shadow-card:  0 2px 12px rgba(20, 35, 29, 0.06);
-  --shadow-sheet: 0 -6px 28px rgba(20, 35, 29, 0.14);
-  --shadow-modal: 0 20px 60px rgba(20, 35, 29, 0.35);
+  --scrim:          rgba(20, 35, 29, 0.52); /* fond assombri derrière une modale */
+  --shadow-card:    0 2px 12px rgba(20, 35, 29, 0.06);
+  --shadow-card-md: 0 4px 16px rgba(20, 35, 29, 0.09); /* panneaux flottants, cartes mises en avant */
+  --shadow-sheet:   0 -6px 28px rgba(20, 35, 29, 0.14);
+  --shadow-modal:   0 20px 60px rgba(20, 35, 29, 0.35);
 
   /* ─── Easing ─────────────────────────────── */
   --ease-ui: cubic-bezier(0.4, 0, 0.2, 1);
@@ -218,9 +241,23 @@
   --color-danger-surface:      #2A1614;
   --color-danger-surface-icon: #3A1D1A;
 
-  --shadow-card:  0 2px 12px rgba(0, 0, 0, 0.28);
-  --shadow-sheet: 0 -6px 28px rgba(0, 0, 0, 0.40);
-  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.45);
+  --color-eco-50:  #0F3A2C;  --color-eco-100: #123F30;
+  --color-eco-200: #2F7A5E;  --color-eco-300: #3FB587;
+  --color-eco-400: #4FCB9B;  --color-eco-500: #4FCB9B;
+  --color-eco-600: #4FCB9B;  --color-eco-700: #6AD8AC;
+  --color-eco-800: #A8E3CB;  --color-eco-900: #D4F1E3;
+
+  --color-transit-50:  #16303C;  --color-transit-100: #193646;
+  --color-transit-200: #2F5C6E;  --color-transit-300: #4589A6;
+  --color-transit-400: #6BB6D6;  --color-transit-500: #6BB6D6;
+  --color-transit-600: #6BB6D6;  --color-transit-700: #8FC9E0;
+  --color-transit-800: #BADCEB;  --color-transit-900: #E0EFF5;
+
+  --scrim:          rgba(13, 21, 18, 0.72);
+  --shadow-card:    0 2px 12px rgba(0, 0, 0, 0.28);
+  --shadow-card-md: 0 4px 16px rgba(0, 0, 0, 0.32);
+  --shadow-sheet:   0 -6px 28px rgba(0, 0, 0, 0.40);
+  --shadow-modal:   0 20px 60px rgba(0, 0, 0, 0.45);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -269,9 +306,23 @@
     --color-danger-surface:      #2A1614;
     --color-danger-surface-icon: #3A1D1A;
 
-    --shadow-card:  0 2px 12px rgba(0, 0, 0, 0.28);
-    --shadow-sheet: 0 -6px 28px rgba(0, 0, 0, 0.40);
-    --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.45);
+    --color-eco-50:  #0F3A2C;  --color-eco-100: #123F30;
+    --color-eco-200: #2F7A5E;  --color-eco-300: #3FB587;
+    --color-eco-400: #4FCB9B;  --color-eco-500: #4FCB9B;
+    --color-eco-600: #4FCB9B;  --color-eco-700: #6AD8AC;
+    --color-eco-800: #A8E3CB;  --color-eco-900: #D4F1E3;
+
+    --color-transit-50:  #16303C;  --color-transit-100: #193646;
+    --color-transit-200: #2F5C6E;  --color-transit-300: #4589A6;
+    --color-transit-400: #6BB6D6;  --color-transit-500: #6BB6D6;
+    --color-transit-600: #6BB6D6;  --color-transit-700: #8FC9E0;
+    --color-transit-800: #BADCEB;  --color-transit-900: #E0EFF5;
+
+    --scrim:          rgba(13, 21, 18, 0.72);
+    --shadow-card:    0 2px 12px rgba(0, 0, 0, 0.28);
+    --shadow-card-md: 0 4px 16px rgba(0, 0, 0, 0.32);
+    --shadow-sheet:   0 -6px 28px rgba(0, 0, 0, 0.40);
+    --shadow-modal:   0 20px 60px rgba(0, 0, 0, 0.45);
   }
 }
 
@@ -298,6 +349,9 @@
 @utility z-modal   { z-index: 40; }
 @utility z-toast   { z-index: 50; }
 
+/* Alias : dialogues flottants (consentement, résumé de trajet) = même élévation qu'une modale */
+@utility shadow-float { box-shadow: var(--shadow-modal); }
+
 /* ─────────────────────────────────────────────
  * VARIABLES CSS — Utilisables dans Leaflet et
  * composants non-Tailwind (ex: popups de carte)
@@ -308,7 +362,7 @@
  * valeurs Estuaire avec les anciennes. */
 :root {
   /* Typographie */
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Instrument Sans', system-ui, -apple-system, sans-serif;
 
   /* Animations */
   --duration-fast:   150ms;
@@ -347,11 +401,13 @@
     @apply outline-none ring-2 ring-primary ring-offset-2;
   }
 
-  /* Respect de prefers-reduced-motion — WCAG 2.3.3 */
+  /* Respect de prefers-reduced-motion — WCAG 2.3.3
+   * .skeleton est volontairement exclu : le shimmer signale un état de
+   * chargement (information), pas une décoration — direction Estuaire. */
   @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
+    *:not(.skeleton),
+    *:not(.skeleton)::before,
+    *:not(.skeleton)::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
@@ -382,34 +438,36 @@
 }
 
 /* ─────────────────────────────────────────────
- * COMPOSANTS UTILITAIRES
+ * COMPOSANTS — direction "Estuaire"
+ * Source de vérité : docs/design/DESIGN-SYSTEM.md. Écrit en @apply (classes
+ * Tailwind) partout où une classe existe — la grille d'espacement/contrôle
+ * Estuaire est un multiple exact de l'échelle Tailwind (--spacing: 4px),
+ * donc h-7/h-9/h-10/h-11/h-12/h-13 = control-xs..2xl sans namespace custom.
+ * Seules les couleurs de mode dynamiques (--mode-color/--mode-surface,
+ * posées inline par le composant appelant, une par transport) restent en
+ * propriété CSS brute : aucune classe Tailwind statique ne peut exprimer
+ * une valeur choisie à l'exécution.
  * ─────────────────────────────────────────────*/
 @layer components {
 
-  /* ── Carte / Panel ── */
-  .card {
-    @apply bg-white rounded-xl shadow-card border border-slate-100;
-  }
-
-  .card-hover {
-    @apply bg-white rounded-xl shadow-card border border-slate-100 transition-shadow duration-fast hover:shadow-card;
-  }
-
-  /* ── Boutons ── */
-  .btn {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-md font-medium text-body-sm transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
-    min-height: 48px;
-  }
-
-  /* En v4, @apply ne peut pas référencer des classes @layer components — on inline les styles */
+  /* ── Bouton primaire — une seule action principale par écran ── */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-md font-medium text-body-sm transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white hover:bg-primary-hover active:bg-primary-hover focus-visible:ring-primary;
-    min-height: 48px;
+    @apply inline-flex items-center justify-center gap-2 h-13 px-6 rounded-lg border-none cursor-pointer touch-manipulation;
+    @apply bg-primary text-on-primary text-body font-semibold;
+    @apply transition duration-fast ease-ui;
+    @apply hover:bg-primary-hover active:scale-[0.97];
+    @apply disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary;
   }
 
+  /* ── Bouton secondaire ── */
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-md font-medium text-body-sm transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 active:bg-slate-100 focus-visible:ring-slate-400;
-    min-height: 48px;
+    @apply inline-flex items-center justify-center gap-2 h-12 px-5 rounded-md cursor-pointer;
+    @apply bg-transparent text-text text-body font-medium border border-border-strong;
+    @apply transition-colors duration-normal ease-ui;
+    @apply hover:bg-surface-muted;
+    @apply disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary;
   }
 
   .btn-ghost {
@@ -422,41 +480,79 @@
     min-height: 48px;
   }
 
-  /* ── Inputs ── */
+  /* ── Bouton icône — flottant carte (44px) / desktop (40px) ── */
+  .btn-icon {
+    @apply inline-flex items-center justify-center size-11 shrink-0 rounded-md cursor-pointer;
+    @apply bg-surface text-text-muted border border-border shadow-card;
+    @apply transition-colors duration-fast ease-ui;
+    @apply hover:text-text;
+    @apply disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary;
+  }
+
+  /* ── Carte de composant (résultat, contenu) ── */
+  .card {
+    @apply bg-surface border border-border rounded-xl shadow-card;
+  }
+
+  .card-hover {
+    @apply bg-surface border border-border rounded-xl shadow-card;
+    @apply transition-shadow duration-fast ease-ui hover:shadow-card-md;
+  }
+
+  /* Carte accentuée par mode de transport (liseré gauche, radius inchangé) —
+   * --mode-color posée inline par le composant appelant, une valeur par mode
+   * de transport : aucune classe statique ne peut l'exprimer. */
+  .card-mode-accent {
+    @apply border-l-4;
+    border-left-color: var(--mode-color, var(--color-primary));
+  }
+
+  /* ── Chip de mode / profil (pill) ──
+   * --mode-color / --mode-surface sont posées inline par le composant appelant
+   * (ex: style={{ '--mode-color': 'var(--color-mode-bike)' }}), sinon repli sur primary. */
+  .chip-mode {
+    @apply inline-flex items-center gap-2 h-10 px-3 rounded-full whitespace-nowrap;
+    @apply text-label font-semibold border border-border bg-surface text-text-muted;
+    @apply transition-colors duration-fast ease-ui;
+
+    &[aria-selected='true'] {
+      border-width: 1.5px;
+      border-color: var(--mode-color, var(--color-primary));
+      background: var(--mode-surface, var(--color-primary-surface));
+      color: var(--mode-color, var(--color-primary));
+    }
+
+    &[data-size='sm'] {
+      @apply h-9 px-[11px];
+    }
+  }
+
+  /* Marche : toujours en trait pointillé sur la carte, quelle que soit la teinte */
+  .trace-walk {
+    stroke-dasharray: 4 4;
+  }
+
+  /* Tracé d'itinéraire : halo blanc/sombre 2px pour la lisibilité sur la carte */
+  .trace-segment {
+    stroke-width: 4px;
+    paint-order: stroke;
+    stroke: var(--color-surface);
+  }
+
+  /* ── Input ── */
   .input {
-    @apply w-full px-4 py-3 rounded-md bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 text-body transition-colors duration-fast focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed;
-    min-height: 48px;
+    @apply flex items-center gap-3 w-full h-12 px-4 rounded-md outline-none;
+    @apply bg-surface text-text text-body border border-border;
+    @apply transition-colors duration-normal ease-ui;
+    @apply placeholder:text-text-subtle;
+    @apply focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary;
+    @apply disabled:bg-surface-muted disabled:text-text-disabled disabled:cursor-not-allowed;
   }
 
   /* ── Labels ── */
   .label {
     @apply block text-body-sm font-medium text-slate-700 mb-1.5;
-  }
-
-  /* ── Badges de mode de transport ── */
-  .mode-badge {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-caption font-medium;
-    min-height: 24px;
-  }
-
-  .mode-badge-walk {
-    @apply bg-slate-100 text-slate-600;
-  }
-
-  .mode-badge-bike {
-    @apply bg-primary-surface text-primary;
-  }
-
-  .mode-badge-tram {
-    @apply bg-transit-surface text-transit;
-  }
-
-  .mode-badge-bus {
-    @apply bg-amber-50 text-amber-700;
-  }
-
-  .mode-badge-navibus {
-    @apply bg-cyan-50 text-cyan-700;
   }
 
   /* ── Score CO2 ── */
@@ -472,22 +568,110 @@
     @apply text-slate-600 bg-slate-100 rounded-full px-2 py-0.5;
   }
 
-  /* ── Toast notifications ── */
+  /* ── Bottom sheet (mobile) — devient un panneau latéral ≥1024px ──
+   * <div role="dialog" aria-labelledby="..."> non modal (sauf état 8, cf. .modal) */
+  .bottom-sheet {
+    @apply fixed inset-x-0 bottom-0 flex flex-col gap-3;
+    @apply bg-surface border-t border-border rounded-t-2xl shadow-sheet;
+    @apply px-4 pt-2 pb-3;
+    @apply transition-transform duration-200 ease-ui;
+    @apply lg:static lg:w-100 lg:min-w-[380px] lg:border-t-0 lg:rounded-2xl lg:shadow-card;
+    /* Panneaux Leaflet internes (tuiles/marqueurs) déclarés à z-index élevé et
+     * échappant à .leaflet-container (position:relative + z-index:auto ne crée
+     * pas de contexte d'empilement) : sans z-index explicite ici, ils peignent
+     * par-dessus le sheet dans le contexte isolate de <main>. */
+    @apply z-1100;
+
+    /* États du bottom sheet mobile (MAQUETTE.md §5.2) — max-lg: n'affecte
+     * jamais le panneau latéral desktop (déjà position:static ci-dessus). */
+    &[data-sheet-state='collapsed'] {
+      @apply max-lg:h-[212px] max-lg:overflow-hidden;
+    }
+    &[data-sheet-state='search'] {
+      @apply max-lg:top-0 max-lg:rounded-none max-lg:border-t-0 max-lg:pt-3;
+    }
+    &[data-sheet-state='mid'] {
+      @apply max-lg:max-h-[52vh] max-lg:overflow-y-auto;
+    }
+    &[data-sheet-state='settings'] {
+      @apply max-lg:top-[140px] max-lg:overflow-y-auto;
+    }
+    &[data-sheet-state='results'] {
+      @apply max-lg:top-[132px] max-lg:overflow-y-auto;
+    }
+    &[data-sheet-state='detail'] {
+      @apply max-lg:top-[152px] max-lg:overflow-y-auto;
+    }
+    /* Suivi actif : chrome sombre forcé quel que soit le thème choisi par
+     * l'utilisateur — seul état du produit à l'imposer (MAQUETTE.md §5.2 état 7). */
+    &[data-sheet-state='tracking'] {
+      @apply max-lg:top-[172px] max-lg:overflow-y-auto;
+      background: #16211d;
+      border-top-color: #2c3b35;
+      color: #eef2ef;
+    }
+  }
+
+  /* Poignée du bottom sheet — 40×4px, purement décorative */
+  .bottom-sheet-handle {
+    @apply self-center w-10 h-1 rounded-full bg-border lg:hidden;
+  }
+
+  /* ── Modale ── */
+  /* <div role="dialog" aria-modal="true" aria-labelledby="..."> */
+  .modal {
+    @apply bg-surface rounded-2xl shadow-modal p-6 lg:w-140 lg:mx-auto;
+  }
+
+  /* ── Bottom navigation (mobile) — devient une sidebar ≥1024px ── */
+  /* <nav aria-label="Navigation principale"> */
+  .bottom-nav {
+    @apply fixed inset-x-0 bottom-0 grid grid-cols-4 gap-1 px-2 pt-2;
+    @apply bg-surface border-t border-border;
+    @apply lg:static lg:flex lg:flex-col lg:w-58 lg:h-screen lg:p-4 lg:border-t-0 lg:border-r lg:border-border;
+    /* env() ne peut pas s'exprimer en classe utilitaire */
+    padding-bottom: calc(var(--spacing) * 2 + env(safe-area-inset-bottom));
+  }
+
+  .bottom-nav-item {
+    @apply flex flex-col items-center gap-[3px] px-0.5 py-[7px] rounded-lg no-underline;
+    @apply text-text-muted text-caption font-medium;
+    @apply transition-colors duration-fast ease-ui;
+    @apply lg:flex-row lg:justify-start lg:gap-[11px] lg:px-3 lg:py-2.5 lg:text-body-sm;
+
+    &[aria-current='page'] {
+      @apply bg-primary-surface text-primary font-bold;
+    }
+  }
+
+  /* ── Toast ── */
+  /* <div role="status" aria-live="polite" aria-atomic="true"> */
   .toast {
-    @apply fixed bottom-20 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-body-sm font-medium px-4 py-3 rounded-xl shadow-modal animate-slide-up z-toast;
+    @apply fixed left-4 right-4 z-50 flex items-center gap-3;
+    @apply bg-surface border border-border rounded-xl px-4 py-3 shadow-sheet;
+    /* env() ne peut pas s'exprimer en classe utilitaire */
+    bottom: calc(var(--spacing) * 13 + env(safe-area-inset-bottom) + var(--spacing) * 2);
   }
 
-  .toast-success {
-    @apply fixed bottom-20 left-1/2 -translate-x-1/2 bg-primary text-white text-body-sm font-medium px-4 py-3 rounded-xl shadow-modal animate-slide-up z-toast;
-  }
-
-  .toast-error {
-    @apply fixed bottom-20 left-1/2 -translate-x-1/2 bg-red-600 text-white text-body-sm font-medium px-4 py-3 rounded-xl shadow-modal animate-slide-up z-toast;
-  }
-
-  /* ── Skeleton loading ── */
+  /* ── Skeleton (chargement) — shimmer explicitement exempté de
+   * prefers-reduced-motion (cf. règle globale plus bas) : c'est une
+   * information d'état ("en cours de chargement"), pas une décoration.
+   * Dégradé 3 arrêts + animation dédiée : pas de classe Tailwind pour ça. ── */
   .skeleton {
-    @apply bg-slate-200 rounded animate-pulse;
+    @apply rounded-sm;
+    background: linear-gradient(
+      90deg,
+      var(--color-surface-sunken) 0%,
+      var(--color-surface-muted) 50%,
+      var(--color-surface-sunken) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s linear infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
   }
 }
 

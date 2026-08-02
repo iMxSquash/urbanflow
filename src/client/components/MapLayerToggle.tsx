@@ -137,7 +137,9 @@ export function MapLayerToggle({
     <div
       className={[
         'absolute left-4 z-1000',
-        hasJourney ? 'bottom-[calc(58vh+12px)] lg:bottom-4' : 'bottom-4',
+        // Le bottom sheet est désormais toujours affiché (état "replié" 212px
+        // minimum) — ce bouton doit toujours passer au-dessus, jamais bottom-4.
+        hasJourney ? 'bottom-[calc(58vh+12px)] lg:bottom-4' : 'bottom-[232px] lg:bottom-4',
       ].join(' ')}
       role="group"
       aria-label="Calques de la carte"
