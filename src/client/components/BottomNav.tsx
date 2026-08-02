@@ -1,9 +1,11 @@
 import { NavLink } from 'react-router-dom'
+import { useAuthStore } from '../stores/auth.store'
 
 interface NavItem {
   to: string
   label: string
   icon: React.ReactNode
+  desktopOnly?: boolean
 }
 
 const ITEMS: NavItem[] = [
@@ -42,14 +44,54 @@ const ITEMS: NavItem[] = [
       </>
     ),
   },
+  {
+    to: '/parametres',
+    label: 'Paramètres',
+    desktopOnly: true,
+    icon: (
+      <>
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+      </>
+    ),
+  },
 ]
+
+/** Bloc identité — pied de la sidebar desktop uniquement (MAQUETTE.md §7). */
+function UserFooter() {
+  const user = useAuthStore((s) => s.user)
+  const isGuest = useAuthStore((s) => s.isGuest)
+
+  if (isGuest || !user) return null
+
+  const initials = user.email.slice(0, 2).toUpperCase()
+
+  return (
+    <div className="hidden lg:flex items-center gap-2.5 px-2.5 py-3 mt-1.5 border-t border-surface-sunken">
+      <span
+        aria-hidden="true"
+        className="size-9 rounded-full bg-primary-surface text-primary text-label font-bold flex items-center justify-center shrink-0"
+      >
+        {initials}
+      </span>
+      <span className="min-w-0 text-body-sm font-semibold text-text truncate">{user.email}</span>
+    </div>
+  )
+}
 
 /** Navigation principale — `.bottom-nav` (4 items mobiles, devient sidebar 232px ≥1024px). */
 export function BottomNav() {
   return (
     <nav aria-label="Navigation principale" className="bottom-nav">
       {ITEMS.map((item) => (
-        <NavLink key={item.to} to={item.to} end={item.to === '/'} className="bottom-nav-item">
+        <NavLink
+          key={item.to}
+          to={item.to}
+          end={item.to === '/'}
+          className={['bottom-nav-item', item.desktopOnly ? 'max-lg:hidden lg:mt-auto' : ''].join(
+            ' '
+          )}
+        >
           <svg
             aria-hidden="true"
             width="20"
@@ -66,6 +108,7 @@ export function BottomNav() {
           {item.label}
         </NavLink>
       ))}
+      <UserFooter />
     </nav>
   )
 }

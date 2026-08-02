@@ -3,6 +3,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MapContainer, TileLayer } from 'react-leaflet'
 import { useLocation } from 'react-router-dom'
+import { BottomNav } from '../components/BottomNav'
 import { ErrorBanner } from '../components/ErrorBanner'
 import { GeolocationConsent } from '../components/GeolocationConsent'
 import { EcoMapLayer } from '../components/EcoMapLayer'
@@ -311,153 +312,162 @@ export default function MapPage() {
   const showGeoError = !!geoError && !geoLoading && geolocationConsent !== 'denied'
 
   return (
-    <div className="h-screen">
-      {/* Ne recouvre pas un suivi de trajet déjà en cours — le GPS et le
-       * segment affiché ne dépendent pas du réseau une fois le trajet chargé. */}
-      {!isOnline && trackingPhase !== 'active' && <OfflinePanel />}
+    <div className="lg:flex lg:h-screen">
+      {/* Sidebar desktop : masquée en mobile sauf sheet replié, où elle est le
+       * bottom nav (comportement historique du sheet à 8 états, inchangé). En
+       * desktop la sidebar est permanente, indépendante de l'état du sheet. */}
+      <div className={sheetState === 'collapsed' ? '' : 'max-lg:hidden'}>
+        <BottomNav />
+      </div>
 
       {/* Pas de top app-bar : "la carte reste le sujet" (MAQUETTE.md §1). La
-       * navigation passe entièrement par le bottom sheet (BottomNav) et,
-       * pour Paramètres, par le raccourci en tête du profil. */}
-      <main
-        className="h-full relative overflow-hidden isolate"
-        role="application"
-        aria-label="Carte de mobilité de Nantes"
-      >
-        {weather && (
-          <div className="absolute top-3 right-3 z-1100">
-            <WeatherBadge weather={weather} variant="map" />
-          </div>
-        )}
+       * navigation passe entièrement par le bottom sheet et, pour Paramètres,
+       * par le raccourci en tête du profil. */}
+      <MapSheet
+        state={sheetState}
+        onStateChange={setSheetState}
+        fromLabel={effectiveFromLabel}
+        toLabel={toLabel}
+        hasFrom={!!userPosition}
+        onFromSelect={(c, label) => {
+          setAddressPosition(c)
+          setFromLabel(label)
+        }}
+        onToSelect={(c, label) => {
+          setToCoords(c)
+          setToLabel(label)
+        }}
+        options={options}
+        defaultOptions={defaultOptions}
+        onOptionsChange={setOptions}
+        journeys={journeys}
+        journeyLoading={journeyLoading}
+        journeyError={journeyError}
+        selectedJourney={selectedJourney}
+        onSelectJourney={selectJourney}
+        onClosePanel={handleClosePanel}
+        activeSegmentIdx={activeSegmentIdx}
+        onSegmentSelect={setActiveSegmentIdx}
+        trackingPhase={trackingPhase === 'active' ? 'active' : 'idle'}
+        weather={weather}
+        onDepartClick={handleDepartClick}
+        onEndTrip={handleEndTrip}
+      />
 
-        {geoLoading && (
-          <div
-            role="status"
-            aria-label="Localisation en cours"
-            className="absolute top-3 left-1/2 -translate-x-1/2 z-1100 bg-white rounded-full px-4 py-2 shadow-card flex items-center gap-2 text-body-sm text-slate-600 whitespace-nowrap"
-          >
-            <div
-              className="w-4 h-4 border-2 border-slate-200 border-t-eco-600 rounded-full animate-spin"
-              aria-hidden="true"
-            />
-            Localisation en cours…
-          </div>
-        )}
+      <div className="h-screen lg:h-auto lg:flex-1 lg:min-w-0">
+        {/* Ne recouvre pas un suivi de trajet déjà en cours — le GPS et le
+         * segment affiché ne dépendent pas du réseau une fois le trajet chargé. */}
+        {!isOnline && trackingPhase !== 'active' && <OfflinePanel />}
 
-        {showGeoError && geoError && (
-          <div className="absolute top-3 left-3 right-3 z-1100 flex items-start gap-2">
-            <div className="flex-1">
-              <ErrorBanner message={geoError} onRetry={locate} />
-            </div>
-            <button
-              type="button"
-              onClick={denyGeolocation}
-              className="btn-secondary text-caption px-3 shrink-0 bg-white"
-              style={{ minHeight: '44px' }}
-            >
-              Saisir une adresse
-            </button>
-          </div>
-        )}
-
-        {weatherError && !weatherLoading && !weather && (
-          <div className="absolute top-3 right-3 z-1100 w-72">
-            <ErrorBanner message="Météo indisponible" />
-          </div>
-        )}
-
-        <MapContainer
-          center={NANTES_COMMERCE}
-          zoom={13}
-          className="h-full w-full"
-          zoomControl={false}
-          attributionControl={false}
+        <main
+          className="h-full relative overflow-hidden isolate"
+          role="application"
+          aria-label="Carte de mobilité de Nantes"
         >
-          <TileLayer url={CARTO_POSITRON} attribution={CARTO_ATTRIBUTION} />
-          {layers.tanLines && (
-            <Suspense fallback={null}>
-              <TanLinesLayer />
-            </Suspense>
+          {weather && (
+            <div className="absolute top-3 right-3 z-1100">
+              <WeatherBadge weather={weather} variant="map" />
+            </div>
           )}
-          {layers.tanStops && (
-            <Suspense fallback={null}>
-              <TanStopsLayer />
-            </Suspense>
-          )}
-          {layers.bikesharing && (
-            <Suspense fallback={null}>
-              <BiclooLayer />
-            </Suspense>
-          )}
-          {displayPosition && (
-            <UserLocationMarker
-              position={displayPosition}
-              isTracking={trackingPhase === 'active'}
-            />
-          )}
-          {ecoMapActive && journeys.length > 0 && (
-            <EcoMapLayer
-              journeys={journeys}
-              selectedJourneyId={selectedJourney?.id}
-              onSelect={(journey) => {
-                setActiveSegmentIdx(null)
-                selectJourney(journey)
-              }}
-            />
-          )}
-          {selectedJourney && !ecoMapActive && (
-            <JourneyLayer journey={selectedJourney} activeSegmentIdx={activeSegmentIdx} />
-          )}
-        </MapContainer>
 
-        <MapLayerToggle
-          hasJourney={journeys.length > 0 || !!selectedJourney}
-          ecoMapActive={ecoMapActive}
-          onToggleEco={() => setEcoMapActive((v) => !v)}
-        />
+          {geoLoading && (
+            <div
+              role="status"
+              aria-label="Localisation en cours"
+              className="absolute top-3 left-1/2 -translate-x-1/2 z-1100 bg-white rounded-full px-4 py-2 shadow-card flex items-center gap-2 text-body-sm text-slate-600 whitespace-nowrap"
+            >
+              <div
+                className="w-4 h-4 border-2 border-slate-200 border-t-eco-600 rounded-full animate-spin"
+                aria-hidden="true"
+              />
+              Localisation en cours…
+            </div>
+          )}
 
-        <MapSheet
-          state={sheetState}
-          onStateChange={setSheetState}
-          fromLabel={effectiveFromLabel}
-          toLabel={toLabel}
-          hasFrom={!!userPosition}
-          onFromSelect={(c, label) => {
-            setAddressPosition(c)
-            setFromLabel(label)
-          }}
-          onToSelect={(c, label) => {
-            setToCoords(c)
-            setToLabel(label)
-          }}
-          options={options}
-          defaultOptions={defaultOptions}
-          onOptionsChange={setOptions}
-          journeys={journeys}
-          journeyLoading={journeyLoading}
-          journeyError={journeyError}
-          selectedJourney={selectedJourney}
-          onSelectJourney={selectJourney}
-          onClosePanel={handleClosePanel}
-          activeSegmentIdx={activeSegmentIdx}
-          onSegmentSelect={setActiveSegmentIdx}
-          trackingPhase={trackingPhase === 'active' ? 'active' : 'idle'}
-          weather={weather}
-          onDepartClick={handleDepartClick}
-          onEndTrip={handleEndTrip}
-        />
+          {showGeoError && geoError && (
+            <div className="absolute top-3 left-3 right-3 z-1100 flex items-start gap-2">
+              <div className="flex-1">
+                <ErrorBanner message={geoError} onRetry={locate} />
+              </div>
+              <button
+                type="button"
+                onClick={denyGeolocation}
+                className="btn-secondary text-caption px-3 shrink-0 bg-white"
+                style={{ minHeight: '44px' }}
+              >
+                Saisir une adresse
+              </button>
+            </div>
+          )}
 
-        {/* Toast confirmation départ sans suivi */}
-        {tripResult && (
-          <TripToast
-            co2SavedGrams={tripResult.co2SavedGrams}
-            pointsEarned={tripResult.pointsEarned}
-            totalPoints={tripResult.totalPoints}
-            newlyUnlockedBadges={tripResult.newlyUnlockedBadges}
-            onClose={() => setTripResult(null)}
+          {weatherError && !weatherLoading && !weather && (
+            <div className="absolute top-3 right-3 z-1100 w-72">
+              <ErrorBanner message="Météo indisponible" />
+            </div>
+          )}
+
+          <MapContainer
+            center={NANTES_COMMERCE}
+            zoom={13}
+            className="h-full w-full"
+            zoomControl={false}
+            attributionControl={false}
+          >
+            <TileLayer url={CARTO_POSITRON} attribution={CARTO_ATTRIBUTION} />
+            {layers.tanLines && (
+              <Suspense fallback={null}>
+                <TanLinesLayer />
+              </Suspense>
+            )}
+            {layers.tanStops && (
+              <Suspense fallback={null}>
+                <TanStopsLayer />
+              </Suspense>
+            )}
+            {layers.bikesharing && (
+              <Suspense fallback={null}>
+                <BiclooLayer />
+              </Suspense>
+            )}
+            {displayPosition && (
+              <UserLocationMarker
+                position={displayPosition}
+                isTracking={trackingPhase === 'active'}
+              />
+            )}
+            {ecoMapActive && journeys.length > 0 && (
+              <EcoMapLayer
+                journeys={journeys}
+                selectedJourneyId={selectedJourney?.id}
+                onSelect={(journey) => {
+                  setActiveSegmentIdx(null)
+                  selectJourney(journey)
+                }}
+              />
+            )}
+            {selectedJourney && !ecoMapActive && (
+              <JourneyLayer journey={selectedJourney} activeSegmentIdx={activeSegmentIdx} />
+            )}
+          </MapContainer>
+
+          <MapLayerToggle
+            hasJourney={journeys.length > 0 || !!selectedJourney}
+            ecoMapActive={ecoMapActive}
+            onToggleEco={() => setEcoMapActive((v) => !v)}
           />
-        )}
-      </main>
+
+          {/* Toast confirmation départ sans suivi */}
+          {tripResult && (
+            <TripToast
+              co2SavedGrams={tripResult.co2SavedGrams}
+              pointsEarned={tripResult.pointsEarned}
+              totalPoints={tripResult.totalPoints}
+              newlyUnlockedBadges={tripResult.newlyUnlockedBadges}
+              onClose={() => setTripResult(null)}
+            />
+          )}
+        </main>
+      </div>
 
       {/* Modale consentement géolocalisation initiale */}
       {geolocationConsent === null &&

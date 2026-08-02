@@ -15,7 +15,7 @@ export function Modal({ titleId, descriptionId, onClose, children }: ModalProps)
 
   return (
     <div
-      className="fixed inset-0 z-modal flex items-end sm:items-center justify-center px-4 pb-4 sm:pb-0"
+      className="fixed inset-0 z-modal flex items-end lg:items-center justify-center px-4 pb-4 lg:pb-0"
       style={{ backgroundColor: 'var(--scrim)' }}
     >
       <div

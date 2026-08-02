@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useProfileStore } from '../stores/profile.store'
 import { useAuthStore } from '../stores/auth.store'
 import { ModeChip } from '../components/ModeChip'
-import { BottomNav } from '../components/BottomNav'
+import { PageWithSidebar } from '../components/PageWithSidebar'
 import { PROFILE_PRESETS } from '../constants/profile-presets'
 import { TRANSPORT_MODES } from '@shared/types/index'
 import type { MobilityProfile, TransportMode, UserPreference } from '@shared/types/index'
@@ -308,49 +308,56 @@ export default function ProfilePage() {
   const initials = user ? user.email.slice(0, 2).toUpperCase() : '?'
 
   return (
-    <div className="min-h-screen bg-bg pb-[calc(var(--height-bottomnav)+1rem)] lg:pb-6">
-      <header className="bg-surface border-b border-border sticky top-0 z-navbar">
-        <div className="max-w-2xl mx-auto flex items-center gap-3 px-4 h-16">
-          <span
-            aria-hidden="true"
-            className="shrink-0 size-[46px] rounded-full bg-primary-surface text-primary flex items-center justify-center text-body-sm font-bold"
-          >
-            {initials}
-          </span>
-          <div className="flex-1 min-w-0">
-            <p className="text-body-sm font-bold truncate">{user?.email ?? 'Invité'}</p>
-            <p className="text-caption text-text-muted">Profil de mobilité</p>
-          </div>
-          <Link to="/parametres" aria-label="Paramètres" className="btn-icon">
-            <svg
+    <PageWithSidebar>
+      <div className="min-h-screen bg-bg pb-[calc(var(--height-bottomnav)+1rem)] lg:pb-6">
+        <header className="bg-surface border-b border-border sticky top-0 z-navbar">
+          <div className="max-w-2xl mx-auto flex items-center gap-3 px-4 h-16 lg:max-w-260">
+            <span
               aria-hidden="true"
-              width="18"
-              height="18"
-              viewBox="0 0 20 20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.75"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              className="shrink-0 size-[46px] rounded-full bg-primary-surface text-primary flex items-center justify-center text-body-sm font-bold"
             >
-              <circle cx="10" cy="10" r="3" />
-              <path d="M10 2v1.5M10 16.5V18M2 10h1.5M16.5 10H18M4.22 4.22l1.06 1.06M14.72 14.72l1.06 1.06M4.22 15.78l1.06-1.06M14.72 5.28l1.06-1.06" />
-            </svg>
-          </Link>
-        </div>
-      </header>
-
-      <main className="max-w-2xl mx-auto px-4 py-5 lg:px-6">
-        {fetchError && !profile && (
-          <div role="alert" className="bg-danger-surface rounded-xl px-4 py-3 text-danger-text text-body-sm mb-4">
-            {fetchError}
+              {initials}
+            </span>
+            <div className="flex-1 min-w-0">
+              <p className="text-body-sm font-bold truncate">{user?.email ?? 'Invité'}</p>
+              <p className="text-caption text-text-muted">Profil de mobilité</p>
+            </div>
+            <Link to="/parametres" aria-label="Paramètres" className="btn-icon lg:hidden">
+              <svg
+                aria-hidden="true"
+                width="18"
+                height="18"
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="10" cy="10" r="3" />
+                <path d="M10 2v1.5M10 16.5V18M2 10h1.5M16.5 10H18M4.22 4.22l1.06 1.06M14.72 14.72l1.06 1.06M4.22 15.78l1.06-1.06M14.72 5.28l1.06-1.06" />
+              </svg>
+            </Link>
           </div>
-        )}
+        </header>
 
-        {isInitialLoading ? <ProfileSkeleton /> : profile ? <ProfileForm profile={profile} /> : null}
-      </main>
+        <main className="max-w-2xl mx-auto px-4 py-5 lg:px-6 lg:max-w-260">
+          {fetchError && !profile && (
+            <div
+              role="alert"
+              className="bg-danger-surface rounded-xl px-4 py-3 text-danger-text text-body-sm mb-4"
+            >
+              {fetchError}
+            </div>
+          )}
 
-      <BottomNav />
-    </div>
+          {isInitialLoading ? (
+            <ProfileSkeleton />
+          ) : profile ? (
+            <ProfileForm profile={profile} />
+          ) : null}
+        </main>
+      </div>
+    </PageWithSidebar>
   )
 }

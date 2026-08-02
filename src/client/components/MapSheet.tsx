@@ -1,8 +1,15 @@
 import { useEffect, useId } from 'react'
-import type { Coordinates, Journey, TransportMode, UserPreference, WeatherCondition } from '@shared/types/index'
+import type {
+  Coordinates,
+  Journey,
+  TransportMode,
+  UserPreference,
+  WeatherCondition,
+} from '@shared/types/index'
 import { TRANSPORT_MODES, USER_PREFERENCES } from '@shared/types/index'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 import { AddressSearch } from './AddressSearch'
-import { BottomNav } from './BottomNav'
+import { Co2FactorsNote } from './Co2FactorsNote'
 import { DatetimePicker } from './DatetimePicker'
 import { EmptyResultsPanel } from './EmptyResultsPanel'
 import { JourneyPanel, type JourneyTrackingPhase } from './JourneyPanel'
@@ -164,7 +171,6 @@ function CollapsedView({
         </span>
       </button>
       <PreferenceRadioGroup value={preference} onChange={onPreferenceChange} />
-      <BottomNav />
     </div>
   )
 }
@@ -248,7 +254,12 @@ function ModeChipsFieldset({
     <fieldset className="m-0 p-0 border-0 flex flex-wrap gap-2">
       <legend className="sr-only">Modes de transport autorisés pour ce trajet</legend>
       {TRANSPORT_MODES.map((mode) => (
-        <ModeChip key={mode} mode={mode} selected={modes.includes(mode)} onClick={() => toggle(mode)} />
+        <ModeChip
+          key={mode}
+          mode={mode}
+          selected={modes.includes(mode)}
+          onClick={() => toggle(mode)}
+        />
       ))}
     </fieldset>
   )
@@ -310,7 +321,10 @@ function MidView({
       </button>
       {!journeyLoading && journeyError && count === 0 ? (
         <EmptyResultsPanel
-          time={options.datetime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+          time={options.datetime.toLocaleTimeString('fr-FR', {
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
           options={options}
           onOptionsChange={onOptionsChange}
           onOpenSettings={onOpenSettings}
@@ -386,48 +400,20 @@ function Toggle({
   )
 }
 
-function SettingsView({
+// Champs communs à SettingsView (mobile, dépliant) et DesktopPanel (toujours
+// visible, "en ligne d'outils" — MAQUETTE.md §5.2 desktop).
+function SettingsFields({
   options,
   onOptionsChange,
-  onApply,
-  onReset,
-  onCollapse,
 }: {
   options: SearchOptions
   onOptionsChange: (o: SearchOptions) => void
-  onApply: () => void
-  onReset: () => void
-  onCollapse: () => void
 }) {
   const pmrId = useId()
   const elevationId = useId()
 
   return (
-    <div className="flex flex-col gap-4 h-full">
-      <div className="flex items-center justify-between">
-        <span className="text-h3 font-bold text-text">Réglages avancés</span>
-        <button
-          type="button"
-          onClick={onCollapse}
-          aria-label="Replier les réglages avancés"
-          className="btn-icon size-9"
-        >
-          <svg
-            aria-hidden="true"
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M6 15l6-6 6 6" />
-          </svg>
-        </button>
-      </div>
-
+    <>
       <DatetimePicker
         datetime={options.datetime}
         type={options.datetimeType}
@@ -463,9 +449,7 @@ function SettingsView({
           max={25}
           step={5}
           value={options.maxWalkMinutes}
-          onChange={(e) =>
-            onOptionsChange({ ...options, maxWalkMinutes: Number(e.target.value) })
-          }
+          onChange={(e) => onOptionsChange({ ...options, maxWalkMinutes: Number(e.target.value) })}
           className="w-full cursor-pointer accent-primary"
           aria-valuemin={5}
           aria-valuemax={25}
@@ -481,6 +465,50 @@ function SettingsView({
         label="Éviter le dénivelé"
         description="Pénalise les itinéraires à vélo (approximation — pas de données d'altimétrie réelles)"
       />
+    </>
+  )
+}
+
+function SettingsView({
+  options,
+  onOptionsChange,
+  onApply,
+  onReset,
+  onCollapse,
+}: {
+  options: SearchOptions
+  onOptionsChange: (o: SearchOptions) => void
+  onApply: () => void
+  onReset: () => void
+  onCollapse: () => void
+}) {
+  return (
+    <div className="flex flex-col gap-4 h-full">
+      <div className="flex items-center justify-between">
+        <span className="text-h3 font-bold text-text">Réglages avancés</span>
+        <button
+          type="button"
+          onClick={onCollapse}
+          aria-label="Replier les réglages avancés"
+          className="btn-icon size-9"
+        >
+          <svg
+            aria-hidden="true"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M6 15l6-6 6 6" />
+          </svg>
+        </button>
+      </div>
+
+      <SettingsFields options={options} onOptionsChange={onOptionsChange} />
 
       <div className="mt-auto pt-3 border-t border-border flex gap-3">
         <button type="button" onClick={onReset} className="btn-secondary flex-1 justify-center">
@@ -490,6 +518,126 @@ function SettingsView({
           Appliquer
         </button>
       </div>
+    </div>
+  )
+}
+
+// ── Panneau desktop (≥1024px) ───────────────────────────────────────────────
+// MAQUETTE.md §5.2 "Desktop" : les états 2 à 6 (saisie/mi-hauteur/réglages/
+// résultats/détail) deviennent des sections empilées dans le même panneau,
+// sans overlay ni divulgation progressive — recherche, profil, modes et
+// réglages avancés toujours visibles, résultats/détail juste en dessous.
+// Seul l'état 7 (suivi actif) reste exclusif : chrome sombre, pas de recherche
+// affichée pendant un trajet en cours.
+function DesktopPanel({
+  state,
+  fromLabel,
+  toLabel,
+  onFromSelect,
+  onToSelect,
+  options,
+  onOptionsChange,
+  journeys,
+  journeyLoading,
+  journeyError,
+  selectedJourney,
+  onSelectJourney,
+  onClosePanel,
+  activeSegmentIdx,
+  onSegmentSelect,
+  trackingPhase,
+  weather,
+  onDepartClick,
+  onEndTrip,
+}: {
+  state: SheetState
+  fromLabel: string | null
+  toLabel: string | null
+  onFromSelect: (c: Coordinates, label: string) => void
+  onToSelect: (c: Coordinates, label: string) => void
+  options: SearchOptions
+  onOptionsChange: (o: SearchOptions) => void
+  journeys: Journey[]
+  journeyLoading: boolean
+  journeyError: string | null
+  selectedJourney: Journey | null
+  onSelectJourney: (j: Journey) => void
+  onClosePanel: () => void
+  activeSegmentIdx: number | null
+  onSegmentSelect: (i: number | null) => void
+  trackingPhase: JourneyTrackingPhase
+  weather?: WeatherCondition | null
+  onDepartClick: () => void
+  onEndTrip: () => void
+}) {
+  const isTracking = state === 'tracking'
+
+  return (
+    <div className="flex flex-col gap-4 h-full">
+      {!isTracking && (
+        <>
+          <span className="text-h3 font-bold text-text">Itinéraire</span>
+
+          <div className="flex flex-col gap-3">
+            <AddressSearch
+              label="Adresse de départ"
+              onSelect={(c) => onFromSelect(c, 'Adresse de départ')}
+              placeholder={fromLabel ?? 'Départ — ex : Ma position, Commerce...'}
+            />
+            <AddressSearch
+              label="Adresse d'arrivée"
+              onSelect={(c) => onToSelect(c, 'Adresse')}
+              placeholder={toLabel ?? 'Arrivée'}
+            />
+          </div>
+
+          <PreferenceRadioGroup
+            value={options.preference}
+            onChange={(preference) => onOptionsChange({ ...options, preference })}
+          />
+
+          <ModeChipsFieldset
+            modes={options.modes}
+            onChange={(modes) => onOptionsChange({ ...options, modes })}
+          />
+
+          <div className="flex flex-col gap-3 p-3 rounded-xl border border-border bg-surface-muted">
+            <SettingsFields options={options} onOptionsChange={onOptionsChange} />
+          </div>
+        </>
+      )}
+
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        {selectedJourney ? (
+          <JourneyPanel
+            journey={selectedJourney}
+            onClose={onClosePanel}
+            onDepartClick={onDepartClick}
+            onEndTrip={onEndTrip}
+            trackingPhase={trackingPhase}
+            weather={weather}
+            activeSegmentIdx={activeSegmentIdx}
+            onSegmentSelect={onSegmentSelect}
+          />
+        ) : journeyLoading ? (
+          <p className="text-body-sm text-text-muted text-center py-6" aria-live="polite">
+            Calcul en cours…
+          </p>
+        ) : journeyError && journeys.length === 0 ? (
+          <EmptyResultsPanel
+            time={options.datetime.toLocaleTimeString('fr-FR', {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+            options={options}
+            onOptionsChange={onOptionsChange}
+          />
+        ) : journeys.length > 0 ? (
+          <JourneyResults journeys={journeys} onSelect={onSelectJourney} />
+        ) : null}
+      </div>
+
+      {!isTracking && <Co2FactorsNote className="pt-3 border-t border-border" />}
     </div>
   )
 }
@@ -532,9 +680,11 @@ export function MapSheet(props: MapSheetProps) {
     onEndTrip,
   } = props
 
-  const isDialog = state !== 'collapsed'
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const isDialog = !isDesktop && state !== 'collapsed'
 
   useEffect(() => {
+    if (isDesktop) return
     const parent = PARENT_STATE[state]
     if (!parent) return
     function onKeyDown(e: KeyboardEvent) {
@@ -542,90 +692,129 @@ export function MapSheet(props: MapSheetProps) {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [state, onStateChange])
+  }, [state, onStateChange, isDesktop])
+
+  // Desktop : panneau latéral permanent, `aside` + landmark plutôt qu'un
+  // dialogue transitoire (MAQUETTE.md §5.2 "Panneau en aside + landmarks").
+  const Wrapper = isDesktop ? 'aside' : 'div'
 
   return (
-    <div
+    <Wrapper
       className="bottom-sheet"
       data-sheet-state={state}
       role={isDialog ? 'dialog' : undefined}
-      aria-label={isDialog ? "Recherche et suivi d'itinéraire" : undefined}
+      aria-label={
+        isDesktop
+          ? 'Recherche et résultats'
+          : isDialog
+            ? "Recherche et suivi d'itinéraire"
+            : undefined
+      }
     >
-      {state !== 'search' && <div className="bottom-sheet-handle" aria-hidden="true" />}
+      {!isDesktop && state !== 'search' && (
+        <div className="bottom-sheet-handle" aria-hidden="true" />
+      )}
 
-      <div className="flex-1 min-h-0 overflow-y-auto">
-        {state === 'collapsed' && (
-          <CollapsedView
-            onOpenSearch={() => onStateChange('search')}
-            preference={options.preference}
-            onPreferenceChange={(preference) => onOptionsChange({ ...options, preference })}
-          />
-        )}
+      {isDesktop ? (
+        <DesktopPanel
+          state={state}
+          fromLabel={fromLabel}
+          toLabel={toLabel}
+          onFromSelect={onFromSelect}
+          onToSelect={onToSelect}
+          options={options}
+          onOptionsChange={onOptionsChange}
+          journeys={journeys}
+          journeyLoading={journeyLoading}
+          journeyError={journeyError}
+          selectedJourney={selectedJourney}
+          onSelectJourney={(j) => {
+            onSelectJourney(j)
+            onStateChange('detail')
+          }}
+          onClosePanel={onClosePanel}
+          activeSegmentIdx={activeSegmentIdx}
+          onSegmentSelect={onSegmentSelect}
+          trackingPhase={trackingPhase}
+          weather={weather}
+          onDepartClick={onDepartClick}
+          onEndTrip={onEndTrip}
+        />
+      ) : (
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          {state === 'collapsed' && (
+            <CollapsedView
+              onOpenSearch={() => onStateChange('search')}
+              preference={options.preference}
+              onPreferenceChange={(preference) => onOptionsChange({ ...options, preference })}
+            />
+          )}
 
-        {state === 'search' && (
-          <SearchView
-            fromLabel={fromLabel}
-            toLabel={toLabel}
-            onFromSelect={onFromSelect}
-            onToSelect={(c, label) => {
-              onToSelect(c, label)
-              if (hasFrom) onStateChange('mid')
-            }}
-            onBack={() => onStateChange(fromLabel || toLabel ? 'mid' : 'collapsed')}
-          />
-        )}
+          {state === 'search' && (
+            <SearchView
+              fromLabel={fromLabel}
+              toLabel={toLabel}
+              onFromSelect={onFromSelect}
+              onToSelect={(c, label) => {
+                onToSelect(c, label)
+                if (hasFrom) onStateChange('mid')
+              }}
+              onBack={() => onStateChange(fromLabel || toLabel ? 'mid' : 'collapsed')}
+            />
+          )}
 
-        {state === 'mid' && (
-          <MidView
-            options={options}
-            onOptionsChange={onOptionsChange}
-            journeys={journeys}
-            journeyLoading={journeyLoading}
-            journeyError={journeyError}
-            onOpenSettings={() => onStateChange('settings')}
-            onViewResults={() => onStateChange('results')}
-          />
-        )}
+          {state === 'mid' && (
+            <MidView
+              options={options}
+              onOptionsChange={onOptionsChange}
+              journeys={journeys}
+              journeyLoading={journeyLoading}
+              journeyError={journeyError}
+              onOpenSettings={() => onStateChange('settings')}
+              onViewResults={() => onStateChange('results')}
+            />
+          )}
 
-        {state === 'settings' && (
-          <SettingsView
-            options={options}
-            onOptionsChange={onOptionsChange}
-            onApply={() => onStateChange('mid')}
-            onReset={() => {
-              onOptionsChange(defaultOptions)
-              onStateChange('mid')
-            }}
-            onCollapse={() => onStateChange('mid')}
-          />
-        )}
+          {state === 'settings' && (
+            <SettingsView
+              options={options}
+              onOptionsChange={onOptionsChange}
+              onApply={() => onStateChange('mid')}
+              onReset={() => {
+                onOptionsChange(defaultOptions)
+                onStateChange('mid')
+              }}
+              onCollapse={() => onStateChange('mid')}
+            />
+          )}
 
-        {state === 'results' && (
-          <JourneyResults
-            journeys={journeys}
-            onSelect={(j) => {
-              onSelectJourney(j)
-              onStateChange('detail')
-            }}
-            onClose={() => onStateChange('mid')}
-          />
-        )}
+          {state === 'results' && (
+            <JourneyResults
+              journeys={journeys}
+              onSelect={(j) => {
+                onSelectJourney(j)
+                onStateChange('detail')
+              }}
+              onClose={() => onStateChange('mid')}
+            />
+          )}
 
-        {(state === 'detail' || state === 'tracking') && selectedJourney && (
-          <JourneyPanel
-            journey={selectedJourney}
-            onClose={onClosePanel}
-            onDepartClick={() => {
-              onDepartClick()
-            }}
-            onEndTrip={onEndTrip}
-            trackingPhase={trackingPhase}
-            weather={weather}
-            activeSegmentIdx={activeSegmentIdx}
-            onSegmentSelect={onSegmentSelect}
-          />
-        )}
-      </div>
-    </div>
+          {(state === 'detail' || state === 'tracking') && selectedJourney && (
+            <JourneyPanel
+              journey={selectedJourney}
+              onClose={onClosePanel}
+              onDepartClick={() => {
+                onDepartClick()
+              }}
+              onEndTrip={onEndTrip}
+              trackingPhase={trackingPhase}
+              weather={weather}
+              activeSegmentIdx={activeSegmentIdx}
+              onSegmentSelect={onSegmentSelect}
+            />
+          )}
+        </div>
+      )}
+    </Wrapper>
   )
 }
