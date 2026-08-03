@@ -26,9 +26,9 @@ function StationPopup({ station }: { station: BiclooStation }) {
 
   return (
     <div className="min-w-40">
-      <p className="font-semibold text-slate-900 mb-2">{station.name}</p>
-      <div className="flex flex-col gap-1 text-body-sm text-slate-600">
-        <span className={available ? 'text-eco-700 font-medium' : 'text-slate-400'}>
+      <p className="font-semibold text-text mb-2">{station.name}</p>
+      <div className="flex flex-col gap-1 text-body-sm text-text-muted">
+        <span className={available ? 'text-eco-700 font-medium' : 'text-text-subtle'}>
           {station.availableBikes} vélo{station.availableBikes !== 1 ? 's' : ''} disponible
           {station.availableBikes !== 1 ? 's' : ''}
         </span>
@@ -36,7 +36,7 @@ function StationPopup({ station }: { station: BiclooStation }) {
           {station.availableDocks} place{station.availableDocks !== 1 ? 's' : ''} libre
           {station.availableDocks !== 1 ? 's' : ''}
         </span>
-        <span className="text-slate-400 text-caption">
+        <span className="text-text-subtle text-caption">
           {station.totalDocks} emplacements au total
         </span>
       </div>

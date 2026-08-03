@@ -145,7 +145,7 @@ export function DeleteAccountModal({ onClose }: DeleteAccountModalProps) {
           onClick={() => void handleDelete()}
           disabled={!canConfirm || isDeleting}
           aria-busy={isDeleting}
-          className="h-13 rounded-lg bg-danger text-on-primary text-body font-bold disabled:opacity-40 disabled:cursor-not-allowed"
+          className="h-13 w-full justify-center rounded-lg bg-danger text-on-primary text-body font-bold disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {isDeleting ? 'Suppression…' : 'Supprimer définitivement'}
         </button>

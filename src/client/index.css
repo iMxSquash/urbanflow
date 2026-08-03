@@ -207,7 +207,9 @@
 
   --color-text:           #EEF2EF; /* 16,6:1 */
   --color-text-muted:     #A2B0A9; /* 8,1:1 */
-  --color-text-subtle:    #8C8279; /* 5,0:1 */
+  --color-text-subtle:    #87958D; /* 5,3:1 sur surface, 5,9:1 sur bg. #8C8279/#948A80 (valeurs précédentes) étaient une teinte brune chaude
+     isolée dans une palette sombre par ailleurs entièrement froide (sauge/vert-gris, cf. --color-text-muted #A2B0A9 et --color-text-disabled #6B7A72) —
+     visuellement une couleur "fausse note". Recalée sur le même axe de teinte, entre muted et disabled en clarté. */
   --color-text-disabled:  #6B7A72;
 
   --color-primary:            #4FCB9B; /* 8,3:1 */
@@ -215,7 +217,7 @@
   --color-primary-surface:    #0F3A2C;
   --color-primary-weak:       #2F7A5E;
   --color-on-primary:         #062018; /* 10,4:1 */
-  --color-on-primary-muted:   #A8C9BB;
+  --color-on-primary-muted:   #153327; /* 6,7:1 sur --color-primary sombre — #A8C9BB (ancienne valeur) donnait ~1,1:1, quasi invisible (texte clair sur fond déjà clair en mode sombre) */
 
   --color-transit:         #6BB6D6; /* 7,4:1 */
   --color-transit-surface: #16303C;
@@ -272,7 +274,7 @@
 
     --color-text:           #EEF2EF;
     --color-text-muted:     #A2B0A9;
-    --color-text-subtle:    #8C8279;
+    --color-text-subtle:    #87958D;
     --color-text-disabled:  #6B7A72;
 
     --color-primary:            #4FCB9B;
@@ -280,7 +282,7 @@
     --color-primary-surface:    #0F3A2C;
     --color-primary-weak:       #2F7A5E;
     --color-on-primary:         #062018;
-    --color-on-primary-muted:   #A8C9BB;
+    --color-on-primary-muted:   #153327; /* 6,7:1 sur --color-primary sombre — #A8C9BB (ancienne valeur) donnait ~1,1:1, quasi invisible (texte clair sur fond déjà clair en mode sombre) */
 
     --color-transit:         #6BB6D6;
     --color-transit-surface: #16303C;
@@ -413,12 +415,18 @@
     }
   }
 
-  /* Zones tactiles minimum WCAG 2.5.5 (48px) */
+  /* Layout par défaut (icône + libellé alignés) — sans taille imposée : le
+   * système de contrôle Estuaire (control-xs 28px → control-2xl 52px,
+   * DESIGN-SYSTEM.md §1.6) choisit délibérément des tailles < 48px pour
+   * les contrôles secondaires (chips, tabs, mini-toggles). Un plancher
+   * global min-height/min-width:48px ici les écrasait tous silencieusement
+   * (min-height gagne toujours sur une classe height plus petite, quelle
+   * que soit sa spécificité) — control-lg (44px) reste la cible tactile
+   * minimum documentée pour les actions qui en ont réellement besoin,
+   * posée composant par composant plutôt qu'en règle aveugle. */
   button,
   a,
   [role="button"] {
-    min-height: 48px;
-    min-width: 48px;
     @apply flex items-center;
   }
 
@@ -574,17 +582,34 @@
     @apply bg-surface border-t border-border rounded-t-2xl shadow-sheet;
     @apply px-4 pt-2 pb-3;
     @apply transition-transform duration-200 ease-ui;
-    @apply lg:static lg:w-100 lg:min-w-[380px] lg:border-t-0 lg:rounded-2xl lg:shadow-card;
+    /* rounded-r uniquement : l'arête gauche du panneau touche la sidebar,
+     * elle ne doit jamais porter d'arrondi (seule l'arête carte, à droite,
+     * en a un). */
+    @apply lg:static lg:w-100 lg:min-w-[380px] lg:border-t-0 lg:rounded-r-2xl lg:shadow-card;
     /* Panneaux Leaflet internes (tuiles/marqueurs) déclarés à z-index élevé et
      * échappant à .leaflet-container (position:relative + z-index:auto ne crée
      * pas de contexte d'empilement) : sans z-index explicite ici, ils peignent
      * par-dessus le sheet dans le contexte isolate de <main>. */
     @apply z-1100;
 
+    /* Panneau desktop réduit — masque le contenu, ne garde qu'un mince rail
+     * portant l'onglet d'agrandissement (cf. .bottom-sheet-desktop-tab). */
+    &[data-desktop-collapsed='true'] {
+      @apply lg:w-8 lg:min-w-0 lg:p-0 lg:overflow-visible;
+    }
+
     /* États du bottom sheet mobile (MAQUETTE.md §5.2) — max-lg: n'affecte
      * jamais le panneau latéral desktop (déjà position:static ci-dessus). */
     &[data-sheet-state='collapsed'] {
-      @apply max-lg:h-[212px] max-lg:overflow-hidden;
+      /* Seul état où le bottom-nav mobile est aussi affiché (MapPage.tsx) —
+       * les deux sont `fixed bottom-0` : sans ce décalage, le sheet (z-1100)
+       * recouvre entièrement la nav (z-navbar) en dessous, qui devient
+       * invisible/inaccessible alors qu'elle est bien montée dans le DOM.
+       * Hauteur en `h-auto` (pas les 212px fixes d'origine) : ces 212px
+       * incluaient une marge basse qui ne se voyait pas tant que le sheet
+       * recouvrait la nav — une fois décalé au-dessus d'elle, cette même
+       * marge devenait un vide visible entre les chips et la nav. */
+      @apply max-lg:h-auto max-lg:bottom-[var(--height-bottomnav)];
     }
     &[data-sheet-state='search'] {
       @apply max-lg:top-0 max-lg:rounded-none max-lg:border-t-0 max-lg:pt-3;
@@ -611,9 +636,20 @@
     }
   }
 
-  /* Poignée du bottom sheet — 40×4px, purement décorative */
+  /* Poignée du bottom sheet (mobile) — pastille purement visuelle, portée par
+   * un vrai <button> (cible tactile 48px via la règle globale `button{}`)
+   * qui agrandit/réduit le sheet d'un cran. */
   .bottom-sheet-handle {
-    @apply self-center w-10 h-1 rounded-full bg-border lg:hidden;
+    @apply w-10 h-1 rounded-full bg-border;
+  }
+
+  /* Onglet d'agrandissement/réduction du panneau desktop — mi-inséré sur
+   * l'arête droite (côté carte) du panneau, visible replié comme déplié. */
+  .bottom-sheet-desktop-tab {
+    @apply hidden lg:flex items-center justify-center;
+    @apply absolute top-1/2 -translate-y-1/2 -right-3.5 z-10;
+    @apply w-7 h-11 rounded-lg bg-surface border border-border shadow-card text-text-muted;
+    @apply hover:text-text transition-colors duration-fast;
   }
 
   /* ── Modale ── */
@@ -625,11 +661,17 @@
   /* ── Bottom navigation (mobile) — devient une sidebar ≥1024px ── */
   /* <nav aria-label="Navigation principale"> */
   .bottom-nav {
-    @apply fixed inset-x-0 bottom-0 grid grid-cols-4 gap-1 px-2 pt-2;
+    @apply fixed inset-x-0 bottom-0 z-navbar grid grid-cols-4 gap-1 px-2 pt-2;
     @apply bg-surface border-t border-border;
     @apply lg:static lg:flex lg:flex-col lg:w-58 lg:h-screen lg:p-4 lg:border-t-0 lg:border-r lg:border-border;
     /* env() ne peut pas s'exprimer en classe utilitaire */
     padding-bottom: calc(var(--spacing) * 2 + env(safe-area-inset-bottom));
+    /* Sans z-index explicite, un `position:fixed` sans z-index (auto) se classe
+     * par ordre du DOM parmi les autres éléments qui créent un contexte
+     * d'empilement — hors, tout élément avec `opacity < 1` (ex: un bouton
+     * `disabled:opacity-40`, comme "Échanger" indisponible) en crée un aussi.
+     * La nav étant montée avant le contenu de page dans le DOM, ces boutons
+     * repassaient au-dessus d'elle au scroll. */
   }
 
   .bottom-nav-item {
@@ -650,6 +692,65 @@
     @apply bg-surface border border-border rounded-xl px-4 py-3 shadow-sheet;
     /* env() ne peut pas s'exprimer en classe utilitaire */
     bottom: calc(var(--spacing) * 13 + env(safe-area-inset-bottom) + var(--spacing) * 2);
+  }
+
+  /* ── Slider (marche max, etc.) ── Piste 6px + poignée 26px à liseré
+   * primary (maquette "1a Estuaire - Écrans.dc.html" lignes 327-338) —
+   * un `accent-color` seul ne peut pas produire cette poignée large à
+   * bordure épaisse, d'où les pseudo-éléments natifs plutôt qu'un input
+   * "au look navigateur". Le remplissage utilise `--slider-fill` (posée
+   * en style inline par le composant `Slider`, seule valeur calculée à
+   * l'exécution) : Firefox a `::-moz-range-progress` en natif, WebKit non
+   * — d'où le dégradé équivalent sur `::-webkit-slider-runnable-track`. */
+  .slider {
+    @apply w-full appearance-none cursor-pointer bg-transparent outline-none;
+    height: 26px;
+
+    &::-webkit-slider-runnable-track {
+      height: 6px;
+      border-radius: 9999px;
+      background: linear-gradient(
+        to right,
+        var(--color-primary) var(--slider-fill, 0%),
+        var(--color-surface-sunken) var(--slider-fill, 0%)
+      );
+    }
+    &::-webkit-slider-thumb {
+      appearance: none;
+      width: 26px;
+      height: 26px;
+      margin-top: -10px;
+      border-radius: 9999px;
+      background: var(--color-surface);
+      border: 3px solid var(--color-primary);
+      box-shadow: var(--shadow-card);
+      cursor: pointer;
+    }
+    &::-moz-range-track {
+      height: 6px;
+      border-radius: 9999px;
+      background: var(--color-surface-sunken);
+    }
+    &::-moz-range-progress {
+      height: 6px;
+      border-radius: 9999px;
+      background: var(--color-primary);
+    }
+    &::-moz-range-thumb {
+      width: 26px;
+      height: 26px;
+      border-radius: 9999px;
+      background: var(--color-surface);
+      border: 3px solid var(--color-primary);
+      box-shadow: var(--shadow-card);
+      cursor: pointer;
+    }
+    &:focus-visible::-webkit-slider-thumb {
+      box-shadow: var(--focus-ring);
+    }
+    &:focus-visible::-moz-range-thumb {
+      box-shadow: var(--focus-ring);
+    }
   }
 
   /* ── Skeleton (chargement) — shimmer explicitement exempté de
@@ -683,6 +784,11 @@
   border-radius: var(--radius-xl) !important;
   box-shadow: var(--shadow-card) !important;
   font-family: var(--font-sans) !important;
+  background: var(--color-surface) !important;
+}
+
+.leaflet-popup-tip {
+  background: var(--color-surface) !important;
 }
 
 .leaflet-popup-content {

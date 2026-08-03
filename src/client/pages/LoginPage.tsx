@@ -156,20 +156,18 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between">
-          <label className="flex items-center gap-2 cursor-pointer text-body-sm text-text">
-            <input
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-              className="size-[22px] rounded-xs accent-primary"
-            />
-            Rester connecté
-          </label>
-          <a href="#" className="text-body-sm font-semibold text-primary">
-            Mot de passe oublié
-          </a>
-        </div>
+        {/* Pas de lien "Mot de passe oublié" : aucun endpoint de réinitialisation
+         * n'existe côté serveur (pas d'envoi d'email dans ce projet) — un lien
+         * href="#" sans action réelle serait un bouton mort. */}
+        <label className="flex items-center gap-2 cursor-pointer text-body-sm text-text">
+          <input
+            type="checkbox"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+            className="size-[22px] rounded-xs accent-primary"
+          />
+          Rester connecté
+        </label>
 
         <button
           type="submit"

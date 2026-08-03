@@ -92,8 +92,14 @@ function RewardCard({ reward, totalPoints, purchasing, onPurchase }: RewardCardP
   const progressPct = Math.min(100, Math.round((totalPoints / reward.pointsCost) * 100))
 
   return (
+    // `h-full` : occupe toute la hauteur de la ligne de grille (même hauteur
+    // que sa voisine). `justify-between` distribue l'espace restant entre le
+    // bloc description et le bloc points/bouton (poussé vers le bas plutôt
+    // que de laisser un vide après le bouton) ; `gap-2.5` reste un plancher
+    // minimum — CSS additionne gap + espace distribué par justify-between,
+    // jamais moins que gap-2.5 même si les deux cartes ont la même hauteur.
     <article
-      className={`card p-3.5 flex flex-col gap-2.5 ${!reward.affordable ? 'bg-surface-muted' : ''}`}
+      className={`card p-3.5 h-full flex flex-col justify-between gap-2.5 ${!reward.affordable ? 'bg-surface-muted' : ''}`}
     >
       <div className="flex items-start gap-3">
         <span
@@ -117,69 +123,71 @@ function RewardCard({ reward, totalPoints, purchasing, onPurchase }: RewardCardP
         </div>
       </div>
 
-      {reward.affordable ? (
-        <div className="flex items-center gap-2.5">
-          <span className="inline-flex items-center px-2.5 py-1.5 rounded-sm bg-primary-surface text-primary text-caption font-bold tabular-nums">
-            {formatPoints(reward.pointsCost)}
-          </span>
-          <span className="text-caption text-text-muted">
-            Il vous reste {formatPoints(remaining)} après échange
-          </span>
-        </div>
-      ) : (
-        <>
+      <div className="flex flex-col gap-2.5">
+        {reward.affordable ? (
           <div className="flex items-center gap-2.5">
-            <span className="inline-flex items-center px-2.5 py-1.5 rounded-sm bg-surface-sunken text-text-muted text-caption font-bold tabular-nums">
+            <span className="inline-flex items-center px-2.5 py-1.5 rounded-sm bg-primary-surface text-primary text-caption font-bold tabular-nums">
               {formatPoints(reward.pointsCost)}
             </span>
-            <span className="inline-flex items-center gap-1.5 text-caption font-semibold text-warning">
-              <svg
-                aria-hidden="true"
-                width="13"
-                height="13"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <rect x="4" y="10" width="16" height="10" rx="2.5" />
-                <path d="M8 10V7a4 4 0 0 1 8 0v3" />
-              </svg>
-              Encore {formatPoints(reward.pointsCost - totalPoints)}
+            <span className="text-caption text-text-muted">
+              Il vous reste {formatPoints(remaining)} après échange
             </span>
           </div>
-          <div className="flex flex-col gap-1">
-            <span
-              role="progressbar"
-              aria-valuenow={progressPct}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-label={`Progression vers ${reward.name}`}
-              className="block h-1.5 rounded-full bg-surface-sunken"
-            >
+        ) : (
+          <>
+            <div className="flex items-center gap-2.5">
+              <span className="inline-flex items-center px-2.5 py-1.5 rounded-sm bg-surface-sunken text-text-muted text-caption font-bold tabular-nums">
+                {formatPoints(reward.pointsCost)}
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-caption font-semibold text-warning">
+                <svg
+                  aria-hidden="true"
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="4" y="10" width="16" height="10" rx="2.5" />
+                  <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+                </svg>
+                Encore {formatPoints(reward.pointsCost - totalPoints)}
+              </span>
+            </div>
+            <div className="flex flex-col gap-1">
               <span
-                className="block h-1.5 rounded-full bg-text-disabled"
-                style={{ width: `${progressPct}%` }}
-              />
-            </span>
-            <span className="text-caption text-text-muted tabular-nums">
-              {formatPoints(totalPoints)} / {formatPoints(reward.pointsCost)}
-            </span>
-          </div>
-        </>
-      )}
+                role="progressbar"
+                aria-valuenow={progressPct}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label={`Progression vers ${reward.name}`}
+                className="block h-1.5 rounded-full bg-surface-sunken"
+              >
+                <span
+                  className="block h-1.5 rounded-full bg-text-disabled"
+                  style={{ width: `${progressPct}%` }}
+                />
+              </span>
+              <span className="text-caption text-text-muted tabular-nums">
+                {formatPoints(totalPoints)} / {formatPoints(reward.pointsCost)}
+              </span>
+            </div>
+          </>
+        )}
 
-      <button
-        type="button"
-        disabled={!reward.affordable || purchasing}
-        aria-disabled={!reward.affordable || purchasing}
-        onClick={() => onPurchase(reward.id)}
-        className={reward.affordable ? 'btn-primary w-full' : 'btn-secondary w-full'}
-      >
-        {purchasing ? 'Échange…' : 'Échanger'}
-      </button>
+        <button
+          type="button"
+          disabled={!reward.affordable || purchasing}
+          aria-disabled={!reward.affordable || purchasing}
+          onClick={() => onPurchase(reward.id)}
+          className={reward.affordable ? 'btn-primary w-full' : 'btn-secondary w-full'}
+        >
+          {purchasing ? 'Échange…' : 'Échanger'}
+        </button>
+      </div>
     </article>
   )
 }
@@ -433,7 +441,7 @@ export default function RewardsPage() {
                 aria-controls="panel-catalog"
                 tabIndex={tab === 'catalog' ? 0 : -1}
                 onClick={() => setTab('catalog')}
-                className={`flex-1 h-10 rounded-full text-body-sm font-semibold transition-colors duration-fast ${tab === 'catalog' ? 'bg-primary text-on-primary' : 'text-text'}`}
+                className={`flex-1 h-10 justify-center rounded-full text-body-sm font-semibold transition-colors duration-fast ${tab === 'catalog' ? 'bg-primary text-on-primary' : 'text-text'}`}
               >
                 Catalogue
               </button>
@@ -445,7 +453,7 @@ export default function RewardsPage() {
                 aria-controls="panel-history"
                 tabIndex={tab === 'history' ? 0 : -1}
                 onClick={() => setTab('history')}
-                className={`flex-1 h-10 rounded-full text-body-sm font-semibold transition-colors duration-fast ${tab === 'history' ? 'bg-primary text-on-primary' : 'text-text'}`}
+                className={`flex-1 h-10 justify-center rounded-full text-body-sm font-semibold transition-colors duration-fast ${tab === 'history' ? 'bg-primary text-on-primary' : 'text-text'}`}
               >
                 Historique
               </button>

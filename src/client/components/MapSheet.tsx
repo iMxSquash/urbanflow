@@ -1,4 +1,4 @@
-import { useEffect, useId } from 'react'
+import { useEffect, useId, useState } from 'react'
 import type {
   Coordinates,
   Journey,
@@ -15,6 +15,8 @@ import { EmptyResultsPanel } from './EmptyResultsPanel'
 import { JourneyPanel, type JourneyTrackingPhase } from './JourneyPanel'
 import { JourneyResults } from './JourneyResults'
 import { ModeChip } from './ModeChip'
+import { Slider } from './Slider'
+import { Toggle } from './Toggle'
 
 // ── État du sheet — MAQUETTE.md §5.2 (8 états, le 8e — fin de trajet — est une
 // modale gérée séparément par MapPage via JourneySummaryModal) ──────────────
@@ -356,50 +358,6 @@ function MidView({
   )
 }
 
-function Toggle({
-  id,
-  checked,
-  onChange,
-  label,
-  description,
-}: {
-  id: string
-  checked: boolean
-  onChange: (v: boolean) => void
-  label: string
-  description?: string
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4">
-      <div>
-        <p id={id} className="text-body-sm font-medium text-text">
-          {label}
-        </p>
-        {description && <p className="text-caption text-text-subtle mt-0.5">{description}</p>}
-      </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        aria-labelledby={id}
-        onClick={() => onChange(!checked)}
-        className={[
-          'relative shrink-0 w-11 h-6 rounded-full transition-colors duration-fast',
-          checked ? 'bg-primary' : 'bg-surface-sunken',
-        ].join(' ')}
-      >
-        <span
-          aria-hidden="true"
-          className={[
-            'absolute top-0.5 left-0.5 w-5 h-5 bg-surface rounded-full shadow-card transition-transform duration-fast',
-            checked ? 'translate-x-5' : 'translate-x-0',
-          ].join(' ')}
-        />
-      </button>
-    </div>
-  )
-}
-
 // Champs communs à SettingsView (mobile, dépliant) et DesktopPanel (toujours
 // visible, "en ligne d'outils" — MAQUETTE.md §5.2 desktop).
 function SettingsFields({
@@ -442,19 +400,14 @@ function SettingsFields({
             {options.maxWalkMinutes} min
           </span>
         </div>
-        <input
+        <Slider
           id="max-walk-sheet"
-          type="range"
           min={5}
           max={25}
           step={5}
           value={options.maxWalkMinutes}
-          onChange={(e) => onOptionsChange({ ...options, maxWalkMinutes: Number(e.target.value) })}
-          className="w-full cursor-pointer accent-primary"
-          aria-valuemin={5}
-          aria-valuemax={25}
-          aria-valuenow={options.maxWalkMinutes}
-          aria-valuetext={`${options.maxWalkMinutes} minutes`}
+          onChange={(maxWalkMinutes) => onOptionsChange({ ...options, maxWalkMinutes })}
+          ariaValueText={`${options.maxWalkMinutes} minutes`}
         />
       </div>
 
@@ -694,14 +647,28 @@ export function MapSheet(props: MapSheetProps) {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [state, onStateChange, isDesktop])
 
+  // Réduction du panneau desktop — pur affichage, indépendant de la machine
+  // à états du sheet (search/results/...). Un changement d'état (nouvelle
+  // adresse, trajet sélectionné...) réaffiche automatiquement le panneau :
+  // rien ne doit rester bloqué caché derrière un rail réduit. Ajusté pendant
+  // le rendu (pattern React "adjusting state when a prop changes") plutôt
+  // qu'un useEffect, pour éviter un rendu en cascade évitable.
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false)
+  const [prevState, setPrevState] = useState(state)
+  if (state !== prevState) {
+    setPrevState(state)
+    setDesktopCollapsed(false)
+  }
+
   // Desktop : panneau latéral permanent, `aside` + landmark plutôt qu'un
   // dialogue transitoire (MAQUETTE.md §5.2 "Panneau en aside + landmarks").
   const Wrapper = isDesktop ? 'aside' : 'div'
 
   return (
     <Wrapper
-      className="bottom-sheet"
+      className="bottom-sheet lg:relative"
       data-sheet-state={state}
+      data-desktop-collapsed={isDesktop ? desktopCollapsed : undefined}
       role={isDialog ? 'dialog' : undefined}
       aria-label={
         isDesktop
@@ -711,11 +678,48 @@ export function MapSheet(props: MapSheetProps) {
             : undefined
       }
     >
-      {!isDesktop && state !== 'search' && (
-        <div className="bottom-sheet-handle" aria-hidden="true" />
+      {!isDesktop && state !== 'search' && state !== 'tracking' && (
+        <button
+          type="button"
+          onClick={() => {
+            if (state === 'collapsed') onStateChange(hasFrom ? 'mid' : 'search')
+            else {
+              const parent = PARENT_STATE[state]
+              if (parent) onStateChange(parent)
+            }
+          }}
+          aria-label={state === 'collapsed' ? 'Agrandir le panneau' : 'Réduire le panneau'}
+          className="self-center shrink-0 -mx-4 -mt-2 px-4 pt-2 pb-1.5 flex items-center justify-center"
+        >
+          <span className="bottom-sheet-handle" aria-hidden="true" />
+        </button>
       )}
 
-      {isDesktop ? (
+      {isDesktop && (
+        <button
+          type="button"
+          onClick={() => setDesktopCollapsed((v) => !v)}
+          aria-label={desktopCollapsed ? 'Agrandir le panneau de recherche' : 'Réduire le panneau de recherche'}
+          aria-expanded={!desktopCollapsed}
+          className="bottom-sheet-desktop-tab"
+        >
+          <svg
+            aria-hidden="true"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            {desktopCollapsed ? <path d="M9 6l6 6-6 6" /> : <path d="M15 6l-6 6 6 6" />}
+          </svg>
+        </button>
+      )}
+
+      {isDesktop && desktopCollapsed ? null : isDesktop ? (
         <DesktopPanel
           state={state}
           fromLabel={fromLabel}

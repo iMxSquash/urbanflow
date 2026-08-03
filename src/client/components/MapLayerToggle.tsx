@@ -14,7 +14,7 @@ const LAYERS: LayerConfig[] = [
   {
     key: 'bikesharing',
     label: 'Bicloo',
-    activeColor: '#15803d',
+    activeColor: 'var(--color-primary)',
     activeTextClass: 'text-eco-800',
     activeBgClass: 'bg-eco-50',
     activeRingClass: 'ring-eco-200',
@@ -22,18 +22,20 @@ const LAYERS: LayerConfig[] = [
   {
     key: 'tanLines',
     label: 'Lignes',
-    activeColor: '#4338ca',
-    activeTextClass: 'text-indigo-800',
-    activeBgClass: 'bg-indigo-50',
-    activeRingClass: 'ring-indigo-200',
+    // Transport en commun (Naolib) → toujours le token transit, jamais indigo brut
+    // (non themé, invisible en mode sombre).
+    activeColor: 'var(--color-transit)',
+    activeTextClass: 'text-transit-700',
+    activeBgClass: 'bg-transit-50',
+    activeRingClass: 'ring-transit-200',
   },
   {
     key: 'tanStops',
     label: 'Arrêts',
-    activeColor: '#4338ca',
-    activeTextClass: 'text-indigo-800',
-    activeBgClass: 'bg-indigo-50',
-    activeRingClass: 'ring-indigo-200',
+    activeColor: 'var(--color-transit)',
+    activeTextClass: 'text-transit-700',
+    activeBgClass: 'bg-transit-50',
+    activeRingClass: 'ring-transit-200',
   },
 ]
 
@@ -144,7 +146,7 @@ export function MapLayerToggle({
       role="group"
       aria-label="Calques de la carte"
     >
-      <div className="bg-white rounded-xl shadow-card-md border border-slate-100 p-1.5 flex flex-col gap-2">
+      <div className="bg-surface rounded-xl shadow-card-md border border-border p-1.5 flex flex-col gap-2">
         {LAYERS.map(
           ({ key, label, activeColor, activeTextClass, activeBgClass, activeRingClass }) => {
             const active = layers[key]
@@ -160,7 +162,7 @@ export function MapLayerToggle({
                   'transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-600',
                   active
                     ? `${activeBgClass} ${activeTextClass} ring-1 ring-inset ${activeRingClass}`
-                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700',
+                    : 'text-text-subtle hover:bg-surface-muted hover:text-text',
                 ].join(' ')}
               >
                 <span style={{ color: active ? activeColor : undefined }}>{LAYER_ICONS[key]}</span>
@@ -171,7 +173,7 @@ export function MapLayerToggle({
         )}
         {hasJourney && onToggleEco && (
           <>
-            <div className="h-px bg-slate-100 mx-1" aria-hidden="true" />
+            <div className="h-px bg-border mx-1" aria-hidden="true" />
             <button
               type="button"
               onClick={onToggleEco}
@@ -182,10 +184,10 @@ export function MapLayerToggle({
                 'transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-600',
                 ecoMapActive
                   ? 'bg-eco-50 text-eco-800 ring-1 ring-inset ring-eco-200'
-                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700',
+                  : 'text-text-subtle hover:bg-surface-muted hover:text-text',
               ].join(' ')}
             >
-              <span style={{ color: ecoMapActive ? '#15803d' : undefined }}>
+              <span style={{ color: ecoMapActive ? 'var(--color-primary)' : undefined }}>
                 <LeafIcon />
               </span>
               Carte éco

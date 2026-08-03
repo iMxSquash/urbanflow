@@ -57,7 +57,7 @@ export function TripToast({
       <div className="min-w-0 flex-1">
         {pointsEarned > 0 ? (
           <>
-            <p className="text-body-sm font-bold text-slate-900 leading-snug">
+            <p className="text-body-sm font-bold text-text leading-snug">
               Bon trajet !{' '}
               <span className="text-primary">
                 +{pointsEarned} pt{pointsEarned > 1 ? 's' : ''}
@@ -66,11 +66,12 @@ export function TripToast({
             <p className="text-caption text-primary mt-0.5">
               {formatCo2(co2SavedGrams)} CO₂ économisés vs voiture
             </p>
-            <p className="text-caption text-slate-400 mt-0.5">
-              Total cumulé : <span className="font-medium text-slate-600">{totalPoints} pts</span>
+            <p className="text-caption text-text-subtle mt-0.5">
+              Total cumulé :{' '}
+              <span className="font-medium text-text-muted">{totalPoints} pts</span>
             </p>
             {newlyUnlockedBadges.length > 0 && (
-              <p className="text-caption text-amber-600 font-medium mt-1">
+              <p className="text-caption text-warning font-medium mt-1">
                 🏅{' '}
                 {newlyUnlockedBadges.length === 1
                   ? '1 badge débloqué !'
@@ -80,11 +81,11 @@ export function TripToast({
           </>
         ) : (
           <>
-            <p className="text-body-sm font-bold text-slate-900 leading-snug">Trajet enregistré</p>
+            <p className="text-body-sm font-bold text-text leading-snug">Trajet enregistré</p>
             <p className="text-caption text-primary mt-0.5">
               {formatCo2(co2SavedGrams)} CO₂ économisés vs voiture
             </p>
-            <p className="text-caption text-slate-400 mt-0.5">
+            <p className="text-caption text-text-subtle mt-0.5">
               Activez le suivi GPS pour gagner des points
             </p>
           </>
@@ -95,7 +96,7 @@ export function TripToast({
         type="button"
         onClick={onClose}
         aria-label="Fermer la notification"
-        className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full text-text-subtle hover:text-text-muted hover:bg-surface-sunken transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         <svg
           aria-hidden="true"

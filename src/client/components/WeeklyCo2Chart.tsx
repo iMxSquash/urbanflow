@@ -25,7 +25,7 @@ export default function WeeklyCo2Chart({ data }: WeeklyCo2ChartProps) {
   const isEmpty = data.every((d) => d.co2SavedGrams === 0)
   if (isEmpty) {
     return (
-      <div className="h-27 flex items-center justify-center text-body-sm text-text-subtle">
+      <div className="h-27 flex items-center justify-center text-body-sm text-text-muted">
         Aucun trajet enregistré ces 4 dernières semaines
       </div>
     )

@@ -180,20 +180,28 @@ export default function ParametresPage() {
                     {demoMode ? 'Données statiques · horaires et CO₂ fictifs' : 'APIs réelles'}
                   </span>
                 </span>
-                <button
-                  type="button"
+                {/* input réel + span visuel (pas un <button>) : la règle globale
+                 * `button{min-height:48px}` écraserait la pastille 46×28px. */}
+                <input
+                  type="checkbox"
                   role="switch"
                   aria-checked={demoMode}
                   aria-label="Activer ou désactiver le mode démo"
+                  checked={demoMode}
                   disabled={demoLoading}
-                  onClick={() => void toggle(!demoMode)}
+                  onChange={() => void toggle(!demoMode)}
+                  className="sr-only peer"
+                />
+                <span
+                  aria-hidden="true"
                   className={[
-                    'shrink-0 w-[46px] h-7 rounded-full flex items-center p-[3px] transition-colors duration-fast disabled:opacity-50',
+                    'shrink-0 w-[46px] h-7 rounded-full flex items-center p-[3px] transition-colors duration-fast',
+                    'peer-disabled:opacity-50 peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2',
                     demoMode ? 'bg-warning justify-end' : 'bg-border justify-start',
                   ].join(' ')}
                 >
                   <span className="w-[22px] h-[22px] rounded-full bg-surface" />
-                </button>
+                </span>
               </div>
 
               {demoMode && (
@@ -241,20 +249,26 @@ export default function ParametresPage() {
                           : 'Transitous, OSRM et Bicloo en direct'}
                       </span>
                     </span>
-                    <button
-                      type="button"
+                    <input
+                      type="checkbox"
                       role="switch"
                       aria-checked={providersDemo ?? false}
                       aria-label="Activer ou désactiver la simulation des trajets"
+                      checked={providersDemo ?? false}
                       disabled={demoLoading}
-                      onClick={() => void toggleProviders(!providersDemo)}
+                      onChange={() => void toggleProviders(!providersDemo)}
+                      className="sr-only peer"
+                    />
+                    <span
+                      aria-hidden="true"
                       className={[
-                        'shrink-0 w-[46px] h-7 rounded-full flex items-center p-[3px] transition-colors duration-fast disabled:opacity-50',
+                        'shrink-0 w-[46px] h-7 rounded-full flex items-center p-[3px] transition-colors duration-fast',
+                        'peer-disabled:opacity-50 peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2',
                         providersDemo ? 'bg-warning justify-end' : 'bg-border justify-start',
                       ].join(' ')}
                     >
                       <span className="w-[22px] h-[22px] rounded-full bg-surface" />
-                    </button>
+                    </span>
                   </div>
 
                   {providersDemo && (
@@ -515,7 +529,7 @@ export default function ParametresPage() {
                 <button
                   type="button"
                   onClick={() => setShowDeleteModal(true)}
-                  className="h-11 rounded-md border-[1.5px] border-danger bg-surface text-danger text-body-sm font-bold"
+                  className="h-11 px-5 justify-center rounded-md border-[1.5px] border-danger bg-surface text-danger text-body-sm font-bold"
                 >
                   Supprimer mon compte
                 </button>

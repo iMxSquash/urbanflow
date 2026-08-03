@@ -4,6 +4,7 @@ import { useProfileStore } from '../stores/profile.store'
 import { useAuthStore } from '../stores/auth.store'
 import { ModeChip } from '../components/ModeChip'
 import { PageWithSidebar } from '../components/PageWithSidebar'
+import { Slider } from '../components/Slider'
 import { PROFILE_PRESETS } from '../constants/profile-presets'
 import { TRANSPORT_MODES } from '@shared/types/index'
 import type { MobilityProfile, TransportMode, UserPreference } from '@shared/types/index'
@@ -237,22 +238,17 @@ function ProfileForm({ profile }: { profile: MobilityProfile }) {
               {form.maxWalkMinutes} min
             </span>
           </div>
-          <input
+          <Slider
             id="max-walk"
-            type="range"
             min={5}
             max={25}
             step={1}
             value={form.maxWalkMinutes}
-            onChange={(e) => {
-              setForm((f) => ({ ...f, maxWalkMinutes: Number(e.target.value) }))
+            onChange={(maxWalkMinutes) => {
+              setForm((f) => ({ ...f, maxWalkMinutes }))
               setSaveError(null)
             }}
-            className="w-full h-1.5 cursor-pointer accent-primary"
-            aria-valuemin={5}
-            aria-valuemax={25}
-            aria-valuenow={form.maxWalkMinutes}
-            aria-valuetext={`${form.maxWalkMinutes} minutes`}
+            ariaValueText={`${form.maxWalkMinutes} minutes`}
           />
           <div className="flex justify-between text-caption text-text-muted" aria-hidden="true">
             <span>5 min</span>

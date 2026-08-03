@@ -49,23 +49,23 @@ export function JourneySummaryModal({
         </svg>
       </div>
 
-      <h2 id="summary-title" className="text-h3 font-bold text-slate-900 text-center mb-1">
+      <h2 id="summary-title" className="text-h3 font-bold text-text text-center mb-1">
         Trajet terminé !
       </h2>
-      <p className="text-caption text-slate-400 text-center mb-6">
+      <p className="text-caption text-text-subtle text-center mb-6">
         +{tripResult.pointsEarned} pt{tripResult.pointsEarned > 1 ? 's' : ''} ·{' '}
         {formatCo2(tripResult.co2SavedGrams)} CO₂ économisés
       </p>
 
       <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="bg-slate-50 rounded-card p-3 text-center">
-          <p className="text-caption text-slate-500 mb-1">Durée réelle</p>
-          <p className="text-h3 font-bold text-slate-900 leading-none mt-1">
+        <div className="bg-surface-sunken rounded-card p-3 text-center">
+          <p className="text-caption text-text-subtle mb-1">Durée réelle</p>
+          <p className="text-h3 font-bold text-text leading-none mt-1">
             {formatDuration(realDurationMin)}
           </p>
           {Math.abs(diffMin) >= 1 && (
             <p
-              className={`text-caption mt-1 font-medium ${diffMin > 0 ? 'text-amber-600' : 'text-primary'}`}
+              className={`text-caption mt-1 font-medium ${diffMin > 0 ? 'text-warning' : 'text-primary'}`}
             >
               {diffMin > 0 ? '+' : ''}
               {diffMin} min vs prévu
@@ -73,28 +73,28 @@ export function JourneySummaryModal({
           )}
         </div>
         <div className="bg-primary-surface rounded-card p-3 text-center">
-          <p className="text-caption text-slate-500 mb-1">CO₂ économisé</p>
+          <p className="text-caption text-text-subtle mb-1">CO₂ économisé</p>
           <p className="text-h3 font-bold text-primary leading-none mt-1">
             {formatCo2(tripResult.co2SavedGrams)}
           </p>
-          <p className="text-caption text-slate-400 mt-1">vs voiture</p>
+          <p className="text-caption text-text-subtle mt-1">vs voiture</p>
         </div>
       </div>
 
-      <div className="flex items-center justify-between bg-slate-50 rounded-card px-4 py-3 mb-2">
-        <span className="text-body-sm text-slate-600 font-medium">Points gagnés</span>
+      <div className="flex items-center justify-between bg-surface-sunken rounded-card px-4 py-3 mb-2">
+        <span className="text-body-sm text-text-muted font-medium">Points gagnés</span>
         <span className="text-h3 font-bold text-primary">+{tripResult.pointsEarned} pts</span>
       </div>
       <div className="flex items-center justify-between px-1 mb-5">
-        <span className="text-caption text-slate-400">Total cumulé</span>
-        <span className="text-body-sm font-semibold text-slate-700">
+        <span className="text-caption text-text-subtle">Total cumulé</span>
+        <span className="text-body-sm font-semibold text-text-muted">
           {tripResult.totalPoints} pts
         </span>
       </div>
 
       {tripResult.newlyUnlockedBadges.length > 0 && (
-        <div className="bg-amber-50 border border-amber-100 rounded-card px-4 py-3 mb-5">
-          <p className="text-body-sm font-semibold text-amber-800">
+        <div className="bg-warning-surface-soft border border-warning-border rounded-card px-4 py-3 mb-5">
+          <p className="text-body-sm font-semibold text-warning">
             🏅{' '}
             {tripResult.newlyUnlockedBadges.length === 1
               ? '1 badge débloqué !'

@@ -31,9 +31,9 @@ export function DatetimePicker({
   }
 
   return (
-    <div className="bg-white rounded-card shadow-card px-3 py-2 flex items-center gap-2">
+    <div className="bg-surface rounded-card shadow-card px-3 py-2 flex items-center gap-2">
       <div
-        className="flex rounded-button overflow-hidden border border-slate-200 shrink-0"
+        className="flex rounded-button overflow-hidden border border-border shrink-0"
         role="group"
         aria-label="Mode horaire"
       >
@@ -43,7 +43,9 @@ export function DatetimePicker({
           aria-pressed={type === 'departure'}
           className={[
             'px-2.5 py-1 text-caption font-medium transition-colors duration-fast',
-            type === 'departure' ? 'bg-eco-600 text-white' : 'text-slate-600 hover:bg-slate-50',
+            type === 'departure'
+              ? 'bg-primary text-on-primary'
+              : 'text-text-muted hover:bg-surface-muted',
           ].join(' ')}
         >
           Départ
@@ -53,8 +55,10 @@ export function DatetimePicker({
           onClick={() => onTypeChange('arrival')}
           aria-pressed={type === 'arrival'}
           className={[
-            'px-2.5 py-1 text-caption font-medium transition-colors duration-fast border-l border-slate-200',
-            type === 'arrival' ? 'bg-eco-600 text-white' : 'text-slate-600 hover:bg-slate-50',
+            'px-2.5 py-1 text-caption font-medium transition-colors duration-fast border-l border-border',
+            type === 'arrival'
+              ? 'bg-primary text-on-primary'
+              : 'text-text-muted hover:bg-surface-muted',
           ].join(' ')}
         >
           Arrivée
@@ -65,7 +69,7 @@ export function DatetimePicker({
         type="datetime-local"
         value={toLocalIso(datetime)}
         onChange={handleInputChange}
-        className="flex-1 text-body-sm text-slate-700 bg-transparent border-none outline-none min-w-0 cursor-pointer"
+        className="flex-1 text-body-sm text-text bg-transparent border-none outline-none min-w-0 cursor-pointer"
         aria-label={type === 'departure' ? 'Heure de départ' : "Heure d'arrivée souhaitée"}
       />
 

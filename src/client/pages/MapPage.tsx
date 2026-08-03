@@ -374,10 +374,10 @@ export default function MapPage() {
             <div
               role="status"
               aria-label="Localisation en cours"
-              className="absolute top-3 left-1/2 -translate-x-1/2 z-1100 bg-white rounded-full px-4 py-2 shadow-card flex items-center gap-2 text-body-sm text-slate-600 whitespace-nowrap"
+              className="absolute top-3 left-1/2 -translate-x-1/2 z-1100 bg-surface rounded-full px-4 py-2 shadow-card flex items-center gap-2 text-body-sm text-text-muted whitespace-nowrap"
             >
               <div
-                className="w-4 h-4 border-2 border-slate-200 border-t-eco-600 rounded-full animate-spin"
+                className="w-4 h-4 border-2 border-border border-t-eco-600 rounded-full animate-spin"
                 aria-hidden="true"
               />
               Localisation en cours…
@@ -392,7 +392,7 @@ export default function MapPage() {
               <button
                 type="button"
                 onClick={denyGeolocation}
-                className="btn-secondary text-caption px-3 shrink-0 bg-white"
+                className="btn-secondary text-caption px-3 shrink-0 bg-surface"
                 style={{ minHeight: '44px' }}
               >
                 Saisir une adresse

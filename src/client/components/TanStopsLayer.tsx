@@ -7,8 +7,8 @@ const MIN_ZOOM = 14
 function StopPopup({ name, wheelchairBoarding }: { name: string; wheelchairBoarding: boolean }) {
   return (
     <div className="min-w-32">
-      <p className="font-semibold text-slate-900 text-sm">{name}</p>
-      {wheelchairBoarding && <p className="text-caption text-slate-400 mt-1">Accessible PMR</p>}
+      <p className="font-semibold text-text text-sm">{name}</p>
+      {wheelchairBoarding && <p className="text-caption text-text-subtle mt-1">Accessible PMR</p>}
     </div>
   )
 }

@@ -111,7 +111,7 @@ export function AddressSearch({
         {label}
       </label>
       <div className="relative flex items-center">
-        <span className="absolute left-3 text-slate-400 pointer-events-none" aria-hidden="true">
+        <span className="absolute left-3 text-text-subtle pointer-events-none" aria-hidden="true">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" strokeWidth="1.5" />
             <path
@@ -145,11 +145,11 @@ export function AddressSearch({
           onBlur={() => setTimeout(() => setOpen(false), 150)}
           placeholder={placeholder}
           autoComplete="off"
-          className="input pl-9 bg-white shadow-card-md"
+          className="input pl-9 bg-surface shadow-card-md"
         />
         {loading && (
           <span className="absolute right-3 pointer-events-none" aria-label="Recherche en cours">
-            <div className="w-4 h-4 border-2 border-slate-200 border-t-eco-600 rounded-full animate-spin" />
+            <div className="w-4 h-4 border-2 border-border border-t-eco-600 rounded-full animate-spin" />
           </span>
         )}
       </div>
@@ -166,7 +166,7 @@ export function AddressSearch({
           id={listId}
           role="listbox"
           aria-label="Suggestions d'adresses"
-          className="absolute top-full left-0 right-0 mt-1 bg-white rounded-card shadow-card-lg border border-slate-100 overflow-hidden z-overlay max-h-64 overflow-y-auto"
+          className="absolute top-full left-0 right-0 mt-1 bg-surface rounded-card shadow-card-lg border border-border overflow-hidden z-overlay max-h-64 overflow-y-auto"
         >
           {results.map((result, index) => (
             <li
@@ -176,10 +176,10 @@ export function AddressSearch({
               aria-selected={index === activeIndex}
               onMouseDown={() => handleSelect(result)}
               title={result.display_name}
-              className={`px-4 py-3 cursor-pointer text-body-sm border-b border-slate-50 last:border-0 truncate transition-colors duration-fast ${
+              className={`px-4 py-3 cursor-pointer text-body-sm border-b border-border last:border-0 truncate transition-colors duration-fast ${
                 index === activeIndex
                   ? 'bg-eco-50 text-eco-800'
-                  : 'text-slate-700 hover:bg-slate-50'
+                  : 'text-text-muted hover:bg-surface-muted'
               }`}
             >
               {result.display_name}
