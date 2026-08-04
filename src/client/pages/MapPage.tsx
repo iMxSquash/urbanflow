@@ -159,6 +159,7 @@ export default function MapPage() {
     setFromLabel(state.fromLabel)
     setToCoords(state.to)
     setToLabel(state.toLabel)
+    setEcoMapActive(true)
     setSheetState('mid')
   }, [location.state])
 
@@ -360,6 +361,7 @@ export default function MapPage() {
         onToSelect={(c, label) => {
           setToCoords(c)
           setToLabel(label)
+          setEcoMapActive(true)
         }}
         onSwap={handleSwapDirection}
         options={options}
