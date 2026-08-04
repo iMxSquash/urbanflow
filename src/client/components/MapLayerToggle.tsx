@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import type { MapLayerKey } from '../stores/map-layers.store'
 import { useMapLayersStore } from '../stores/map-layers.store'
 
@@ -122,10 +123,88 @@ function LeafIcon() {
   )
 }
 
+function LayersTriggerIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 3l9 5-9 5-9-5 9-5M3 14l9 5 9-5" />
+    </svg>
+  )
+}
+
 interface MapLayerToggleProps {
   hasJourney: boolean
   ecoMapActive?: boolean
   onToggleEco?: () => void
+}
+
+function LayerRows({
+  hasJourney,
+  ecoMapActive,
+  onToggleEco,
+}: Required<Omit<MapLayerToggleProps, 'onToggleEco'>> & Pick<MapLayerToggleProps, 'onToggleEco'>) {
+  const { layers, toggleLayer } = useMapLayersStore()
+
+  return (
+    <>
+      {LAYERS.map(
+        ({ key, label, activeColor, activeTextClass, activeBgClass, activeRingClass }) => {
+          const active = layers[key]
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => toggleLayer(key)}
+              aria-pressed={active}
+              aria-label={`${active ? 'Masquer' : 'Afficher'} : ${label}`}
+              className={[
+                'flex items-center gap-2.5 px-3 h-11 rounded-lg text-body-sm font-medium cursor-pointer',
+                'transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-600',
+                active
+                  ? `${activeBgClass} ${activeTextClass} ring-1 ring-inset ${activeRingClass}`
+                  : 'text-text-subtle hover:bg-surface-muted hover:text-text',
+              ].join(' ')}
+            >
+              <span style={{ color: active ? activeColor : undefined }}>{LAYER_ICONS[key]}</span>
+              {label}
+            </button>
+          )
+        }
+      )}
+      {hasJourney && onToggleEco && (
+        <>
+          <div className="h-px bg-border mx-1" aria-hidden="true" />
+          <button
+            type="button"
+            onClick={onToggleEco}
+            aria-pressed={ecoMapActive}
+            aria-label={ecoMapActive ? 'Désactiver la carte éco' : 'Activer la carte éco'}
+            className={[
+              'flex items-center gap-2.5 px-3 h-11 rounded-lg text-body-sm font-medium cursor-pointer',
+              'transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-600',
+              ecoMapActive
+                ? 'bg-eco-50 text-eco-800 ring-1 ring-inset ring-eco-200'
+                : 'text-text-subtle hover:bg-surface-muted hover:text-text',
+            ].join(' ')}
+          >
+            <span style={{ color: ecoMapActive ? 'var(--color-primary)' : undefined }}>
+              <LeafIcon />
+            </span>
+            Carte éco
+          </button>
+        </>
+      )}
+    </>
+  )
 }
 
 export function MapLayerToggle({
@@ -133,68 +212,82 @@ export function MapLayerToggle({
   ecoMapActive = false,
   onToggleEco,
 }: MapLayerToggleProps) {
-  const { layers, toggleLayer } = useMapLayersStore()
+  const [isOpen, setIsOpen] = useState(false)
+  const mobileContainerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    function handlePointerDown(event: PointerEvent) {
+      if (!mobileContainerRef.current?.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setIsOpen(false)
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isOpen])
 
   return (
-    <div
-      className={[
-        'absolute left-4 z-1000',
-        // Le bottom sheet est désormais toujours affiché (état "replié" 212px
-        // minimum) — ce bouton doit toujours passer au-dessus, jamais bottom-4.
-        hasJourney ? 'bottom-[calc(58vh+12px)] lg:bottom-4' : 'bottom-[232px] lg:bottom-4',
-      ].join(' ')}
-      role="group"
-      aria-label="Calques de la carte"
-    >
-      <div className="bg-surface rounded-xl shadow-card-md border border-border p-1.5 flex flex-col gap-2">
-        {LAYERS.map(
-          ({ key, label, activeColor, activeTextClass, activeBgClass, activeRingClass }) => {
-            const active = layers[key]
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => toggleLayer(key)}
-                aria-pressed={active}
-                aria-label={`${active ? 'Masquer' : 'Afficher'} : ${label}`}
-                className={[
-                  'flex items-center gap-2.5 px-3 h-11 rounded-lg text-body-sm font-medium cursor-pointer',
-                  'transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-600',
-                  active
-                    ? `${activeBgClass} ${activeTextClass} ring-1 ring-inset ${activeRingClass}`
-                    : 'text-text-subtle hover:bg-surface-muted hover:text-text',
-                ].join(' ')}
-              >
-                <span style={{ color: active ? activeColor : undefined }}>{LAYER_ICONS[key]}</span>
-                {label}
-              </button>
-            )
-          }
-        )}
-        {hasJourney && onToggleEco && (
-          <>
-            <div className="h-px bg-border mx-1" aria-hidden="true" />
-            <button
-              type="button"
-              onClick={onToggleEco}
-              aria-pressed={ecoMapActive}
-              aria-label={ecoMapActive ? 'Désactiver la carte éco' : 'Activer la carte éco'}
-              className={[
-                'flex items-center gap-2.5 px-3 h-11 rounded-lg text-body-sm font-medium cursor-pointer',
-                'transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-eco-600',
-                ecoMapActive
-                  ? 'bg-eco-50 text-eco-800 ring-1 ring-inset ring-eco-200'
-                  : 'text-text-subtle hover:bg-surface-muted hover:text-text',
-              ].join(' ')}
-            >
-              <span style={{ color: ecoMapActive ? 'var(--color-primary)' : undefined }}>
-                <LeafIcon />
-              </span>
-              Carte éco
-            </button>
-          </>
+    <>
+      {/* Desktop — panneau toujours visible, inchangé */}
+      <div
+        className={[
+          'hidden lg:flex absolute left-4 z-1000',
+          // Le bottom sheet est désormais toujours affiché (état "replié" 212px
+          // minimum) — ce bouton doit toujours passer au-dessus, jamais bottom-4.
+          hasJourney ? 'bottom-[calc(58vh+12px)] lg:bottom-4' : 'bottom-[232px] lg:bottom-4',
+        ].join(' ')}
+        role="group"
+        aria-label="Calques de la carte"
+      >
+        <div className="bg-surface rounded-xl shadow-card-md border border-border p-1.5 flex flex-col gap-2">
+          <LayerRows
+            hasJourney={hasJourney}
+            ecoMapActive={ecoMapActive}
+            onToggleEco={onToggleEco}
+          />
+        </div>
+      </div>
+
+      {/* Mobile — masqué derrière un bouton déclencheur, sous le badge météo */}
+      <div ref={mobileContainerRef} className="lg:hidden absolute top-[58px] right-3 z-1100">
+        <button
+          type="button"
+          onClick={() => setIsOpen((open) => !open)}
+          aria-haspopup="true"
+          aria-expanded={isOpen}
+          aria-label={isOpen ? 'Fermer les couches de la carte' : 'Couches de la carte'}
+          className={[
+            'w-11 h-11 rounded-xl border shadow-card flex items-center justify-center cursor-pointer',
+            isOpen
+              ? 'bg-eco-50 border-eco-600 text-eco-800'
+              : 'bg-surface/90 border-border text-text',
+          ].join(' ')}
+        >
+          <LayersTriggerIcon />
+        </button>
+        {isOpen && (
+          <div
+            role="group"
+            aria-label="Calques de la carte"
+            className="absolute top-[calc(100%+8px)] right-0 w-52 bg-surface rounded-xl shadow-card-md border border-border p-1.5 flex flex-col gap-2"
+          >
+            <LayerRows
+              hasJourney={hasJourney}
+              ecoMapActive={ecoMapActive}
+              onToggleEco={onToggleEco}
+            />
+          </div>
         )}
       </div>
-    </div>
+    </>
   )
 }
