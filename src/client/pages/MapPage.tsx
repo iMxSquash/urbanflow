@@ -67,6 +67,11 @@ export default function MapPage() {
   const [fromLabel, setFromLabel] = useState<string | null>(null)
   const [toCoords, setToCoords] = useState<Coordinates | null>(null)
   const [toLabel, setToLabel] = useState<string | null>(null)
+  // Une inversion départ/arrivée déplace la position GPS courante côté
+  // arrivée : le départ devient une adresse fixe (l'ancienne arrivée), qui ne
+  // doit plus être écrasée par le GPS tant qu'aucune nouvelle recherche n'a
+  // été lancée depuis la carte (cf. handleSwapDirection).
+  const [geoOverridden, setGeoOverridden] = useState(false)
   const [sheetState, setSheetState] = useState<SheetState>('collapsed')
   const {
     journeys,
@@ -158,7 +163,7 @@ export default function MapPage() {
   }, [location.state])
 
   // Position affichée : pendant le suivi on suit la position GPS temps réel
-  const userPosition = geoPosition ?? addressPosition
+  const userPosition = geoOverridden ? addressPosition : (geoPosition ?? addressPosition)
   const displayPosition =
     trackingPhase === 'active' ? (trackingPosition ?? userPosition) : userPosition
 
@@ -265,6 +270,23 @@ export default function MapPage() {
     void handleArrival()
   }
 
+  // Inverse départ et arrivée. L'ancien départ (GPS ou adresse) devient une
+  // arrivée fixe ; l'ancienne arrivée devient le nouveau départ, qui doit
+  // rester prioritaire sur le GPS (geoOverridden) sans quoi userPosition
+  // reviendrait aussitôt à la position courante.
+  function handleSwapDirection() {
+    const prevFromCoords = userPosition
+    const prevFromLabel = effectiveFromLabel
+    const prevToCoords = toCoords
+    const prevToLabel = toLabel
+
+    setGeoOverridden(true)
+    setAddressPosition(prevToCoords)
+    setFromLabel(prevToLabel)
+    setToCoords(prevFromCoords)
+    setToLabel(prevFromLabel)
+  }
+
   // Fermeture du résumé de fin de trajet — retour à un état replié propre
   function handleSummaryClose() {
     setSummaryResult(null)
@@ -275,6 +297,7 @@ export default function MapPage() {
     setFromLabel(null)
     setToCoords(null)
     setToLabel(null)
+    setGeoOverridden(false)
     setSheetState('collapsed')
   }
 
@@ -290,6 +313,7 @@ export default function MapPage() {
       setFromLabel(null)
       setToCoords(null)
       setToLabel(null)
+      setGeoOverridden(false)
       setSheetState('collapsed')
     } else {
       setActiveSegmentIdx(null)
@@ -308,7 +332,7 @@ export default function MapPage() {
     datetimeType: 'departure',
   }
 
-  const effectiveFromLabel = geoPosition ? 'Ma position' : fromLabel
+  const effectiveFromLabel = geoOverridden ? fromLabel : geoPosition ? 'Ma position' : fromLabel
   const showGeoError = !!geoError && !geoLoading && geolocationConsent !== 'denied'
 
   return (
@@ -337,6 +361,7 @@ export default function MapPage() {
           setToCoords(c)
           setToLabel(label)
         }}
+        onSwap={handleSwapDirection}
         options={options}
         defaultOptions={defaultOptions}
         onOptionsChange={setOptions}

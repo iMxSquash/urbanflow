@@ -12,6 +12,7 @@ import { AddressSearch } from './AddressSearch'
 import { Co2FactorsNote } from './Co2FactorsNote'
 import { DatetimePicker } from './DatetimePicker'
 import { EmptyResultsPanel } from './EmptyResultsPanel'
+import { IconButton } from './IconButton'
 import { JourneyPanel, type JourneyTrackingPhase } from './JourneyPanel'
 import { JourneyResults } from './JourneyResults'
 import { ModeChip } from './ModeChip'
@@ -49,6 +50,7 @@ interface MapSheetProps {
   hasFrom: boolean
   onFromSelect: (c: Coordinates, label: string) => void
   onToSelect: (c: Coordinates, label: string) => void
+  onSwap: () => void
 
   options: SearchOptions
   defaultOptions: SearchOptions
@@ -84,6 +86,33 @@ const PREFERENCE_META: Record<UserPreference, { label: string; icon: React.React
     label: 'Équilibré',
     icon: <path d="M12 3v18M4 8h16M4 16h16" />,
   },
+}
+
+// Inverse départ/arrivée — Direction Estuaire (icône + gabarit identiques en
+// mobile et desktop, cf. MAQUETTE.md §5.2 état 2 "inverser").
+function SwapDirectionButton({ onSwap }: { onSwap: () => void }) {
+  return (
+    <IconButton
+      icon={
+        <svg
+          aria-hidden="true"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M7 4v14l-3-3M17 20V6l3 3" />
+        </svg>
+      }
+      aria-label="Inverser départ et arrivée"
+      onClick={onSwap}
+      className="self-center shrink-0"
+    />
+  )
 }
 
 // ── Sous-vues ────────────────────────────────────────────────────────────────
@@ -182,12 +211,14 @@ function SearchView({
   toLabel,
   onFromSelect,
   onToSelect,
+  onSwap,
   onBack,
 }: {
   fromLabel: string | null
   toLabel: string | null
   onFromSelect: (c: Coordinates, label: string) => void
   onToSelect: (c: Coordinates, label: string) => void
+  onSwap: () => void
   onBack: () => void
 }) {
   return (
@@ -216,16 +247,21 @@ function SearchView({
         <span className="text-h3 font-bold text-text">Où allez-vous ?</span>
       </div>
 
-      <AddressSearch
-        label="Adresse de départ"
-        onSelect={(c) => onFromSelect(c, 'Adresse de départ')}
-        placeholder={fromLabel ?? 'Départ — ex : Ma position, Commerce...'}
-      />
-      <AddressSearch
-        label="Adresse d'arrivée"
-        onSelect={(c) => onToSelect(c, 'Adresse')}
-        placeholder="Arrivée"
-      />
+      <div className="flex gap-2.5 items-stretch">
+        <div className="flex-1 flex flex-col gap-1.5">
+          <AddressSearch
+            label="Adresse de départ"
+            onSelect={(c) => onFromSelect(c, 'Adresse de départ')}
+            placeholder={fromLabel ?? 'Départ — ex : Ma position, Commerce...'}
+          />
+          <AddressSearch
+            label="Adresse d'arrivée"
+            onSelect={(c) => onToSelect(c, 'Adresse')}
+            placeholder="Arrivée"
+          />
+        </div>
+        <SwapDirectionButton onSwap={onSwap} />
+      </div>
 
       <p className="text-caption text-text-subtle mt-auto pt-2">
         ↑↓ pour parcourir · Entrée pour choisir · Échap pour revenir à la carte
@@ -488,6 +524,7 @@ function DesktopPanel({
   toLabel,
   onFromSelect,
   onToSelect,
+  onSwap,
   options,
   onOptionsChange,
   journeys,
@@ -508,6 +545,7 @@ function DesktopPanel({
   toLabel: string | null
   onFromSelect: (c: Coordinates, label: string) => void
   onToSelect: (c: Coordinates, label: string) => void
+  onSwap: () => void
   options: SearchOptions
   onOptionsChange: (o: SearchOptions) => void
   journeys: Journey[]
@@ -531,17 +569,20 @@ function DesktopPanel({
         <>
           <span className="text-h3 font-bold text-text">Itinéraire</span>
 
-          <div className="flex flex-col gap-3">
-            <AddressSearch
-              label="Adresse de départ"
-              onSelect={(c) => onFromSelect(c, 'Adresse de départ')}
-              placeholder={fromLabel ?? 'Départ — ex : Ma position, Commerce...'}
-            />
-            <AddressSearch
-              label="Adresse d'arrivée"
-              onSelect={(c) => onToSelect(c, 'Adresse')}
-              placeholder={toLabel ?? 'Arrivée'}
-            />
+          <div className="flex gap-2.5 items-stretch">
+            <div className="flex-1 flex flex-col gap-1.5">
+              <AddressSearch
+                label="Adresse de départ"
+                onSelect={(c) => onFromSelect(c, 'Adresse de départ')}
+                placeholder={fromLabel ?? 'Départ — ex : Ma position, Commerce...'}
+              />
+              <AddressSearch
+                label="Adresse d'arrivée"
+                onSelect={(c) => onToSelect(c, 'Adresse')}
+                placeholder={toLabel ?? 'Arrivée'}
+              />
+            </div>
+            <SwapDirectionButton onSwap={onSwap} />
           </div>
 
           <PreferenceRadioGroup
@@ -616,6 +657,7 @@ export function MapSheet(props: MapSheetProps) {
     hasFrom,
     onFromSelect,
     onToSelect,
+    onSwap,
     options,
     defaultOptions,
     onOptionsChange,
@@ -726,6 +768,7 @@ export function MapSheet(props: MapSheetProps) {
           toLabel={toLabel}
           onFromSelect={onFromSelect}
           onToSelect={onToSelect}
+          onSwap={onSwap}
           options={options}
           onOptionsChange={onOptionsChange}
           journeys={journeys}
@@ -763,6 +806,7 @@ export function MapSheet(props: MapSheetProps) {
                 onToSelect(c, label)
                 if (hasFrom) onStateChange('mid')
               }}
+              onSwap={onSwap}
               onBack={() => onStateChange(fromLabel || toLabel ? 'mid' : 'collapsed')}
             />
           )}
