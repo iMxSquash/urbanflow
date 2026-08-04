@@ -155,9 +155,7 @@ function SegmentDetail({ segment }: { segment: JourneySegment }) {
 
         <div className="bg-surface rounded-lg p-2 text-center border border-border">
           <p className="text-[10px] text-text-subtle leading-none mb-0.5">Distance</p>
-          <p className="text-body-sm font-bold text-text tabular-nums">
-            {segment.distanceKm} km
-          </p>
+          <p className="text-body-sm font-bold text-text tabular-nums">{segment.distanceKm} km</p>
         </div>
 
         {segment.co2g > 0 ? (
@@ -306,7 +304,9 @@ export function JourneyPanel({
       {/* Segments */}
       <p className="text-caption font-semibold text-text-subtle uppercase tracking-wide mb-3">
         Détail du trajet
-        <span className="ml-1 normal-case font-normal text-text-disabled">· tap pour les détails</span>
+        <span className="ml-1 normal-case font-normal text-text-disabled">
+          · tap pour les détails
+        </span>
       </p>
 
       <ol className="space-y-0">

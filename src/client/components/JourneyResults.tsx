@@ -216,9 +216,7 @@ function JourneyCard({ journey, ranks, onSelect, animDelay }: JourneyCardProps) 
         )}
 
         {/* ── Journey label ── */}
-        <h3 className="text-body font-semibold text-text leading-tight mb-2">
-          {journey.label}
-        </h3>
+        <h3 className="text-body font-semibold text-text leading-tight mb-2">{journey.label}</h3>
 
         {/* ── Mode badges + heure de départ ── */}
         <div className="flex flex-wrap items-center justify-between gap-y-1 mb-4">

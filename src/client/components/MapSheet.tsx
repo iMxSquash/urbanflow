@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import type {
   Coordinates,
   Journey,
@@ -7,8 +7,10 @@ import type {
   WeatherCondition,
 } from '@shared/types/index'
 import { TRANSPORT_MODES, USER_PREFERENCES } from '@shared/types/index'
+import { useAddressAutocomplete } from '../hooks/useAddressAutocomplete'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import { AddressSearch } from './AddressSearch'
+import { AddressSuggestionsList } from './AddressSuggestionsList'
 import { Co2FactorsNote } from './Co2FactorsNote'
 import { DatetimePicker } from './DatetimePicker'
 import { EmptyResultsPanel } from './EmptyResultsPanel'
@@ -46,11 +48,17 @@ interface MapSheetProps {
   onStateChange: (s: SheetState) => void
 
   fromLabel: string | null
+  fromCoords: Coordinates | null
   toLabel: string | null
   hasFrom: boolean
   onFromSelect: (c: Coordinates, label: string) => void
   onToSelect: (c: Coordinates, label: string) => void
   onSwap: () => void
+  onCancelSearch: () => void
+  /** Reporte le rétrécissement manuel mobile au parent — `MapPage` en a besoin
+   * pour savoir quand réafficher la nav (MIGRATION-TODO.md étape 6, visible
+   * en `collapsed`/`mid` et donc aussi quand le sheet est réduit à une bande). */
+  onMobileMinimizedChange?: (minimized: boolean) => void
 
   options: SearchOptions
   defaultOptions: SearchOptions
@@ -206,8 +214,73 @@ function CollapsedView({
   )
 }
 
+// Champ départ/arrivée du sheet mobile — input nu (pas de popover) : les
+// suggestions du champ actif s'affichent dans la zone partagée sous la ligne
+// des deux champs (MIGRATION-TODO.md étape 6 : "pas en popup, directement
+// dans la partie vide sous les inputs").
+function SearchField({
+  id,
+  listId,
+  label,
+  placeholder,
+  active,
+  auto,
+  onFocus,
+  onBlur,
+  onEscape,
+}: {
+  id: string
+  listId: string
+  label: string
+  placeholder: string
+  active: boolean
+  auto: ReturnType<typeof useAddressAutocomplete>
+  onFocus: () => void
+  onBlur: () => void
+  onEscape: () => void
+}) {
+  return (
+    <div className="relative flex items-center">
+      <label htmlFor={id} className="sr-only">
+        {label}
+      </label>
+      <span className="absolute left-3 text-text-subtle pointer-events-none" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" strokeWidth="1.5" />
+          <path d="m10 10 2.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      </span>
+      <input
+        id={id}
+        type="search"
+        role="combobox"
+        aria-expanded={active}
+        aria-controls={listId}
+        aria-autocomplete="list"
+        aria-activedescendant={
+          active && auto.activeIndex >= 0 ? `${listId}-option-${auto.activeIndex}` : undefined
+        }
+        value={auto.query}
+        onChange={(e) => auto.setQuery(e.target.value)}
+        onKeyDown={(e) => auto.handleKeyDown(e, { onEscape })}
+        onFocus={onFocus}
+        onBlur={onBlur}
+        placeholder={placeholder}
+        autoComplete="off"
+        className="input pl-9 bg-surface shadow-card-md"
+      />
+      {auto.loading && (
+        <span className="absolute right-3 pointer-events-none" aria-label="Recherche en cours">
+          <div className="w-4 h-4 border-2 border-border border-t-eco-600 rounded-full animate-spin" />
+        </span>
+      )}
+    </div>
+  )
+}
+
 function SearchView({
   fromLabel,
+  fromCoords,
   toLabel,
   onFromSelect,
   onToSelect,
@@ -215,12 +288,47 @@ function SearchView({
   onBack,
 }: {
   fromLabel: string | null
+  fromCoords: Coordinates | null
   toLabel: string | null
   onFromSelect: (c: Coordinates, label: string) => void
   onToSelect: (c: Coordinates, label: string) => void
   onSwap: () => void
   onBack: () => void
 }) {
+  const fromId = useId()
+  const fromListId = useId()
+  const toId = useId()
+  const toListId = useId()
+  const [activeField, setActiveField] = useState<'from' | 'to' | null>(null)
+
+  const fromAuto = useAddressAutocomplete(onFromSelect, undefined, fromLabel ?? '')
+  const toAuto = useAddressAutocomplete(onToSelect, fromCoords, toLabel ?? '')
+
+  function focusField(field: 'from' | 'to', auto: ReturnType<typeof useAddressAutocomplete>) {
+    auto.refreshRecents()
+    setActiveField(field)
+  }
+
+  function blurField(field: 'from' | 'to') {
+    setTimeout(() => setActiveField((f) => (f === field ? null : f)), 150)
+  }
+
+  const activeAuto = activeField === 'from' ? fromAuto : activeField === 'to' ? toAuto : null
+
+  // `onSwap` (prop) échange les coordonnées/labels côté `MapPage`, mais les
+  // champs affichés ici lisent l'état local de chaque hook (`fromAuto.query`/
+  // `toAuto.query`), pas les props `fromLabel`/`toLabel` (seulement utilisées
+  // comme valeur initiale au montage) — sans ce échange local explicite, le
+  // texte visible dans les deux champs ne bougeait pas au clic. Les valeurs
+  // à écrire sont lues dans les props *avant* l'appel à `onSwap`, seule
+  // source fiable (le hook local peut être vide si l'adresse a été résolue
+  // après le montage, ex. géolocalisation asynchrone).
+  function handleSwap() {
+    fromAuto.setQuietQuery(toLabel ?? '')
+    toAuto.setQuietQuery(fromLabel ?? '')
+    onSwap()
+  }
+
   return (
     <div className="flex flex-col gap-3 h-full">
       <div className="flex items-center gap-2">
@@ -249,19 +357,51 @@ function SearchView({
 
       <div className="flex gap-2.5 items-stretch">
         <div className="flex-1 flex flex-col gap-1.5">
-          <AddressSearch
+          <SearchField
+            id={fromId}
+            listId={fromListId}
             label="Adresse de départ"
-            onSelect={(c) => onFromSelect(c, 'Adresse de départ')}
             placeholder={fromLabel ?? 'Départ — ex : Ma position, Commerce...'}
+            active={activeField === 'from'}
+            auto={fromAuto}
+            onFocus={() => focusField('from', fromAuto)}
+            onBlur={() => blurField('from')}
+            onEscape={() => setActiveField(null)}
           />
-          <AddressSearch
+          <SearchField
+            id={toId}
+            listId={toListId}
             label="Adresse d'arrivée"
-            onSelect={(c) => onToSelect(c, 'Adresse')}
             placeholder="Arrivée"
+            active={activeField === 'to'}
+            auto={toAuto}
+            onFocus={() => focusField('to', toAuto)}
+            onBlur={() => blurField('to')}
+            onEscape={() => setActiveField(null)}
           />
         </div>
-        <SwapDirectionButton onSwap={onSwap} />
+        <SwapDirectionButton onSwap={handleSwap} />
       </div>
+
+      {activeAuto && (
+        <AddressSuggestionsList
+          listId={activeField === 'from' ? fromListId : toListId}
+          query={activeAuto.query}
+          results={activeAuto.results}
+          activeIndex={activeAuto.activeIndex}
+          recents={activeAuto.recents}
+          originCoords={activeField === 'to' ? fromCoords : undefined}
+          onSelectResult={(r) => {
+            activeAuto.selectResult(r)
+            setActiveField(null)
+          }}
+          onSelectRecent={(r) => {
+            activeAuto.selectRecent(r)
+            setActiveField(null)
+          }}
+          className="flex-1 min-h-0 overflow-y-auto"
+        />
+      )}
 
       <p className="text-caption text-text-subtle mt-auto pt-2">
         ↑↓ pour parcourir · Entrée pour choisir · Échap pour revenir à la carte
@@ -269,6 +409,59 @@ function SearchView({
         {toLabel}
       </p>
     </div>
+  )
+}
+
+// Vue minimisée mobile — indépendante de `SheetState` (peu importe l'étape en
+// cours) : ne montre que la barre de recherche, sans les chips de profil ni
+// le contenu de l'état courant (MIGRATION-TODO.md étape 6). Avant une
+// recherche, invite générique ; après, résumé départ → arrivée, tap pour
+// restaurer le sheet à sa taille précédente.
+function MinimizedSearchBar({
+  fromLabel,
+  toLabel,
+  onRestore,
+}: {
+  fromLabel: string | null
+  toLabel: string | null
+  onRestore: () => void
+}) {
+  const hasRoute = !!toLabel
+
+  return (
+    <button
+      type="button"
+      onClick={onRestore}
+      aria-label="Agrandir le panneau de recherche"
+      className="input justify-between text-left text-text-subtle"
+    >
+      <span className="flex items-center gap-3 min-w-0">
+        <svg
+          aria-hidden="true"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="shrink-0"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="M20 20l-4.5-4.5" />
+        </svg>
+        <span className="truncate">
+          {hasRoute ? (
+            <span className="text-text font-medium">
+              {fromLabel ?? 'Ma position'} → {toLabel}
+            </span>
+          ) : (
+            'Où allez-vous ?'
+          )}
+        </span>
+      </span>
+    </button>
   )
 }
 
@@ -289,7 +482,7 @@ function ModeChipsFieldset({
   }
 
   return (
-    <fieldset className="m-0 p-0 border-0 flex flex-wrap gap-2">
+    <fieldset className="m-0 p-0 border-0 min-w-0 w-full flex flex-nowrap gap-2 overflow-x-auto overscroll-x-contain touch-pan-x scrollbar-none [&>*]:shrink-0">
       <legend className="sr-only">Modes de transport autorisés pour ce trajet</legend>
       {TRANSPORT_MODES.map((mode) => (
         <ModeChip
@@ -303,7 +496,66 @@ function ModeChipsFieldset({
   )
 }
 
+// Résumé départ/arrivée en tête de la mi-hauteur — MAQUETTE.md §5.2 état 3
+// "A→B renseigné" (rangées résolues, pas des champs de saisie live : l'objet
+// est de pouvoir corriger sans redescendre en `collapsed`, pas de refaire
+// tourner l'autocomplete ici). Tap sur une adresse → réouvre `search`.
+function MidAddressRow({
+  fromLabel,
+  toLabel,
+  onSwap,
+  onEditAddresses,
+}: {
+  fromLabel: string | null
+  toLabel: string | null
+  onSwap: () => void
+  onEditAddresses: () => void
+}) {
+  return (
+    <div className="flex gap-2.5 items-stretch">
+      <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+        <button
+          type="button"
+          onClick={onEditAddresses}
+          aria-label={`Modifier l'adresse de départ, actuellement ${fromLabel ?? 'Ma position'}`}
+          className="flex items-center gap-2.5 h-11.5 px-3 rounded-md bg-surface-sunken text-left"
+        >
+          <span aria-hidden="true" className="w-2.5 h-2.5 rounded-full bg-primary shrink-0" />
+          <span className="flex-1 min-w-0 truncate text-body-sm font-medium text-text">
+            {fromLabel ?? 'Ma position'}
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={onEditAddresses}
+          aria-label={`Modifier l'adresse d'arrivée, actuellement ${toLabel ?? ''}`}
+          className="flex items-center gap-2.5 h-11.5 px-3 rounded-md bg-surface border border-text text-left"
+        >
+          <svg
+            aria-hidden="true"
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            className="text-text shrink-0"
+          >
+            <path d="M12 22s7-6.5 7-12A7 7 0 0 0 5 10c0 5.5 7 12 7 12z" />
+          </svg>
+          <span className="flex-1 min-w-0 truncate text-body-sm font-semibold text-text">
+            {toLabel}
+          </span>
+        </button>
+      </div>
+      <SwapDirectionButton onSwap={onSwap} />
+    </div>
+  )
+}
+
 function MidView({
+  fromLabel,
+  toLabel,
+  onSwap,
+  onEditAddresses,
   options,
   onOptionsChange,
   journeys,
@@ -312,6 +564,10 @@ function MidView({
   onOpenSettings,
   onViewResults,
 }: {
+  fromLabel: string | null
+  toLabel: string | null
+  onSwap: () => void
+  onEditAddresses: () => void
   options: SearchOptions
   onOptionsChange: (o: SearchOptions) => void
   journeys: Journey[]
@@ -329,6 +585,12 @@ function MidView({
 
   return (
     <div className="flex flex-col gap-3">
+      <MidAddressRow
+        fromLabel={fromLabel}
+        toLabel={toLabel}
+        onSwap={onSwap}
+        onEditAddresses={onEditAddresses}
+      />
       <ModeChipsFieldset
         modes={options.modes}
         onChange={(modes) => onOptionsChange({ ...options, modes })}
@@ -336,9 +598,9 @@ function MidView({
       <button
         type="button"
         onClick={onOpenSettings}
-        className="flex items-center justify-between text-body-sm text-text-muted px-1 py-2"
+        className="flex items-center justify-between gap-2 text-body-sm text-text-muted px-1 py-2"
       >
-        <span>
+        <span className="min-w-0 truncate text-left">
           {options.datetimeType === 'departure' ? 'Partir maintenant' : 'Arriver avant'} ·{' '}
           {options.maxWalkMinutes} min de marche
           {options.pmrAccessibility && ' · PMR'}
@@ -353,6 +615,7 @@ function MidView({
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
+          className="shrink-0"
         >
           <path d="M6 9l6 6 6-6" />
         </svg>
@@ -374,7 +637,9 @@ function MidView({
           disabled={journeyLoading || count === 0}
           className="btn-secondary w-full justify-between"
         >
-          <span aria-live="polite">{summary}</span>
+          <span aria-live="polite" className="min-w-0 truncate text-left">
+            {summary}
+          </span>
           <svg
             aria-hidden="true"
             width="16"
@@ -385,6 +650,7 @@ function MidView({
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
+            className="shrink-0"
           >
             <path d="M5 12h14M12 5l7 7-7 7" />
           </svg>
@@ -573,12 +839,12 @@ function DesktopPanel({
             <div className="flex-1 flex flex-col gap-1.5">
               <AddressSearch
                 label="Adresse de départ"
-                onSelect={(c) => onFromSelect(c, 'Adresse de départ')}
+                onSelect={onFromSelect}
                 placeholder={fromLabel ?? 'Départ — ex : Ma position, Commerce...'}
               />
               <AddressSearch
                 label="Adresse d'arrivée"
-                onSelect={(c) => onToSelect(c, 'Adresse')}
+                onSelect={onToSelect}
                 placeholder={toLabel ?? 'Arrivée'}
               />
             </div>
@@ -638,6 +904,11 @@ function DesktopPanel({
 
 // ── MapSheet ─────────────────────────────────────────────────────────────────
 
+// Distance de swipe verticale (px) sur la poignée mobile avant de basculer
+// le rétrécissement manuel (indépendant de l'état — voir `.bottom-sheet`
+// `data-mobile-minimized` dans index.css).
+const MINIMIZE_SWIPE_THRESHOLD_PX = 24
+
 // Un cran en arrière — Échap replie le sheet d'un niveau (MAQUETTE.md §8).
 // 'tracking' n'a pas de parent : un suivi actif ne se replie pas au clavier.
 const PARENT_STATE: Partial<Record<SheetState, SheetState>> = {
@@ -653,11 +924,14 @@ export function MapSheet(props: MapSheetProps) {
     state,
     onStateChange,
     fromLabel,
+    fromCoords,
     toLabel,
     hasFrom,
     onFromSelect,
     onToSelect,
     onSwap,
+    onCancelSearch,
+    onMobileMinimizedChange,
     options,
     defaultOptions,
     onOptionsChange,
@@ -678,9 +952,38 @@ export function MapSheet(props: MapSheetProps) {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const isDialog = !isDesktop && state !== 'collapsed'
 
+  // `search` est accessible depuis plusieurs états (`collapsed` en premier
+  // contact, `mid` pour corriger une adresse déjà choisie) — contrairement
+  // au reste de `PARENT_STATE` (une relation fixe, connue à l'avance), son
+  // "retour" dépend de la navigation réelle de l'utilisateur. `lastStateRef`
+  // retient l'état vu au rendu précédent (mis à jour en effet, jamais lu
+  // pendant le rendu — la règle `react-hooks/refs` interdit de lire/écrire
+  // un ref pendant le rendu) pour détecter la transition *vers* `search` et
+  // capturer l'état d'où elle vient dans `stateBeforeSearchRef`, seul lu
+  // plus tard dans des gestionnaires d'événements (swipe/tap/Échap/retour).
+  const stateBeforeSearchRef = useRef<SheetState>('collapsed')
+  const lastStateRef = useRef<SheetState>(state)
+
+  useEffect(() => {
+    if (state === 'search' && lastStateRef.current !== 'search') {
+      stateBeforeSearchRef.current = lastStateRef.current
+    }
+    lastStateRef.current = state
+  }, [state])
+
+  // Point d'entrée unique pour "à quel état revenir depuis `from`" — `search`
+  // lit la capture dynamique ci-dessus, tous les autres états lisent la
+  // relation fixe `PARENT_STATE`. Les 4 déclencheurs de retour (Échap, tap
+  // poignée, swipe poignée, chevron de `SearchView`) passent tous par cette
+  // même fonction plutôt que de répéter chacun leur propre `state ===
+  // 'search' ? ... : ...`.
+  function backTarget(from: SheetState): SheetState | undefined {
+    return from === 'search' ? stateBeforeSearchRef.current : PARENT_STATE[from]
+  }
+
   useEffect(() => {
     if (isDesktop) return
-    const parent = PARENT_STATE[state]
+    const parent = backTarget(state)
     if (!parent) return
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') onStateChange(parent!)
@@ -689,17 +992,69 @@ export function MapSheet(props: MapSheetProps) {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [state, onStateChange, isDesktop])
 
-  // Réduction du panneau desktop — pur affichage, indépendant de la machine
-  // à états du sheet (search/results/...). Un changement d'état (nouvelle
-  // adresse, trajet sélectionné...) réaffiche automatiquement le panneau :
-  // rien ne doit rester bloqué caché derrière un rail réduit. Ajusté pendant
-  // le rendu (pattern React "adjusting state when a prop changes") plutôt
-  // qu'un useEffect, pour éviter un rendu en cascade évitable.
+  // Réduction du panneau desktop et rétrécissement mobile — pur affichage,
+  // indépendant de la machine à états du sheet (search/results/...). Un
+  // changement d'état (nouvelle adresse, trajet sélectionné...) réaffiche
+  // automatiquement le panneau : rien ne doit rester bloqué caché derrière un
+  // rail réduit ou une bande minimisée. Ajusté pendant le rendu (pattern
+  // React "adjusting state when a prop changes") plutôt qu'un useEffect,
+  // pour éviter un rendu en cascade évitable.
   const [desktopCollapsed, setDesktopCollapsed] = useState(false)
+  const [mobileMinimized, setMobileMinimized] = useState(false)
+
+  // Reporté en effet (pas pendant le rendu) : muter un state du parent
+  // pendant le rendu de cet enfant déclencherait l'avertissement React
+  // "Cannot update a component while rendering a different component".
+  useEffect(() => {
+    onMobileMinimizedChange?.(mobileMinimized)
+  }, [mobileMinimized, onMobileMinimizedChange])
+
   const [prevState, setPrevState] = useState(state)
   if (state !== prevState) {
     setPrevState(state)
     setDesktopCollapsed(false)
+    setMobileMinimized(false)
+  }
+
+  // Swipe vertical sur la poignée mobile — rétrécit/restaure indépendamment
+  // de l'état, sans intercepter le tap simple (qui garde la navigation
+  // agrandir/réduire existante entre états). `didSwipe` évite que le click
+  // émis juste après le pointerup ne redéclenche aussi la navigation d'état.
+  const swipeStartY = useRef<number | null>(null)
+  const didSwipe = useRef(false)
+
+  function handleSheetHandlePointerDown(e: React.PointerEvent) {
+    swipeStartY.current = e.clientY
+    didSwipe.current = false
+  }
+
+  function handleSheetHandlePointerMove(e: React.PointerEvent) {
+    if (swipeStartY.current === null) return
+    const delta = e.clientY - swipeStartY.current
+    if (delta > MINIMIZE_SWIPE_THRESHOLD_PX && state !== 'collapsed') {
+      didSwipe.current = true
+      swipeStartY.current = null
+      // Depuis `search`, minimiser revient à l'état d'où la saisie a été
+      // ouverte (`collapsed` ou `mid` — cf. `backTarget`) plutôt que
+      // d'empiler une bande minimisée par-dessus une saisie qui n'a rien de
+      // commis à résumer.
+      if (state === 'search') onStateChange(backTarget(state)!)
+      else setMobileMinimized(true)
+    } else if (delta < -MINIMIZE_SWIPE_THRESHOLD_PX) {
+      didSwipe.current = true
+      swipeStartY.current = null
+      // Depuis `collapsed`/`mid`, tirer vers le haut ouvre directement la
+      // saisie — `setMobileMinimized(false)` seul était un no-op dans ces
+      // deux états (jamais minimisés, cf. garde `state !== 'collapsed'`
+      // ci-dessus ; `mid` non plus puisqu'il ne passe jamais par ce chemin),
+      // donc le geste n'avait visuellement aucun effet.
+      if (state === 'collapsed' || state === 'mid') onStateChange('search')
+      else setMobileMinimized(false)
+    }
+  }
+
+  function handleSheetHandlePointerUp() {
+    swipeStartY.current = null
   }
 
   // Desktop : panneau latéral permanent, `aside` + landmark plutôt qu'un
@@ -711,6 +1066,7 @@ export function MapSheet(props: MapSheetProps) {
       className="bottom-sheet lg:relative"
       data-sheet-state={state}
       data-desktop-collapsed={isDesktop ? desktopCollapsed : undefined}
+      data-mobile-minimized={!isDesktop ? mobileMinimized : undefined}
       role={isDialog ? 'dialog' : undefined}
       aria-label={
         isDesktop
@@ -720,28 +1076,73 @@ export function MapSheet(props: MapSheetProps) {
             : undefined
       }
     >
-      {!isDesktop && state !== 'search' && state !== 'tracking' && (
-        <button
-          type="button"
-          onClick={() => {
-            if (state === 'collapsed') onStateChange(hasFrom ? 'mid' : 'search')
-            else {
-              const parent = PARENT_STATE[state]
-              if (parent) onStateChange(parent)
+      {!isDesktop && state !== 'tracking' && (
+        <div className="relative self-stretch shrink-0 -mx-4 -mt-2 px-4">
+          <button
+            type="button"
+            onPointerDown={handleSheetHandlePointerDown}
+            onPointerMove={handleSheetHandlePointerMove}
+            onPointerUp={handleSheetHandlePointerUp}
+            onPointerCancel={handleSheetHandlePointerUp}
+            onClick={() => {
+              if (didSwipe.current) {
+                didSwipe.current = false
+                return
+              }
+              if (mobileMinimized) {
+                setMobileMinimized(false)
+                return
+              }
+              if (state === 'collapsed') {
+                onStateChange(hasFrom ? 'mid' : 'search')
+              } else {
+                const parent = backTarget(state)
+                if (parent) onStateChange(parent)
+              }
+            }}
+            aria-label={
+              mobileMinimized || state === 'collapsed'
+                ? 'Agrandir le panneau'
+                : 'Réduire le panneau'
             }
-          }}
-          aria-label={state === 'collapsed' ? 'Agrandir le panneau' : 'Réduire le panneau'}
-          className="self-center shrink-0 -mx-4 -mt-2 px-4 pt-2 pb-1.5 flex items-center justify-center"
-        >
-          <span className="bottom-sheet-handle" aria-hidden="true" />
-        </button>
+            className="w-full pt-2 pb-1.5 flex items-center justify-center touch-none"
+          >
+            <span className="bottom-sheet-handle" aria-hidden="true" />
+          </button>
+
+          {!mobileMinimized && toLabel && state !== 'results' && state !== 'detail' && (
+            <button
+              type="button"
+              onClick={onCancelSearch}
+              aria-label="Annuler la recherche"
+              className="absolute top-1 right-3 w-8 h-8 flex items-center justify-center rounded-full text-text-subtle hover:text-text hover:bg-surface-sunken transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <svg
+                aria-hidden="true"
+                width="14"
+                height="14"
+                viewBox="0 0 14 14"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
+                <path d="M1 1l12 12M13 1L1 13" />
+              </svg>
+            </button>
+          )}
+        </div>
       )}
 
       {isDesktop && (
         <button
           type="button"
           onClick={() => setDesktopCollapsed((v) => !v)}
-          aria-label={desktopCollapsed ? 'Agrandir le panneau de recherche' : 'Réduire le panneau de recherche'}
+          aria-label={
+            desktopCollapsed
+              ? 'Agrandir le panneau de recherche'
+              : 'Réduire le panneau de recherche'
+          }
           aria-expanded={!desktopCollapsed}
           className="bottom-sheet-desktop-tab"
         >
@@ -789,78 +1190,105 @@ export function MapSheet(props: MapSheetProps) {
         />
       ) : (
         <div className="flex-1 min-h-0 overflow-y-auto">
-          {state === 'collapsed' && (
-            <CollapsedView
-              onOpenSearch={() => onStateChange('search')}
-              preference={options.preference}
-              onPreferenceChange={(preference) => onOptionsChange({ ...options, preference })}
-            />
-          )}
+          {/* `key` force un vrai démontage/remontage à chaque changement d'état
+           * ou de minimisation (au lieu d'un simple re-render de la branche déjà
+           * montée) : c'est ce montage DOM qui relance `animate-sheet-grow` à
+           * chaque fois, en CSS pur (`@keyframes`), sans mesure de hauteur ni
+           * rejeu JS — cf. le commentaire sur `.bottom-sheet` dans index.css
+           * pour pourquoi `top`/`bottom`/`max-height` seuls ne suffisent pas à
+           * animer `collapsed`/`mid` (hauteur intrinsèque). */}
+          <div
+            key={mobileMinimized ? 'minimized' : state}
+            className="h-full origin-bottom animate-sheet-grow"
+          >
+            {mobileMinimized ? (
+              <MinimizedSearchBar
+                fromLabel={fromLabel}
+                toLabel={toLabel}
+                onRestore={() => setMobileMinimized(false)}
+              />
+            ) : (
+              <>
+                {state === 'collapsed' && (
+                  <CollapsedView
+                    onOpenSearch={() => onStateChange('search')}
+                    preference={options.preference}
+                    onPreferenceChange={(preference) => onOptionsChange({ ...options, preference })}
+                  />
+                )}
 
-          {state === 'search' && (
-            <SearchView
-              fromLabel={fromLabel}
-              toLabel={toLabel}
-              onFromSelect={onFromSelect}
-              onToSelect={(c, label) => {
-                onToSelect(c, label)
-                if (hasFrom) onStateChange('mid')
-              }}
-              onSwap={onSwap}
-              onBack={() => onStateChange(fromLabel || toLabel ? 'mid' : 'collapsed')}
-            />
-          )}
+                {state === 'search' && (
+                  <SearchView
+                    fromLabel={fromLabel}
+                    fromCoords={fromCoords}
+                    toLabel={toLabel}
+                    onFromSelect={onFromSelect}
+                    onToSelect={(c, label) => {
+                      onToSelect(c, label)
+                      if (hasFrom) onStateChange('mid')
+                    }}
+                    onSwap={onSwap}
+                    onBack={() => onStateChange(backTarget('search')!)}
+                  />
+                )}
 
-          {state === 'mid' && (
-            <MidView
-              options={options}
-              onOptionsChange={onOptionsChange}
-              journeys={journeys}
-              journeyLoading={journeyLoading}
-              journeyError={journeyError}
-              onOpenSettings={() => onStateChange('settings')}
-              onViewResults={() => onStateChange('results')}
-            />
-          )}
+                {state === 'mid' && (
+                  <MidView
+                    fromLabel={fromLabel}
+                    toLabel={toLabel}
+                    onSwap={onSwap}
+                    onEditAddresses={() => onStateChange('search')}
+                    options={options}
+                    onOptionsChange={onOptionsChange}
+                    journeys={journeys}
+                    journeyLoading={journeyLoading}
+                    journeyError={journeyError}
+                    onOpenSettings={() => onStateChange('settings')}
+                    onViewResults={() => onStateChange('results')}
+                  />
+                )}
 
-          {state === 'settings' && (
-            <SettingsView
-              options={options}
-              onOptionsChange={onOptionsChange}
-              onApply={() => onStateChange('mid')}
-              onReset={() => {
-                onOptionsChange(defaultOptions)
-                onStateChange('mid')
-              }}
-              onCollapse={() => onStateChange('mid')}
-            />
-          )}
+                {state === 'settings' && (
+                  <SettingsView
+                    options={options}
+                    onOptionsChange={onOptionsChange}
+                    onApply={() => onStateChange('mid')}
+                    onReset={() => {
+                      onOptionsChange(defaultOptions)
+                      onStateChange('mid')
+                    }}
+                    onCollapse={() => onStateChange('mid')}
+                  />
+                )}
 
-          {state === 'results' && (
-            <JourneyResults
-              journeys={journeys}
-              onSelect={(j) => {
-                onSelectJourney(j)
-                onStateChange('detail')
-              }}
-              onClose={() => onStateChange('mid')}
-            />
-          )}
+                {state === 'results' && (
+                  <JourneyResults
+                    journeys={journeys}
+                    onSelect={(j) => {
+                      onSelectJourney(j)
+                      onStateChange('detail')
+                    }}
+                    onClose={() => onStateChange('mid')}
+                  />
+                )}
 
-          {(state === 'detail' || state === 'tracking') && selectedJourney && (
-            <JourneyPanel
-              journey={selectedJourney}
-              onClose={onClosePanel}
-              onDepartClick={() => {
-                onDepartClick()
-              }}
-              onEndTrip={onEndTrip}
-              trackingPhase={trackingPhase}
-              weather={weather}
-              activeSegmentIdx={activeSegmentIdx}
-              onSegmentSelect={onSegmentSelect}
-            />
-          )}
+                {(state === 'detail' || state === 'tracking') && selectedJourney && (
+                  <JourneyPanel
+                    journey={selectedJourney}
+                    onClose={onClosePanel}
+                    onDepartClick={() => {
+                      onDepartClick()
+                    }}
+                    onEndTrip={onEndTrip}
+                    trackingPhase={trackingPhase}
+                    weather={weather}
+                    activeSegmentIdx={activeSegmentIdx}
+                    onSegmentSelect={onSegmentSelect}
+                  />
+                )}
+              </>
+            )}
+          </div>
         </div>
       )}
     </Wrapper>

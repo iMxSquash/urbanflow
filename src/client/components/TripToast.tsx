@@ -67,8 +67,7 @@ export function TripToast({
               {formatCo2(co2SavedGrams)} CO₂ économisés vs voiture
             </p>
             <p className="text-caption text-text-subtle mt-0.5">
-              Total cumulé :{' '}
-              <span className="font-medium text-text-muted">{totalPoints} pts</span>
+              Total cumulé : <span className="font-medium text-text-muted">{totalPoints} pts</span>
             </p>
             {newlyUnlockedBadges.length > 0 && (
               <p className="text-caption text-warning font-medium mt-1">

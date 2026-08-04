@@ -74,9 +74,7 @@ export function UserLocationMarker({ position, isTracking = false }: UserLocatio
       aria-label={isTracking ? 'Votre position — suivi actif' : 'Votre position actuelle'}
     >
       <Popup>
-        <p className="font-medium text-text">
-          {isTracking ? 'Suivi en cours' : 'Vous êtes ici'}
-        </p>
+        <p className="font-medium text-text">{isTracking ? 'Suivi en cours' : 'Vous êtes ici'}</p>
       </Popup>
     </Marker>
   )

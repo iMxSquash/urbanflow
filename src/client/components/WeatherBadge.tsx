@@ -34,10 +34,7 @@ export function WeatherBadge({ weather, variant = 'map' }: WeatherBadgeProps) {
         <span>
           {weather.temperature}°C · {weather.description}
           {weather.windSpeed > 40 && (
-            <span className="text-warning font-medium">
-              {' '}
-              · Vent fort {weather.windSpeed} km/h
-            </span>
+            <span className="text-warning font-medium"> · Vent fort {weather.windSpeed} km/h</span>
           )}
         </span>
       </div>

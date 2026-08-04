@@ -28,7 +28,7 @@ import { useConsentStore } from '../stores/consent.store'
 import { useMapLayersStore } from '../stores/map-layers.store'
 import { useProfileStore } from '../stores/profile.store'
 import { WeatherBadge } from '../components/WeatherBadge'
-import type { Coordinates, TransportMode } from '@shared/types/index'
+import type { Coordinates, Journey, TransportMode } from '@shared/types/index'
 
 const BiclooLayer = lazy(() => import('../components/BiclooLayer'))
 const TanLinesLayer = lazy(() => import('../components/TanLinesLayer'))
@@ -73,6 +73,10 @@ export default function MapPage() {
   // été lancée depuis la carte (cf. handleSwapDirection).
   const [geoOverridden, setGeoOverridden] = useState(false)
   const [sheetState, setSheetState] = useState<SheetState>('collapsed')
+  // Rétrécissement manuel mobile (bouton poignée) — n'affecte pas `sheetState`,
+  // mais la nav doit réapparaître comme en `collapsed` (MIGRATION-TODO.md
+  // étape 6). Reporté par `MapSheet` via `onMobileMinimizedChange`.
+  const [sheetMinimized, setSheetMinimized] = useState(false)
   const {
     journeys,
     selectedJourney,
@@ -288,9 +292,10 @@ export default function MapPage() {
     setToLabel(prevFromLabel)
   }
 
-  // Fermeture du résumé de fin de trajet — retour à un état replié propre
-  function handleSummaryClose() {
-    setSummaryResult(null)
+  // Réinitialisation complète de la recherche en cours (départ/arrivée,
+  // trajets calculés) — partagée entre la fin de trajet et la croix
+  // "Annuler la recherche" du sheet (MIGRATION-TODO.md étape 6).
+  function resetSearch() {
     setActiveSegmentIdx(null)
     deselectJourney()
     clearJourney()
@@ -302,8 +307,24 @@ export default function MapPage() {
     setSheetState('collapsed')
   }
 
+  // Fermeture du résumé de fin de trajet — retour à un état replié propre
+  function handleSummaryClose() {
+    setSummaryResult(null)
+    resetSearch()
+  }
+
+  // Sélection d'un trajet (depuis la liste du sheet ou en tapant directement
+  // une ligne sur la carte comparative) : on quitte le mode carte éco pour
+  // n'afficher que le trajet choisi (`JourneyLayer`), plus la comparaison
+  // (`EcoMapLayer`).
+  function handleSelectJourney(journey: Journey) {
+    selectJourney(journey)
+    setEcoMapActive(false)
+  }
+
   // Fermeture du panneau détail/suivi : abandon complet si suivi actif,
-  // sinon retour aux résultats (l'itinéraire reste calculé).
+  // sinon retour aux résultats (l'itinéraire reste calculé, on revient à la
+  // comparaison éco puisqu'il n'y a plus de trajet unique affiché).
   function handleClosePanel() {
     if (trackingPhase === 'active') {
       stopTracking()
@@ -319,6 +340,7 @@ export default function MapPage() {
     } else {
       setActiveSegmentIdx(null)
       deselectJourney()
+      setEcoMapActive(true)
       setSheetState('results')
     }
   }
@@ -335,13 +357,24 @@ export default function MapPage() {
 
   const effectiveFromLabel = geoOverridden ? fromLabel : geoPosition ? 'Ma position' : fromLabel
   const showGeoError = !!geoError && !geoLoading && geolocationConsent !== 'denied'
+  // Nav mobile visible en `collapsed`/`mid` (MAQUETTE.md §5.2 états 1 et 3,
+  // "3 · Mi-hauteur" inclut la nav dans la maquette), en `search`/`results`
+  // (demandé explicitement, absents de la maquette mais utiles pour ne pas
+  // s'y sentir bloqué) et quand le sheet est réduit manuellement, quel que
+  // soit l'état sous-jacent.
+  const showBottomNav =
+    sheetState === 'collapsed' ||
+    sheetState === 'mid' ||
+    sheetState === 'search' ||
+    sheetState === 'results' ||
+    sheetMinimized
 
   return (
     <div className="lg:flex lg:h-screen">
-      {/* Sidebar desktop : masquée en mobile sauf sheet replié, où elle est le
-       * bottom nav (comportement historique du sheet à 8 états, inchangé). En
-       * desktop la sidebar est permanente, indépendante de l'état du sheet. */}
-      <div className={sheetState === 'collapsed' ? '' : 'max-lg:hidden'}>
+      {/* Sidebar desktop : masquée en mobile sauf sheet replié/mi-hauteur/réduit,
+       * où elle est le bottom nav. En desktop la sidebar est permanente,
+       * indépendante de l'état du sheet. */}
+      <div className={showBottomNav ? '' : 'max-lg:hidden'}>
         <BottomNav />
       </div>
 
@@ -352,6 +385,7 @@ export default function MapPage() {
         state={sheetState}
         onStateChange={setSheetState}
         fromLabel={effectiveFromLabel}
+        fromCoords={userPosition}
         toLabel={toLabel}
         hasFrom={!!userPosition}
         onFromSelect={(c, label) => {
@@ -364,6 +398,8 @@ export default function MapPage() {
           setEcoMapActive(true)
         }}
         onSwap={handleSwapDirection}
+        onCancelSearch={resetSearch}
+        onMobileMinimizedChange={setSheetMinimized}
         options={options}
         defaultOptions={defaultOptions}
         onOptionsChange={setOptions}
@@ -371,7 +407,7 @@ export default function MapPage() {
         journeyLoading={journeyLoading}
         journeyError={journeyError}
         selectedJourney={selectedJourney}
-        onSelectJourney={selectJourney}
+        onSelectJourney={handleSelectJourney}
         onClosePanel={handleClosePanel}
         activeSegmentIdx={activeSegmentIdx}
         onSegmentSelect={setActiveSegmentIdx}
@@ -468,7 +504,7 @@ export default function MapPage() {
                 selectedJourneyId={selectedJourney?.id}
                 onSelect={(journey) => {
                   setActiveSegmentIdx(null)
-                  selectJourney(journey)
+                  handleSelectJourney(journey)
                 }}
               />
             )}
