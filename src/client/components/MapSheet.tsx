@@ -876,44 +876,122 @@ function DesktopPanel({
   onEndTrip: () => void
 }) {
   const isTracking = state === 'tracking'
+  // Réglages avancés repliés par défaut (MAQUETTE.md §4 "divulgation
+  // progressive" + §5.2 desktop "en barre d'outils en ligne") — jamais
+  // dépliés d'office, quel que soit l'état.
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  // Formulaire de recherche réduit à un résumé dès qu'il y a un résultat à
+  // montrer, pour laisser la hauteur au panneau résultats (`flex-1` plus
+  // bas) — sinon recherche + profil + modes + réglages remplissent le
+  // panneau et un seul itinéraire n'y tient même pas en entier. `editingForm`
+  // permet de rouvrir le formulaire complet à la demande ("Modifier").
+  const [editingForm, setEditingForm] = useState(false)
+  const hasResults = journeys.length > 0 || selectedJourney !== null
+  const formCompact = hasResults && !editingForm
+
+  // Un nouveau calcul en cours équivaut à une nouvelle recherche : on referme
+  // le formulaire déplié manuellement pour revenir au résumé compact une
+  // fois le résultat prêt. Ajusté pendant le rendu (pas un effect) suivant le
+  // pattern React officiel de reset d'état dérivé d'une prop.
+  const [prevJourneyLoading, setPrevJourneyLoading] = useState(journeyLoading)
+  if (journeyLoading !== prevJourneyLoading) {
+    setPrevJourneyLoading(journeyLoading)
+    if (journeyLoading) setEditingForm(false)
+  }
+
+  function handleSelectJourney(journey: Journey) {
+    setEditingForm(false)
+    onSelectJourney(journey)
+  }
 
   return (
     <div className="flex flex-col gap-4 h-full">
-      {!isTracking && (
-        <>
-          <span className="text-h3 font-bold text-text">Itinéraire</span>
+      {!isTracking &&
+        (formCompact ? (
+          <DesktopFormSummary
+            fromLabel={fromLabel}
+            toLabel={toLabel}
+            options={options}
+            onEdit={() => setEditingForm(true)}
+          />
+        ) : (
+          <>
+            <span className="text-h3 font-bold text-text">Itinéraire</span>
 
-          <div className="flex gap-2.5 items-stretch">
-            <div className="flex-1 flex flex-col gap-1.5">
-              <AddressSearch
-                label="Adresse de départ"
-                onSelect={onFromSelect}
-                placeholder={fromLabel ?? 'Départ — ex : Ma position, Commerce...'}
-              />
-              <AddressSearch
-                label="Adresse d'arrivée"
-                onSelect={onToSelect}
-                placeholder={toLabel ?? 'Arrivée'}
-              />
+            <div className="flex gap-2.5 items-stretch">
+              <div className="flex-1 flex flex-col gap-1.5">
+                <AddressSearch
+                  label="Adresse de départ"
+                  onSelect={onFromSelect}
+                  placeholder={fromLabel ?? 'Départ — ex : Ma position, Commerce...'}
+                />
+                <AddressSearch
+                  label="Adresse d'arrivée"
+                  onSelect={onToSelect}
+                  placeholder={toLabel ?? 'Arrivée'}
+                />
+              </div>
+              <SwapDirectionButton onSwap={onSwap} />
             </div>
-            <SwapDirectionButton onSwap={onSwap} />
-          </div>
 
-          <PreferenceRadioGroup
-            value={options.preference}
-            onChange={(preference) => onOptionsChange({ ...options, preference })}
-          />
+            <PreferenceRadioGroup
+              value={options.preference}
+              onChange={(preference) => onOptionsChange({ ...options, preference })}
+            />
 
-          <ModeChipsFieldset
-            modes={options.modes}
-            onChange={(modes) => onOptionsChange({ ...options, modes })}
-          />
+            <ModeChipsFieldset
+              modes={options.modes}
+              onChange={(modes) => onOptionsChange({ ...options, modes })}
+            />
 
-          <div className="flex flex-col gap-3 p-3 rounded-xl border border-border bg-surface-muted">
-            <SettingsFields options={options} onOptionsChange={onOptionsChange} />
-          </div>
-        </>
-      )}
+            <div>
+              <button
+                type="button"
+                onClick={() => setSettingsOpen((open) => !open)}
+                aria-expanded={settingsOpen}
+                className="flex items-center justify-between gap-2 w-full h-10 px-3 rounded-button border border-border bg-surface-muted text-body-sm font-medium text-text-muted hover:bg-surface-sunken transition-colors duration-fast"
+              >
+                <span className="flex items-center gap-2">
+                  <svg
+                    aria-hidden="true"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                  </svg>
+                  Réglages avancés
+                </span>
+                <svg
+                  aria-hidden="true"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={settingsOpen ? 'rotate-180' : ''}
+                >
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </button>
+
+              {settingsOpen && (
+                <div className="flex flex-col gap-3 p-3 mt-2 rounded-xl border border-border bg-surface-muted">
+                  <SettingsFields options={options} onOptionsChange={onOptionsChange} />
+                </div>
+              )}
+            </div>
+          </>
+        ))}
 
       <div className="flex-1 min-h-0 overflow-y-auto">
         {selectedJourney ? (
@@ -941,11 +1019,47 @@ function DesktopPanel({
             onOptionsChange={onOptionsChange}
           />
         ) : journeys.length > 0 ? (
-          <JourneyResults journeys={journeys} onSelect={onSelectJourney} />
+          <JourneyResults journeys={journeys} onSelect={handleSelectJourney} />
         ) : null}
       </div>
 
       {!isTracking && <Co2FactorsNote className="pt-3 border-t border-border" />}
+    </div>
+  )
+}
+
+// Résumé compact du formulaire de recherche (desktop) — remplace
+// adresses+profil+modes+réglages une fois qu'il y a un résultat à montrer,
+// pour rendre au panneau résultats la hauteur qu'ils occupaient (MAQUETTE.md
+// §4 "divulgation progressive"). "Modifier" redéploie le formulaire complet.
+function DesktopFormSummary({
+  fromLabel,
+  toLabel,
+  options,
+  onEdit,
+}: {
+  fromLabel: string | null
+  toLabel: string | null
+  options: SearchOptions
+  onEdit: () => void
+}) {
+  const time = options.datetime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+
+  return (
+    <div className="flex items-center justify-between gap-3 p-3 rounded-xl border border-border bg-surface-muted">
+      <div className="min-w-0">
+        <p className="text-body-sm font-semibold text-text truncate">
+          {fromLabel ?? 'Ma position'} → {toLabel}
+        </p>
+        <p className="text-caption text-text-subtle truncate">
+          {PREFERENCE_META[options.preference].label} ·{' '}
+          {options.datetimeType === 'departure' ? 'Départ' : 'Arrivée'} {time}
+          {options.pmrAccessibility && ' · PMR'}
+        </p>
+      </div>
+      <button type="button" onClick={onEdit} className="btn-secondary shrink-0 h-9 px-3">
+        Modifier
+      </button>
     </div>
   )
 }
