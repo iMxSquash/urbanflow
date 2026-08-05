@@ -822,13 +822,8 @@
     &[data-sheet-state='detail'] {
       @apply max-lg:top-[152px] max-lg:overflow-y-auto;
     }
-    /* Suivi actif : chrome sombre forcé quel que soit le thème choisi par
-     * l'utilisateur — seul état du produit à l'imposer (MAQUETTE.md §5.2 état 7). */
     &[data-sheet-state='tracking'] {
       @apply max-lg:top-[172px] max-lg:overflow-y-auto;
-      background: #16211d;
-      border-top-color: #2c3b35;
-      color: #eef2ef;
     }
 
     /* Rétrécissement manuel (swipe bas sur la poignée, MapSheet.tsx) —

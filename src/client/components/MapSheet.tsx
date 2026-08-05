@@ -465,6 +465,54 @@ function MinimizedSearchBar({
   )
 }
 
+// Bande minimisée dédiée à `tracking` — contrairement à `MinimizedSearchBar`
+// (route + tap pour restaurer), le bouton "Terminer" doit rester actionnable
+// sans réagrandir le panneau, donc deux boutons distincts plutôt qu'un seul
+// bouton englobant (imbriquer un <button> dans un <button> est invalide).
+function MinimizedTrackingBar({
+  onRestore,
+  onEndTrip,
+}: {
+  onRestore: () => void
+  onEndTrip: () => void
+}) {
+  return (
+    <div className="flex items-center gap-2 w-full">
+      <button
+        type="button"
+        onClick={onRestore}
+        aria-label="Agrandir le suivi du trajet"
+        className="flex-1 min-w-0 flex items-center gap-2 h-12 px-4 rounded-md border border-transit-100 bg-transit-50 text-left transition-colors duration-normal ease-ui hover:bg-transit-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary"
+      >
+        {/* Marqueur statique — jamais de pulsation en boucle continue (règle Estuaire) */}
+        <span aria-hidden="true" className="shrink-0 w-2 h-2 rounded-full bg-transit-500" />
+        <span className="text-caption font-medium text-transit-700 truncate">Suivi GPS actif</span>
+      </button>
+      <button
+        type="button"
+        onClick={onEndTrip}
+        aria-label="Terminer le trajet"
+        className="shrink-0 h-12 px-3 flex items-center gap-1.5 rounded-md border border-border-strong text-text hover:bg-surface-muted transition-colors duration-normal ease-ui focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary"
+      >
+        <svg
+          aria-hidden="true"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+        </svg>
+        <span className="text-caption font-medium whitespace-nowrap">Terminer</span>
+      </button>
+    </div>
+  )
+}
+
 function ModeChipsFieldset({
   modes,
   onChange,
@@ -782,8 +830,8 @@ function SettingsView({
 // résultats/détail) deviennent des sections empilées dans le même panneau,
 // sans overlay ni divulgation progressive — recherche, profil, modes et
 // réglages avancés toujours visibles, résultats/détail juste en dessous.
-// Seul l'état 7 (suivi actif) reste exclusif : chrome sombre, pas de recherche
-// affichée pendant un trajet en cours.
+// Seul l'état 7 (suivi actif) reste exclusif : pas de recherche affichée
+// pendant un trajet en cours.
 function DesktopPanel({
   state,
   fromLabel,
@@ -1076,7 +1124,7 @@ export function MapSheet(props: MapSheetProps) {
             : undefined
       }
     >
-      {!isDesktop && state !== 'tracking' && (
+      {!isDesktop && (
         <div className="relative self-stretch shrink-0 -mx-4 -mt-2 px-4">
           <button
             type="button"
@@ -1095,10 +1143,14 @@ export function MapSheet(props: MapSheetProps) {
               }
               if (state === 'collapsed') {
                 onStateChange(hasFrom ? 'mid' : 'search')
-              } else {
-                const parent = backTarget(state)
-                if (parent) onStateChange(parent)
+                return
               }
+              const parent = backTarget(state)
+              // Pas de parent (`tracking`) : réduire le panneau au lieu de
+              // ne rien faire — seul le rétrécissement manuel a un sens
+              // pour un suivi actif, cf. `PARENT_STATE`.
+              if (parent) onStateChange(parent)
+              else setMobileMinimized(true)
             }}
             aria-label={
               mobileMinimized || state === 'collapsed'
@@ -1110,27 +1162,31 @@ export function MapSheet(props: MapSheetProps) {
             <span className="bottom-sheet-handle" aria-hidden="true" />
           </button>
 
-          {!mobileMinimized && toLabel && state !== 'results' && state !== 'detail' && (
-            <button
-              type="button"
-              onClick={onCancelSearch}
-              aria-label="Annuler la recherche"
-              className="absolute top-1 right-3 w-8 h-8 flex items-center justify-center rounded-full text-text-subtle hover:text-text hover:bg-surface-sunken transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            >
-              <svg
-                aria-hidden="true"
-                width="14"
-                height="14"
-                viewBox="0 0 14 14"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
+          {!mobileMinimized &&
+            toLabel &&
+            state !== 'results' &&
+            state !== 'detail' &&
+            state !== 'tracking' && (
+              <button
+                type="button"
+                onClick={onCancelSearch}
+                aria-label="Annuler la recherche"
+                className="absolute top-1 right-3 w-8 h-8 flex items-center justify-center rounded-full text-text-subtle hover:text-text hover:bg-surface-sunken transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
-                <path d="M1 1l12 12M13 1L1 13" />
-              </svg>
-            </button>
-          )}
+                <svg
+                  aria-hidden="true"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 14 14"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                >
+                  <path d="M1 1l12 12M13 1L1 13" />
+                </svg>
+              </button>
+            )}
         </div>
       )}
 
@@ -1202,11 +1258,18 @@ export function MapSheet(props: MapSheetProps) {
             className="h-full origin-bottom animate-sheet-grow"
           >
             {mobileMinimized ? (
-              <MinimizedSearchBar
-                fromLabel={fromLabel}
-                toLabel={toLabel}
-                onRestore={() => setMobileMinimized(false)}
-              />
+              state === 'tracking' ? (
+                <MinimizedTrackingBar
+                  onRestore={() => setMobileMinimized(false)}
+                  onEndTrip={onEndTrip}
+                />
+              ) : (
+                <MinimizedSearchBar
+                  fromLabel={fromLabel}
+                  toLabel={toLabel}
+                  onRestore={() => setMobileMinimized(false)}
+                />
+              )
             ) : (
               <>
                 {state === 'collapsed' && (

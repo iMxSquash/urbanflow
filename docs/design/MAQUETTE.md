@@ -289,7 +289,7 @@ changement d'état, ou un marqueur statique.
 | 4 | **Étendu (réglages)** | haut−140px | "Partir à"/"Arriver avant" + horloge, toggle PMR OFF ("Marche ≤ 5 min · segments vélo écartés"), slider marche max 15min (5-25), toggle "Éviter le dénivelé" ON, "Réinitialiser"/"Appliquer". |
 | 5 | **Résultats (3 propositions)** | haut−172px | Carte 1 recommandée (−1,18kg/23min, barre CO₂ 9%), Carte 2 "Plus rapide" (19min/−0,94kg/1,70€), Carte 3 "Confortable · 0 changement" (27min/−1,02kg). |
 | 6 | **Détail (segments dépliables)** | haut−152px | En-tête 23min/−1,18kg/150kcal/1,70€. 4 segments : Vélo Bicloo (station Commerce, 7 dispo), Attente 3min (badge ambré), Tram 1→Beaujoire (prochains passages 14:40/47/54), Marche→Polytech. CTA "Partir maintenant". |
-| 7 | **Suivi actif (mode sombre)** | haut−172px | Bandeau "Suivi GPS actif · position utilisée uniquement pour ce trajet" (RGPD). ETA "14:55", barre 48%, segment en cours, alerte météo. CTA "Terminer le trajet". |
+| 7 | **Suivi actif** | haut−172px | Bandeau "Suivi GPS actif · position utilisée uniquement pour ce trajet" (RGPD). ETA "14:55", barre 48%, segment en cours, alerte météo. CTA "Terminer le trajet". Suit le thème clair/sombre choisi par l'utilisateur, comme les autres états. |
 | 8 | **Fin de trajet (modale)** | centrée | "Trajet terminé", durée réelle vs estimée, CO₂ évité + équivalence voiture, points gagnés + palier, badge débloqué. "Voir mes progrès"/"Retour à la carte". |
 
 **PMR avant/après (comparaison documentée) :**

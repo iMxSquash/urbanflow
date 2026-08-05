@@ -7,6 +7,7 @@ import { BottomNav } from '../components/BottomNav'
 import { ErrorBanner } from '../components/ErrorBanner'
 import { GeolocationConsent } from '../components/GeolocationConsent'
 import { EcoMapLayer } from '../components/EcoMapLayer'
+import { EndTripConfirmModal } from '../components/EndTripConfirmModal'
 import { JourneyLayer } from '../components/JourneyLayer'
 import { JourneySummaryModal } from '../components/JourneySummaryModal'
 import { MapLayerToggle } from '../components/MapLayerToggle'
@@ -110,6 +111,7 @@ export default function MapPage() {
   const [activeTracking, setActiveTracking] = useState<ActiveTrackingState | null>(null)
   const [summaryResult, setSummaryResult] = useState<RecordTripResult | null>(null)
   const [summaryDurationMin, setSummaryDurationMin] = useState(0)
+  const [showEndTripConfirm, setShowEndTripConfirm] = useState(false)
   const arrivalHandledRef = useRef(false)
 
   const location = useLocation()
@@ -270,8 +272,15 @@ export default function MapPage() {
     setActiveTracking(null)
   }
 
-  // Fin manuelle via "Terminer le trajet"
+  // Fin manuelle via "Terminer le trajet" — passe par une confirmation
+  // (EndTripConfirmModal) avant d'arrêter le suivi, contrairement à l'arrivée
+  // GPS automatique (`handleArrival` ci-dessus) qui n'en a pas besoin.
   function handleEndTrip() {
+    setShowEndTripConfirm(true)
+  }
+
+  function handleConfirmEndTrip() {
+    setShowEndTripConfirm(false)
     void handleArrival()
   }
 
@@ -559,6 +568,16 @@ export default function MapPage() {
             realDurationMin={summaryDurationMin}
             tripResult={summaryResult}
             onClose={handleSummaryClose}
+          />,
+          document.body
+        )}
+
+      {/* Confirmation avant d'arrêter le suivi actif ("Terminer le trajet") */}
+      {showEndTripConfirm &&
+        createPortal(
+          <EndTripConfirmModal
+            onCancel={() => setShowEndTripConfirm(false)}
+            onConfirm={handleConfirmEndTrip}
           />,
           document.body
         )}
