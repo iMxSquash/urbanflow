@@ -23,6 +23,7 @@ import type { RecordTripResult } from '../services/gamification.service'
 import { useGamificationStore } from '../stores/gamification.store'
 import { useActiveTracking } from '../hooks/useActiveTracking'
 import { useGeolocation } from '../hooks/useGeolocation'
+import { useIsDarkMode } from '../hooks/useIsDarkMode'
 import { useJourney } from '../hooks/useJourney'
 import { useWeather } from '../hooks/useWeather'
 import { useConsentStore } from '../stores/consent.store'
@@ -37,7 +38,8 @@ const TanStopsLayer = lazy(() => import('../components/TanStopsLayer'))
 
 const NANTES_COMMERCE: [number, number] = [47.218, -1.553]
 const NANTES_FALLBACK_COORDS = { lat: 47.218, lng: -1.553 }
-const CARTO_POSITRON = 'https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+const CARTO_POSITRON_LIGHT = 'https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+const CARTO_POSITRON_DARK = 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
 const CARTO_ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors ' +
   '&copy; <a href="https://carto.com/attributions">CARTO</a>'
@@ -63,6 +65,7 @@ interface ActiveTrackingState {
 export default function MapPage() {
   const { geolocationConsent, grantGeolocation, denyGeolocation } = useConsentStore()
   const isOnline = useOnlineStatus()
+  const isDarkMode = useIsDarkMode()
   const { position: geoPosition, error: geoError, loading: geoLoading, locate } = useGeolocation()
   const [addressPosition, setAddressPosition] = useState<Coordinates | null>(null)
   const [fromLabel, setFromLabel] = useState<string | null>(null)
@@ -485,7 +488,16 @@ export default function MapPage() {
             zoomControl={false}
             attributionControl={false}
           >
-            <TileLayer url={CARTO_POSITRON} attribution={CARTO_ATTRIBUTION} />
+            <TileLayer
+              key={isDarkMode ? 'dark' : 'light'}
+              url={isDarkMode ? CARTO_POSITRON_DARK : CARTO_POSITRON_LIGHT}
+              attribution={CARTO_ATTRIBUTION}
+              className={
+                isDarkMode
+                  ? 'brightness-110 contrast-[.9] saturate-150 -hue-rotate-[70deg]'
+                  : undefined
+              }
+            />
             {layers.tanLines && (
               <Suspense fallback={null}>
                 <TanLinesLayer />
