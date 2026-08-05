@@ -11,6 +11,7 @@ import { EndTripConfirmModal } from '../components/EndTripConfirmModal'
 import { JourneyLayer } from '../components/JourneyLayer'
 import { JourneySummaryModal } from '../components/JourneySummaryModal'
 import { MapLayerToggle } from '../components/MapLayerToggle'
+import { MapResizeSync } from '../components/MapResizeSync'
 import { MapSheet, type SearchOptions, type SheetState } from '../components/MapSheet'
 import { TrackingConsentModal } from '../components/TrackingConsentModal'
 import { TripToast } from '../components/TripToast'
@@ -498,6 +499,7 @@ export default function MapPage() {
                   : undefined
               }
             />
+            <MapResizeSync />
             {layers.tanLines && (
               <Suspense fallback={null}>
                 <TanLinesLayer />
