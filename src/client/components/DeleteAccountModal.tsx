@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Modal } from './Modal'
-import { deleteAccount } from '../services/auth.service'
+import { deleteAccount, exportUserData } from '../services/auth.service'
 import { getDashboardStats, getUserBadges } from '../services/gamification.service'
 import { getMyRedemptions } from '../services/rewards.service'
 import { useAuthStore } from '../stores/auth.store'
@@ -29,6 +29,7 @@ export function DeleteAccountModal({ onClose }: DeleteAccountModalProps) {
   const [confirmText, setConfirmText] = useState('')
   const [isDeleting, setIsDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isExporting, setIsExporting] = useState(false)
 
   useEffect(() => {
     Promise.all([getDashboardStats(), getUserBadges(), getMyRedemptions()])
@@ -59,6 +60,17 @@ export function DeleteAccountModal({ onClose }: DeleteAccountModalProps) {
     }
   }
 
+  async function handleExport() {
+    setIsExporting(true)
+    try {
+      await exportUserData()
+    } catch {
+      /* non bloquant — l'utilisateur peut réessayer depuis Paramètres */
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   const canConfirm = confirmText === CONFIRM_WORD
 
   return (
@@ -85,9 +97,17 @@ export function DeleteAccountModal({ onClose }: DeleteAccountModalProps) {
       <h2 id="delete-title" className="text-h3 font-bold mb-2">
         Supprimer définitivement votre compte ?
       </h2>
-      <p id="delete-desc" className="text-body-sm text-text-muted leading-relaxed mb-3">
+      <p id="delete-desc" className="text-body-sm text-text-muted leading-relaxed mb-1">
         Cette action est irréversible et prend effet immédiatement.
       </p>
+      <button
+        type="button"
+        onClick={() => void handleExport()}
+        disabled={isExporting}
+        className="text-body-sm font-semibold text-primary mb-3 disabled:opacity-50 self-start"
+      >
+        {isExporting ? 'Export en cours…' : 'Exporter vos données avant de continuer'}
+      </button>
 
       <ul className="flex flex-col gap-1.5 p-3 rounded-md bg-danger-surface mb-4">
         {inventory ? (

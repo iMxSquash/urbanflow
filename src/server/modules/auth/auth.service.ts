@@ -130,6 +130,37 @@ export async function deleteAccount(userId: string): Promise<void> {
   await pool.query('DELETE FROM users WHERE id = $1', [userId])
 }
 
+// Trace serveur du consentement géolocalisation (accountabilité RGPD, art. 5.2) —
+// appelé quand l'utilisateur accepte la modale GeolocationConsent côté client.
+export async function recordRgpdConsent(userId: string): Promise<void> {
+  await pool.query('UPDATE users SET rgpd_consent_at = now() WHERE id = $1', [userId])
+}
+
+export interface AccountInfo {
+  email: string
+  createdAt: string
+  rgpdConsentAt: string | null
+  totalPoints: number
+}
+
+export async function getAccountInfo(userId: string): Promise<AccountInfo> {
+  const result = await pool.query<{
+    email: string
+    created_at: string
+    rgpd_consent_at: string | null
+    total_points: number
+  }>('SELECT email, created_at, rgpd_consent_at, total_points FROM users WHERE id = $1', [userId])
+  const row = result.rows[0]
+  if (!row) throw new Error('USER_NOT_FOUND')
+
+  return {
+    email: row.email,
+    createdAt: new Date(row.created_at).toISOString(),
+    rgpdConsentAt: row.rgpd_consent_at ? new Date(row.rgpd_consent_at).toISOString() : null,
+    totalPoints: row.total_points,
+  }
+}
+
 export async function logoutUser(incomingToken: string): Promise<void> {
   let payload: RefreshTokenPayload
   try {

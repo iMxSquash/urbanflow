@@ -214,4 +214,52 @@ router.post('/logout', refreshRateLimit, authController.logout)
  */
 router.delete('/me', deleteAccountRateLimit, authGuard, authController.deleteAccount)
 
+/**
+ * @swagger
+ * /api/auth/me/export:
+ *   get:
+ *     summary: Exporte l'ensemble des données personnelles du compte connecté (JSON)
+ *     description: >
+ *       Droit à la portabilité (RGPD art. 20) : profil de mobilité, historique de
+ *       trajets (sans coordonnées GPS), badges débloqués et récompenses échangées.
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Export JSON des données personnelles
+ *       401:
+ *         description: Token manquant ou invalide
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.get('/me/export', refreshRateLimit, authGuard, authController.exportData)
+
+/**
+ * @swagger
+ * /api/auth/consent:
+ *   post:
+ *     summary: Trace le consentement géolocalisation de l'utilisateur connecté
+ *     description: >
+ *       Enregistre `rgpd_consent_at = now()` côté serveur, en complément du
+ *       consentement local (Zustand) affiché par la modale de géolocalisation.
+ *       Accountabilité RGPD (art. 5.2) — permet de démontrer que le consentement
+ *       a été recueilli.
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       204:
+ *         description: Consentement enregistré
+ *       401:
+ *         description: Token manquant ou invalide
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post('/consent', refreshRateLimit, authGuard, authController.recordConsent)
+
 export default router

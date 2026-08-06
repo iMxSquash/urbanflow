@@ -21,6 +21,7 @@ import { useOnlineStatus } from '../hooks/useOnlineStatus'
 import { saveLastJourney } from '../utils/last-journey-cache'
 import { recordTrip } from '../services/gamification.service'
 import type { RecordTripResult } from '../services/gamification.service'
+import { recordGeolocationConsent } from '../services/auth.service'
 import { useGamificationStore } from '../stores/gamification.store'
 import { useActiveTracking } from '../hooks/useActiveTracking'
 import { useGeolocation } from '../hooks/useGeolocation'
@@ -222,6 +223,7 @@ export default function MapPage() {
   function handleGrant() {
     locatedOnMount.current = true
     grantGeolocation()
+    void recordGeolocationConsent()
     locate()
   }
 

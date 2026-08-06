@@ -60,6 +60,30 @@ export async function deleteAccount(): Promise<void> {
   }
 }
 
+// Trace serveur du consentement géolocalisation (accountabilité RGPD) — échec
+// non bloquant, le consentement local (Zustand) reste la source de vérité UX.
+export async function recordGeolocationConsent(): Promise<void> {
+  await apiFetch('/api/auth/consent', { method: 'POST' }).catch(() => {
+    /* non bloquant : le consentement local suffit à l'expérience utilisateur */
+  })
+}
+
+// Droit à la portabilité (RGPD art. 20) — télécharge un export JSON des données
+// personnelles du compte connecté.
+export async function exportUserData(): Promise<void> {
+  const res = await apiFetch('/api/auth/me/export')
+  if (!res.ok) {
+    throw new Error('Impossible de générer votre export de données')
+  }
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = 'urbanflow-donnees.json'
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
 export async function login(payload: LoginPayload): Promise<AuthTokenResponse> {
   const res = await fetch('/api/auth/login', {
     method: 'POST',
