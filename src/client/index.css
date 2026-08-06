@@ -751,8 +751,12 @@
      * standard) reste Chromium-only — pas fiable en pratique. La
      * transition/croissance visible de ces deux états passe donc par
      * `animate-sheet-grow` (transform, ci-dessous dans `@theme`), pas par ces
-     * propriétés de boîte. */
-    @apply transition-[top,bottom,max-height] duration-200 ease-ui;
+     * propriétés de boîte. `width`/`min-width`/`padding` s'y ajoutent pour le
+     * rail desktop (`data-desktop-collapsed`, ci-dessous) : ce sont des
+     * valeurs explicites des deux côtés (380px ↔ 32px, jamais `auto`), donc
+     * contrairement à `collapsed`/`mid` elles s'interpolent nativement sans
+     * recourir à `animate-sheet-grow`. */
+    @apply transition-[top,bottom,max-height,width,min-width,padding] duration-200 ease-ui;
     /* Garde-fou structurel : dès qu'un état pose `overflow-y-auto` sur cette
      * boîte (search/mid/settings/results/detail/tracking), la spec CSS
      * "promeut" silencieusement `overflow-x` (resté `visible`) en `auto` —
