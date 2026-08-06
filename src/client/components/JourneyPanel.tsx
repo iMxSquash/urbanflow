@@ -19,29 +19,6 @@ const MODE_COLORS: Record<TransportMode, string> = {
   train: '#33449E',
 }
 
-// Un seul jeu d'icônes SVG (MAQUETTE.md §1.7) — jamais d'emoji fonctionnel.
-// scooter/train ajoutés localement : `ModeChip` ne les porte pas (chips
-// texte seul dans la maquette), mais un segment de trajet doit toujours
-// avoir une icône, tous modes confondus.
-const MODE_ICONS: Record<TransportMode, React.ReactNode> = {
-  ...MODE_ICON_PATH_BASE,
-  scooter: (
-    <>
-      <circle cx="5" cy="19" r="2" />
-      <circle cx="17" cy="19" r="2" />
-      <path d="M5 19h7l1.5-10h5.5M12 12h3" />
-    </>
-  ),
-  train: (
-    <>
-      <rect x="5" y="4" width="14" height="13" rx="3" />
-      <path d="M9 4V2M15 4V2M5 10h14M8 21l-1.5-4M16 21l1.5-4M4 21h16" />
-      <circle cx="9" cy="13.5" r="1" />
-      <circle cx="15" cy="13.5" r="1" />
-    </>
-  ),
-} as Record<TransportMode, React.ReactNode>
-
 const MODE_LABELS: Record<TransportMode, string> = {
   walk: 'Marche',
   bike: 'Vélo',
@@ -402,7 +379,7 @@ export function JourneyPanel({
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   >
-                    {MODE_ICONS[segment.mode]}
+                    {MODE_ICON_PATH_BASE[segment.mode]}
                   </svg>
                 </div>
 

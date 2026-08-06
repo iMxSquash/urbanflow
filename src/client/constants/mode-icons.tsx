@@ -1,10 +1,9 @@
 import type { TransportMode } from '@shared/types/index'
 
-/** Icônes du set Estuaire (viewBox 0 0 24 24, stroke-width 1.9) — walk/bike/tram/bus/navibus
- * uniquement : scooter et train n'ont pas d'icône dédiée dans les maquettes de chip
- * (`ModeChip`, "chip texte seul"). Extrait ici pour être partagé avec les contextes qui,
- * eux, ont besoin d'une icône pour tous les modes (ex: segments de trajet). */
-export const MODE_ICON_PATH_BASE: Partial<Record<TransportMode, React.ReactNode>> = {
+/** Icônes du set Estuaire (viewBox 0 0 24 24, stroke-width 1.9) — source de vérité :
+ * `1a Estuaire - Palette.dc.html` (tableau "Couleurs par mode de transport"), tous
+ * modes confondus y compris scooter et train. */
+export const MODE_ICON_PATH_BASE: Record<TransportMode, React.ReactNode> = {
   walk: (
     <>
       <circle cx="12" cy="4" r="2" />
@@ -32,5 +31,18 @@ export const MODE_ICON_PATH_BASE: Partial<Record<TransportMode, React.ReactNode>
   ),
   navibus: (
     <path d="M3.5 16l1.5-5h14l1.5 5M6.5 11V7h11v4M3.5 20c1.4 0 2.4-1 3.8-1s2.4 1 3.8 1 2.4-1 3.8-1 2.4 1 3.8 1" />
+  ),
+  scooter: (
+    <>
+      <circle cx="6" cy="18" r="2" />
+      <circle cx="18" cy="18" r="2" />
+      <path d="M8 18h8l2-11h2M14 7h-3" />
+    </>
+  ),
+  train: (
+    <>
+      <rect x="5" y="3" width="14" height="13" rx="3" />
+      <path d="M5 10h14M9 16h6M9 20l-2 2M15 20l2 2" />
+    </>
   ),
 }
