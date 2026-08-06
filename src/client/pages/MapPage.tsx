@@ -245,10 +245,8 @@ export default function MapPage() {
     setTrackingPhase('idle')
     if (!selectedJourney) return
     const { segments } = selectedJourney
-    const origin = segments[0].from
-    const destination = segments[segments.length - 1].to
     try {
-      const result = await recordTrip(origin, destination, segments, false)
+      const result = await recordTrip(segments, false)
       setTripResult(result)
       useGamificationStore.getState().setTripResult(result.totalPoints, result.newlyUnlockedBadges)
     } catch {
@@ -262,10 +260,8 @@ export default function MapPage() {
     stopTracking()
     const realDurationMin = Math.round((Date.now() - activeTracking.startTime) / 60_000)
     const { segments } = selectedJourney
-    const origin = segments[0].from
-    const destination = segments[segments.length - 1].to
     try {
-      const result = await recordTrip(origin, destination, segments)
+      const result = await recordTrip(segments)
       useGamificationStore.getState().setTripResult(result.totalPoints, result.newlyUnlockedBadges)
       setSummaryResult(result)
       setSummaryDurationMin(Math.max(1, realDurationMin))

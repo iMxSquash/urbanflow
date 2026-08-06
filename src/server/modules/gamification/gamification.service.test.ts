@@ -25,8 +25,6 @@ const BADGE_ID = 'cccccccc-0000-0000-0000-000000000001'
 
 // 5 km tramway → co2 trajet = 20 g, voiture = 1265 g → économie = 1245 g → 124 pts
 const BASE_INPUT = {
-  origin: { lat: 47.218, lng: -1.553 },
-  destination: { lat: 47.225, lng: -1.56 },
   segments: [{ mode: 'tramway' as const, distanceKm: 5 }],
   gpsVerified: true,
 }

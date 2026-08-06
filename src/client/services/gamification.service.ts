@@ -1,5 +1,5 @@
 import { apiFetch } from '../utils/api-client'
-import type { Coordinates, JourneySegment } from '@shared/types/index'
+import type { JourneySegment } from '@shared/types/index'
 
 export interface RecordTripResult {
   tripId: string
@@ -21,8 +21,6 @@ export interface BadgeWithStatus {
 }
 
 export async function recordTrip(
-  origin: Coordinates,
-  destination: Coordinates,
   segments: JourneySegment[],
   gpsVerified = true
 ): Promise<RecordTripResult> {
@@ -30,8 +28,6 @@ export async function recordTrip(
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      origin,
-      destination,
       segments: segments.map((s) => ({ mode: s.mode, distanceKm: s.distanceKm })),
       gpsVerified,
     }),
