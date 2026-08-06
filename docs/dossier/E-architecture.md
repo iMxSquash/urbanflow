@@ -184,15 +184,10 @@ Le schéma PostgreSQL couvre quatre modules fonctionnels : authentification, pro
 
 Les points gagnés à chaque trajet sont crédités directement sur `trips.points_earned` et cumulés sur `users.total_points`. Aucune table de journal séparée n'est nécessaire : le solde de points d'un utilisateur se déduit de `users.total_points`, et son historique de gain se retrouve trajet par trajet dans `trips`.
 
-**Index PostGIS**
+**Minimisation GPS**
 
-Les colonnes `origin` et `destination` de la table `trips` utilisent le type `GEOGRAPHY(POINT, 4326)` de l'extension PostGIS (Geographic Information System, système d'information géographique, avec projection WGS84). Un index spatial de type GiST (Generalized Search Tree) est prévu sur chacune de ces colonnes pour accélérer les requêtes géospatiales (calcul de distance, sélection d'itinéraires dans un rayon donné) :
-
-```sql
-CREATE INDEX idx_trips_origin      ON trips USING GIST(origin);
-CREATE INDEX idx_trips_destination ON trips USING GIST(destination);
-```
+La table `trips` a initialement porté des colonnes `origin`/`destination` en `GEOGRAPHY(POINT, 4326)` indexées GiST, sur le modèle des stations Bicloo (`bike_stations`, migration 007, qui conserve cet usage pour ses requêtes de proximité). Un audit RGPD a montré qu'aucune requête applicative ne relisait jamais ces coordonnées après l'insertion — ni le calcul CO2/points (dérivé des segments d'itinéraire), ni les badges, ni le tableau de bord. La migration 016 supprime donc ces colonnes et leurs index : la position précise d'un trajet n'est plus stockée au-delà du calcul d'itinéraire qui l'a produite, conformément au principe de minimisation (RGPD art. 5.1.c).
 
 **Politique de rétention**
 
-Les enregistrements de `trips` seront supprimés automatiquement après douze mois, conformément à la politique RGPD définie dans la section consacrée aux contraintes transversales. Un job planifié côté backend exécute cette purge en dehors des heures de pointe. Aucune donnée GPS d'un utilisateur n'est conservée au-delà de cette limite sans action volontaire de sa part.
+Les enregistrements de `trips` et de `reward_redemptions` sont supprimés automatiquement après douze mois, conformément à la politique RGPD définie dans la section consacrée aux contraintes transversales. Un job planifié côté backend (`node-cron`, `src/server/jobs/purge-old-trips.job.ts`) exécute cette purge quotidiennement à 3h15, en dehors des heures de pointe.
