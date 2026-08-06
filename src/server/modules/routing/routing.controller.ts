@@ -13,6 +13,7 @@ export async function journey(req: Request, res: Response): Promise<void> {
     preferredModes,
     maxWalkMinutes,
     pmrAccessibility,
+    avoidElevation,
   } = req.body as JourneyRequest
 
   const options = {
@@ -21,6 +22,7 @@ export async function journey(req: Request, res: Response): Promise<void> {
     modes: preferredModes,
     maxWalkMinutes,
     pmrAccessibility,
+    avoidElevation,
     ...(datetime ? { departureTime: new Date(datetime) } : {}),
   }
 

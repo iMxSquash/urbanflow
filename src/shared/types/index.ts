@@ -26,6 +26,7 @@ export interface JourneyOptions {
   modes?: TransportMode[] // modes autorisés — sélectionne les providers (TC→Transitous, actifs→OSRM) et filtre dur les itinéraires ; influence aussi le score confort
   maxWalkMinutes?: number // pénalité si segment marche dépasse ce seuil
   pmrAccessibility?: boolean // réduit maxWalkMinutes effectif à 5 min, pénalise le vélo
+  avoidElevation?: boolean // pénalise le confort si un segment vélo est présent (pas de données DEM réelles disponibles — cf. scoring.service.ts)
 }
 
 export interface JourneySegment {

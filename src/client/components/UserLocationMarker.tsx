@@ -29,7 +29,9 @@ if (!document.getElementById(PULSE_STYLE_ID)) {
     .uf-pulse-ring {
       position: absolute; inset: 0; border-radius: 50%;
       background: rgba(37,99,235,0.3);
-      animation: uf-pulse 2s ease-out infinite;
+      /* Pulsation UNIQUE au changement d'état (démarrage du suivi), jamais en
+         boucle continue — règle Estuaire (pas d'animation décorative en boucle). */
+      animation: uf-pulse 2s ease-out 1;
     }
     .uf-pulse-dot {
       position: absolute; top: 50%; left: 50%;
@@ -72,9 +74,7 @@ export function UserLocationMarker({ position, isTracking = false }: UserLocatio
       aria-label={isTracking ? 'Votre position — suivi actif' : 'Votre position actuelle'}
     >
       <Popup>
-        <p className="font-medium text-slate-900">
-          {isTracking ? 'Suivi en cours' : 'Vous êtes ici'}
-        </p>
+        <p className="font-medium text-text">{isTracking ? 'Suivi en cours' : 'Vous êtes ici'}</p>
       </Popup>
     </Marker>
   )

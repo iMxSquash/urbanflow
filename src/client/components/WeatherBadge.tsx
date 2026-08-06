@@ -29,15 +29,12 @@ export function WeatherBadge({ weather, variant = 'map' }: WeatherBadgeProps) {
 
   if (variant === 'panel') {
     return (
-      <div className="flex items-center gap-2 text-caption text-slate-500" aria-label={ariaLabel}>
+      <div className="flex items-center gap-2 text-caption text-text-subtle" aria-label={ariaLabel}>
         <span aria-hidden="true">{icon}</span>
         <span>
           {weather.temperature}°C · {weather.description}
           {weather.windSpeed > 40 && (
-            <span className="text-amber-600 font-medium">
-              {' '}
-              · Vent fort {weather.windSpeed} km/h
-            </span>
+            <span className="text-warning font-medium"> · Vent fort {weather.windSpeed} km/h</span>
           )}
         </span>
       </div>
@@ -46,7 +43,9 @@ export function WeatherBadge({ weather, variant = 'map' }: WeatherBadgeProps) {
 
   return (
     <div
-      className="flex items-center gap-1.5 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-card text-body-sm text-slate-700 select-none"
+      // Pas de backdrop-blur (glassmorphism proscrit direction Estuaire) —
+      // simple fond translucide opaque à la couleur de surface du thème.
+      className="flex items-center gap-1.5 bg-surface/90 rounded-full px-3 py-1.5 shadow-card text-body-sm text-text select-none"
       aria-label={ariaLabel}
       role="status"
     >
@@ -54,7 +53,7 @@ export function WeatherBadge({ weather, variant = 'map' }: WeatherBadgeProps) {
         {icon}
       </span>
       <span className="font-medium">{weather.temperature}°C</span>
-      <span className="text-slate-400 hidden sm:inline">· {label}</span>
+      <span className="text-text-subtle hidden sm:inline">· {label}</span>
     </div>
   )
 }

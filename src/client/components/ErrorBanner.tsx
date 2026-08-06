@@ -8,9 +8,9 @@ export function ErrorBanner({ message, onRetry, onClose }: ErrorBannerProps) {
   return (
     <div
       role="alert"
-      className="bg-white rounded-card shadow-card-md border border-red-100 px-4 py-3 flex items-start justify-between gap-3"
+      className="bg-surface rounded-card shadow-card-md border border-danger-surface-icon px-4 py-3 flex items-start justify-between gap-3"
     >
-      <div className="flex items-center gap-2 text-body-sm text-red-600 min-w-0">
+      <div className="flex items-center gap-2 text-body-sm text-danger-text min-w-0">
         <svg
           width="16"
           height="16"

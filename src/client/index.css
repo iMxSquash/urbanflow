@@ -1,146 +1,437 @@
 /*
- * globals.css — UrbanFlow SmartRoute
+ * globals.css — UrbanFlow
  * Tailwind v4 CSS-first configuration
  * À importer dans src/client/main.tsx
  */
 
-@import "@fontsource/inter/latin-400.css";
-@import "@fontsource/inter/latin-500.css";
-@import "@fontsource/inter/latin-600.css";
-@import "@fontsource/inter/latin-700.css";
-@import "tailwindcss";
+@import '@fontsource/instrument-sans/latin-400.css';
+@import '@fontsource/instrument-sans/latin-500.css';
+@import '@fontsource/instrument-sans/latin-600.css';
+@import '@fontsource/instrument-sans/latin-700.css';
+@import 'tailwindcss';
 
 @theme {
-  /* ─── Couleurs — Éco vert ─────────────────── */
-  --color-eco-50:  #f0fdf4;
-  --color-eco-100: #dcfce7;
-  --color-eco-200: #bbf7d0;
-  --color-eco-300: #86efac;
-  --color-eco-400: #4ade80;
-  --color-eco-500: #22c55e;
-  --color-eco-600: #16a34a;
-  --color-eco-700: #15803d;
-  --color-eco-800: #166534;
-  --color-eco-900: #14532d;
-  --color-eco-950: #052e16;
+  /* ─── Couleurs — Direction "Estuaire" (clair, défaut) ───────────
+   * Source : Claude Design → 1a Estuaire - Palette.dc.html
+   * Le mode sombre est une surcharge [data-theme="dark"] plus bas. ── */
 
-  /* ─── Couleurs — Bleu transit ────────────── */
-  --color-transit-50:  #eff6ff;
-  --color-transit-100: #dbeafe;
-  --color-transit-200: #bfdbfe;
-  --color-transit-300: #93c5fd;
-  --color-transit-400: #60a5fa;
-  --color-transit-500: #3b82f6;
-  --color-transit-600: #2563eb;
-  --color-transit-700: #1d4ed8;
-  --color-transit-800: #1e40af;
-  --color-transit-900: #1e3a8a;
-  --color-transit-950: #172554;
+  /* Surfaces */
+  --color-bg: #f6f4ef;
+  --color-surface: #ffffff;
+  --color-surface-muted: #fbfaf7;
+  --color-surface-sunken: #edeae2;
+  --color-border: #dcd7cb;
+  --color-border-strong: #c7bfaf;
 
-  /* ─── Couleurs — Ambre bus ───────────────── */
-  --color-bus-400: #fbbf24;
-  --color-bus-500: #f59e0b;
-  --color-bus-600: #d97706;
-  --color-bus-700: #b45309;
+  /* Texte */
+  --color-text: #14231d; /* 14,9:1 sur surface */
+  --color-text-muted: #47544d; /* 7,1:1 */
+  --color-text-subtle: #6b7a72; /* 4,6:1 */
+  --color-text-disabled: #8a9690;
 
-  /* ─── Couleurs — Modes de transport ─────── */
-  --color-mode-walk:    #94a3b8;
-  --color-mode-bike:    #16a34a;
-  --color-mode-tram:    #2563eb;
-  --color-mode-bus:     #d97706;
-  --color-mode-navibus: #0891b2;
-  --color-mode-car:     #dc2626;
+  /* Vert primaire — action + éco uniquement, jamais utilisé ailleurs */
+  --color-primary: #0b5c43; /* 8,0:1 */
+  --color-primary-hover: #094b37;
+  --color-primary-surface: #e4efe9;
+  --color-primary-weak: #a8c9bb;
+  --color-on-primary: #ffffff;
+  --color-on-primary-muted: #c7e0d5;
 
-  /* ─── Couleurs — Surfaces ────────────────── */
-  --color-surface:      #ffffff;
-  --color-surface-muted: #f1f5f9;
-  --color-surface-card: #ffffff;
+  /* Bleu transit — identifie le TC, jamais une action */
+  --color-transit: #1d5e7a; /* 6,1:1 */
+  --color-transit-surface: #e7eef2;
 
-  /* ─── Couleur — Bordure (corrige border-border) ─ */
-  --color-border: #e2e8f0;
-  --color-border-strong: #cbd5e1;
+  /* Couleurs par mode de transport (7 modes + voiture référence) */
+  --color-mode-walk: #5b6b63;
+  --color-mode-walk-surface: #edeae2;
+  --color-mode-bike: #0b5c43;
+  --color-mode-bike-surface: #e4efe9;
+  --color-mode-scooter: #5c6e1a;
+  --color-mode-scooter-surface: #eff1dc;
+  --color-mode-tram: #1d5e7a;
+  --color-mode-tram-surface: #e7eef2;
+  --color-mode-bus: #6b3f8f;
+  --color-mode-bus-surface: #f0e8f5;
+  --color-mode-navibus: #0f6b6b;
+  --color-mode-navibus-surface: #e0f0f0;
+  --color-mode-train: #33449e;
+  --color-mode-train-surface: #e7eaf8;
+  --color-mode-car: #c7bfaf; /* référence hachurée — jamais sélectionnable */
+
+  /* Alerte — état inhabituel (démo, trajet écarté, hors ligne...), toujours icône + libellé */
+  --color-warning: #7a4a08; /* 7,3:1 */
+  --color-on-warning: #ffffff;
+  --color-warning-border: #c99a4a;
+  --color-warning-surface: #f5ede2;
+  --color-warning-surface-soft: #fbf3e4;
+
+  /* Danger — réservé exclusivement à la suppression de compte */
+  --color-danger: #b3261e; /* 6,3:1 */
+  --color-danger-text: #8c1d18; /* 9,0:1 */
+  --color-danger-text-muted: #7a2620;
+  --color-danger-surface: #fdf4f3;
+  --color-danger-surface-icon: #fdecea;
+
+  /* Rampes eco-50..900 et transit-50..900 — dérivées des tokens --color-primary
+   * et --color-transit ci-dessus, pour les composants encore écrits avec la
+   * syntaxe Tailwind à paliers (bg-eco-50, text-transit-700...). Paliers
+   * 600/50 = valeurs Estuaire exactes ; les autres paliers interpolent. */
+  --color-eco-50: #e4efe9;
+  --color-eco-100: #cfe3d7;
+  --color-eco-200: #a8c9bb;
+  --color-eco-300: #7fb39d;
+  --color-eco-400: #3d8567;
+  --color-eco-500: #146b4e;
+  --color-eco-600: #0b5c43;
+  --color-eco-700: #094b37;
+  --color-eco-800: #073d2c;
+  --color-eco-900: #052e21;
+
+  --color-transit-50: #e7eef2;
+  --color-transit-100: #cfe0e8;
+  --color-transit-200: #a9c8d6;
+  --color-transit-300: #7cacc0;
+  --color-transit-400: #4589a6;
+  --color-transit-500: #206e8c;
+  --color-transit-600: #1d5e7a;
+  --color-transit-700: #17495f;
+  --color-transit-800: #123a4b;
+  --color-transit-900: #0d2c39;
+
+  /* Alias de rayon pour les composants existants (rounded-card/rounded-button) */
+  --radius-card: 16px; /* = radius-xl, cartes de résultat/contenu */
+  --radius-button: 12px; /* = radius-md, boutons icône */
 
   /* ─── Typographie ────────────────────────── */
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Instrument Sans', system-ui, -apple-system, sans-serif;
 
-  --text-display:  2.25rem;
-  --text-h1:       1.875rem;
-  --text-h2:       1.5rem;
-  --text-h3:       1.25rem;
-  --text-body-lg:  1.125rem;
-  --text-body:     1rem;
-  --text-body-sm:  0.875rem;
-  --text-caption:  0.75rem;
+  --text-display: 2.25rem;
+  --text-h1: 1.875rem;
+  --text-h2: 1.5rem;
+  --text-h3: 1.25rem;
+  --text-body-lg: 1.125rem;
+  --text-body: 1rem;
+  --text-body-sm: 0.875rem;
+  --text-label: 0.8125rem; /* 13px — labels de champ, chips (DESIGN-SYSTEM.md) */
+  --text-caption: 0.75rem;
 
-  /* ─── Espacements custom ─────────────────── */
-  --spacing-13:    3.25rem;
-  --spacing-15:    3.75rem;
-  --spacing-18:    4.5rem;
-  --spacing-22:    5.5rem;
-  --spacing-touch: 3rem;
+  /* ─── Espacement — grille 4px Estuaire ────────
+   * La grille Estuaire (4/8/12/16/20/24/32/40px) correspond exactement
+   * à l'échelle numérique par défaut de Tailwind (p-1..p-10 = 4px..40px).
+   * Aucun token custom requis : utiliser directement p-1, gap-4, space-y-10, etc.
+   * Les anciens paliers 13/15/18/22/touch n'appartiennent pas à Estuaire — supprimés. */
 
   /* ─── Breakpoints custom ─────────────────── */
-  --breakpoint-xs:  375px;
+  --breakpoint-xs: 375px;
   --breakpoint-map: 900px;
 
-  /* ─── Rayons de bordure ──────────────────── */
-  --radius-card:   12px;
-  --radius-badge:  20px;
-  --radius-button: 8px;
-  --radius-input:  8px;
-  --radius-map:    16px;
+  /* ─── Rayons de bordure — échelle Estuaire ───
+   * Namespace natif Tailwind --radius-* : génère rounded-xs/sm/md/lg/xl/2xl/full. */
+  --radius-xs: 6px; /* checkboxes, mini pastilles de mode */
+  --radius-sm: 8px; /* badges de segment, pastilles numérotées */
+  --radius-md: 12px; /* inputs, boutons secondaires, items de liste, boutons icône */
+  --radius-lg: 14px; /* boutons primaires, nav actif, bandeaux d'alerte */
+  --radius-xl: 16px; /* cartes de résultat/contenu (18px desktop) */
+  --radius-2xl: 24px; /* bottom sheet (coins hauts), modales */
+  --radius-full: 9999px;
 
-  /* ─── Ombres ─────────────────────────────── */
-  --shadow-card:     0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.06);
-  --shadow-card-md:  0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06);
-  --shadow-card-lg:  0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
-  --shadow-float:    0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.08);
-  --shadow-inner-sm: inset 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  /* ─── Tailles de contrôle (cibles tactiles) ───
+   * Pas de namespace Tailwind dédié — variables CSS à consommer via
+   * height:var(--control-*) / min-height:var(--control-*) dans les composants. */
+  --control-xs: 28px; /* badges/toggles non interactifs */
+  --control-sm: 36px; /* chips de mode en sheet mi-hauteur, bouton fermer */
+  --control-md: 40px; /* chips de mode pleine taille, boutons icône desktop */
+  --control-lg: 44px; /* cible tactile minimum WCAG 2.5.5 */
+  --control-xl: 48px; /* champs de saisie, lignes de réglage, boutons secondaires */
+  --control-2xl: 52px; /* action principale de l'écran */
+
+  /* ─── Ombres — 3 niveaux d'élévation Estuaire (pas plus) ───
+   * Toute autre séparation visuelle passe par une bordure 1px.
+   * Valeurs sombres en surcharge [data-theme="dark"] plus bas. */
+  --scrim: rgba(20, 35, 29, 0.52); /* fond assombri derrière une modale */
+  --shadow-card: 0 2px 12px rgba(20, 35, 29, 0.06);
+  --shadow-card-md: 0 4px 16px rgba(20, 35, 29, 0.09); /* panneaux flottants, cartes mises en avant */
+  --shadow-sheet: 0 -6px 28px rgba(20, 35, 29, 0.14);
+  --shadow-modal: 0 20px 60px rgba(20, 35, 29, 0.35);
 
   /* ─── Easing ─────────────────────────────── */
   --ease-ui: cubic-bezier(0.4, 0, 0.2, 1);
 
   /* ─── Animations ─────────────────────────── */
-  --animate-fade-in:      fade-in 150ms ease-out;
-  --animate-slide-up:     slide-up 200ms ease-out;
+  --animate-fade-in: fade-in 150ms ease-out;
+  --animate-slide-up: slide-up 200ms ease-out;
   --animate-badge-unlock: badge-unlock 300ms ease-out;
-  --animate-count-up:     count-up 200ms ease-out;
+  --animate-count-up: count-up 200ms ease-out;
+  --animate-sheet-grow: sheet-grow 200ms var(--ease-ui);
 
   @keyframes fade-in {
-    from { opacity: 0; }
-    to   { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Contenu du bottom sheet mobile (MapSheet.tsx) — chaque changement
+   * d'état/de minimisation démonte et remonte un nouveau bloc (branches
+   * conditionnelles distinctes), donc cette animation d'entrée rejoue à
+   * chaque fois sans code JS de mesure/rejeu : un vrai montage DOM relance
+   * toujours une `animation` CSS. `transform` (scaleY) plutôt que `height`/
+   * `max-height` — seule propriété qui s'anime de façon fiable quelle que
+   * soit la taille réelle du contenu (auto ou non) et sur tous les moteurs,
+   * au prix d'un étirement visuel bref du contenu pendant la transition
+   * (compromis assumé, cf. `origin-bottom` posé sur le même élément dans
+   * `MapSheet.tsx` pour ancrer la croissance en bas, comme le sheet lui-même). */
+  @keyframes sheet-grow {
+    from {
+      opacity: 0;
+      transform: scaleY(0.92);
+    }
+    to {
+      opacity: 1;
+      transform: scaleY(1);
+    }
   }
 
   @keyframes slide-up {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   @keyframes badge-unlock {
-    0%   { opacity: 0; transform: scale(0.92); }
-    60%  { transform: scale(1.03); }
-    100% { opacity: 1; transform: scale(1); }
+    0% {
+      opacity: 0;
+      transform: scale(0.92);
+    }
+    60% {
+      transform: scale(1.03);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
 
   @keyframes count-up {
-    from { opacity: 0; transform: translateY(4px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   /* ─── Hauteurs nommées ───────────────────── */
-  --height-map-mobile:    50vh;
-  --height-map-desktop:   65vh;
-  --height-journey-card:  5rem;
-  --height-navbar:        4rem;
-  --height-bottomnav:     4.5rem;
+  --height-map-mobile: 50vh;
+  --height-map-desktop: 65vh;
+  --height-journey-card: 5rem;
+  --height-navbar: 4rem;
+  --height-bottomnav: 4.5rem;
 
   /* ─── Z-index ────────────────────────────── */
-  --z-map:     0;
+  /* .bottom-sheet vit hors du contexte isolate de <main> (cf. z-1100 plus
+   * bas) : modal/toast doivent dépasser sa valeur pour s'afficher par-dessus
+   * et l'assombrir (sinon le scrim d'une modale portée en <body> se retrouve
+   * peint sous le sheet, qui reste visible et cliquable au travers). */
+  --z-map: 0;
   --z-overlay: 10;
-  --z-drawer:  20;
-  --z-navbar:  30;
-  --z-modal:   40;
-  --z-toast:   50;
+  --z-drawer: 20;
+  --z-navbar: 30;
+  --z-sheet: 1100;
+  --z-modal: 1200;
+  --z-toast: 1300;
+}
+
+/* ─────────────────────────────────────────────
+ * MODE SOMBRE — surcharge des couleurs/ombres Estuaire
+ * Le mode clair (ci-dessus) est le défaut. Activé via
+ * <html data-theme="dark"> ou prefers-color-scheme si
+ * aucun choix explicite n'a été fait.
+ * ─────────────────────────────────────────────*/
+/* NB : un sélecteur combinant une classe/attribut et un @media dans la même
+ * liste (`[data-theme="dark"], @media (...) { ... }`) n'est pas du CSS valide —
+ * lightningcss l'ignore silencieusement (warning "Invalid empty selector").
+ * Les deux cas sont donc déclarés séparément ci-dessous, quitte à dupliquer
+ * les valeurs, pour que le mode sombre s'applique réellement dans les deux cas. */
+:root {
+  color-scheme: light;
+}
+[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+[data-theme='dark'] {
+  --color-bg: #0d1512;
+  --color-surface: #16211d;
+  --color-surface-muted: #12251e;
+  --color-surface-sunken: #1f2c27;
+  --color-border: #2c3b35;
+  --color-border-strong: #24483a;
+
+  --color-text: #eef2ef; /* 16,6:1 */
+  --color-text-muted: #a2b0a9; /* 8,1:1 */
+  --color-text-subtle: #87958d; /* 5,3:1 sur surface, 5,9:1 sur bg. #8C8279/#948A80 (valeurs précédentes) étaient une teinte brune chaude
+     isolée dans une palette sombre par ailleurs entièrement froide (sauge/vert-gris, cf. --color-text-muted #A2B0A9 et --color-text-disabled #6B7A72) —
+     visuellement une couleur "fausse note". Recalée sur le même axe de teinte, entre muted et disabled en clarté. */
+  --color-text-disabled: #6b7a72;
+
+  --color-primary: #4fcb9b; /* 8,3:1 */
+  --color-primary-hover: #3fb587;
+  --color-primary-surface: #0f3a2c;
+  --color-primary-weak: #2f7a5e;
+  --color-on-primary: #062018; /* 10,4:1 */
+  --color-on-primary-muted: #153327; /* 6,7:1 sur --color-primary sombre — #A8C9BB (ancienne valeur) donnait ~1,1:1, quasi invisible (texte clair sur fond déjà clair en mode sombre) */
+
+  --color-transit: #6bb6d6; /* 7,4:1 */
+  --color-transit-surface: #16303c;
+
+  --color-mode-walk: #a2b0a9;
+  --color-mode-walk-surface: #1f2c27;
+  --color-mode-bike: #4fcb9b;
+  --color-mode-bike-surface: #0f3a2c;
+  --color-mode-scooter: #b8cc5a;
+  --color-mode-scooter-surface: #2a2e12;
+  --color-mode-tram: #6bb6d6;
+  --color-mode-tram-surface: #16303c;
+  --color-mode-bus: #c09be0;
+  --color-mode-bus-surface: #2c1f38;
+  --color-mode-navibus: #58c4c4;
+  --color-mode-navibus-surface: #123434;
+  --color-mode-train: #8fa0f0;
+  --color-mode-train-surface: #1b2044;
+  --color-mode-car: #3a4a43;
+
+  --color-warning: #e9a93c; /* 8,9:1 */
+  --color-on-warning: #1f1401; /* 10,9:1 */
+  --color-warning-border: #7a5e22;
+  --color-warning-surface: #2a2113;
+  --color-warning-surface-soft: #241c10;
+
+  --color-danger: #f0736b; /* 7,0:1 */
+  --color-danger-text: #f0736b;
+  --color-danger-text-muted: #e4a9a4;
+  --color-danger-surface: #2a1614;
+  --color-danger-surface-icon: #3a1d1a;
+
+  --color-eco-50: #0f3a2c;
+  --color-eco-100: #123f30;
+  --color-eco-200: #2f7a5e;
+  --color-eco-300: #3fb587;
+  --color-eco-400: #4fcb9b;
+  --color-eco-500: #4fcb9b;
+  --color-eco-600: #4fcb9b;
+  --color-eco-700: #6ad8ac;
+  --color-eco-800: #a8e3cb;
+  --color-eco-900: #d4f1e3;
+
+  --color-transit-50: #16303c;
+  --color-transit-100: #193646;
+  --color-transit-200: #2f5c6e;
+  --color-transit-300: #4589a6;
+  --color-transit-400: #6bb6d6;
+  --color-transit-500: #6bb6d6;
+  --color-transit-600: #6bb6d6;
+  --color-transit-700: #8fc9e0;
+  --color-transit-800: #badceb;
+  --color-transit-900: #e0eff5;
+
+  --scrim: rgba(13, 21, 18, 0.72);
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.28);
+  --shadow-card-md: 0 4px 16px rgba(0, 0, 0, 0.32);
+  --shadow-sheet: 0 -6px 28px rgba(0, 0, 0, 0.4);
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.45);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']):not([data-theme='dark']) {
+    color-scheme: dark;
+    --color-bg: #0d1512;
+    --color-surface: #16211d;
+    --color-surface-muted: #12251e;
+    --color-surface-sunken: #1f2c27;
+    --color-border: #2c3b35;
+    --color-border-strong: #24483a;
+
+    --color-text: #eef2ef;
+    --color-text-muted: #a2b0a9;
+    --color-text-subtle: #87958d;
+    --color-text-disabled: #6b7a72;
+
+    --color-primary: #4fcb9b;
+    --color-primary-hover: #3fb587;
+    --color-primary-surface: #0f3a2c;
+    --color-primary-weak: #2f7a5e;
+    --color-on-primary: #062018;
+    --color-on-primary-muted: #153327; /* 6,7:1 sur --color-primary sombre — #A8C9BB (ancienne valeur) donnait ~1,1:1, quasi invisible (texte clair sur fond déjà clair en mode sombre) */
+
+    --color-transit: #6bb6d6;
+    --color-transit-surface: #16303c;
+
+    --color-mode-walk: #a2b0a9;
+    --color-mode-walk-surface: #1f2c27;
+    --color-mode-bike: #4fcb9b;
+    --color-mode-bike-surface: #0f3a2c;
+    --color-mode-scooter: #b8cc5a;
+    --color-mode-scooter-surface: #2a2e12;
+    --color-mode-tram: #6bb6d6;
+    --color-mode-tram-surface: #16303c;
+    --color-mode-bus: #c09be0;
+    --color-mode-bus-surface: #2c1f38;
+    --color-mode-navibus: #58c4c4;
+    --color-mode-navibus-surface: #123434;
+    --color-mode-train: #8fa0f0;
+    --color-mode-train-surface: #1b2044;
+    --color-mode-car: #3a4a43;
+
+    --color-warning: #e9a93c;
+    --color-on-warning: #1f1401;
+    --color-warning-border: #7a5e22;
+    --color-warning-surface: #2a2113;
+    --color-warning-surface-soft: #241c10;
+
+    --color-danger: #f0736b;
+    --color-danger-text: #f0736b;
+    --color-danger-text-muted: #e4a9a4;
+    --color-danger-surface: #2a1614;
+    --color-danger-surface-icon: #3a1d1a;
+
+    --color-eco-50: #0f3a2c;
+    --color-eco-100: #123f30;
+    --color-eco-200: #2f7a5e;
+    --color-eco-300: #3fb587;
+    --color-eco-400: #4fcb9b;
+    --color-eco-500: #4fcb9b;
+    --color-eco-600: #4fcb9b;
+    --color-eco-700: #6ad8ac;
+    --color-eco-800: #a8e3cb;
+    --color-eco-900: #d4f1e3;
+
+    --color-transit-50: #16303c;
+    --color-transit-100: #193646;
+    --color-transit-200: #2f5c6e;
+    --color-transit-300: #4589a6;
+    --color-transit-400: #6bb6d6;
+    --color-transit-500: #6bb6d6;
+    --color-transit-600: #6bb6d6;
+    --color-transit-700: #8fc9e0;
+    --color-transit-800: #badceb;
+    --color-transit-900: #e0eff5;
+
+    --scrim: rgba(13, 21, 18, 0.72);
+    --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.28);
+    --shadow-card-md: 0 4px 16px rgba(0, 0, 0, 0.32);
+    --shadow-sheet: 0 -6px 28px rgba(0, 0, 0, 0.4);
+    --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.45);
+  }
 }
 
 /* ─────────────────────────────────────────────
@@ -159,49 +450,64 @@
 }
 
 /* z-index nommés — --z-* dans @theme ne génère pas de classes @apply-compatibles */
-@utility z-map     { z-index: 0; }
-@utility z-overlay { z-index: 10; }
-@utility z-drawer  { z-index: 20; }
-@utility z-navbar  { z-index: 30; }
-@utility z-modal   { z-index: 40; }
-@utility z-toast   { z-index: 50; }
+@utility z-map {
+  z-index: 0;
+}
+@utility z-overlay {
+  z-index: 10;
+}
+@utility z-drawer {
+  z-index: 20;
+}
+@utility z-navbar {
+  z-index: 30;
+}
+@utility z-sheet {
+  z-index: 1100;
+}
+@utility z-modal {
+  z-index: 1200;
+}
+@utility z-toast {
+  z-index: 1300;
+}
+
+/* Alias : dialogues flottants (consentement, résumé de trajet) = même élévation qu'une modale */
+@utility shadow-float {
+  box-shadow: var(--shadow-modal);
+}
+
+/* Défilement horizontal sans barre visible (chips de mode) — la barre de
+ * défilement système n'apporte rien sur une rangée de chips tactile, et la
+ * poignée de scroll horizontale casse le style "pilules" de la maquette. */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
 
 /* ─────────────────────────────────────────────
  * VARIABLES CSS — Utilisables dans Leaflet et
  * composants non-Tailwind (ex: popups de carte)
  * ─────────────────────────────────────────────*/
+/* NB : les couleurs (modes de transport, surfaces, textes) sont déjà exposées
+ * en tant que variables :root par le bloc @theme ci-dessus (Tailwind v4 les
+ * émet automatiquement) — inutile de les redéclarer ici, ça écraserait les
+ * valeurs Estuaire avec les anciennes. */
 :root {
-  /* Modes de transport */
-  --color-mode-walk:    #94a3b8;
-  --color-mode-bike:    #16a34a;
-  --color-mode-tram:    #2563eb;
-  --color-mode-bus:     #d97706;
-  --color-mode-navibus: #0891b2;
-  --color-mode-car:     #dc2626;
-
-  /* Surfaces */
-  --color-bg:           #f8fafc;
-  --color-surface:      #ffffff;
-  --color-surface-muted: #f1f5f9;
-  --color-border:       #e2e8f0;
-  --color-border-strong: #cbd5e1;
-
-  /* Textes */
-  --color-text:           #0f172a;
-  --color-text-secondary: #475569;
-  --color-text-muted:     #94a3b8;
-
   /* Typographie */
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Instrument Sans', system-ui, -apple-system, sans-serif;
 
   /* Animations */
-  --duration-fast:   150ms;
+  --duration-fast: 150ms;
   --duration-normal: 200ms;
-  --duration-slow:   300ms;
-  --easing-ui:       cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-slow: 300ms;
+  --easing-ui: cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Layout */
-  --navbar-height:    64px;
+  --navbar-height: 64px;
   --bottomnav-height: 72px;
 }
 
@@ -221,157 +527,485 @@
   }
 
   body {
-    @apply bg-slate-50 text-slate-900 font-sans antialiased;
-    background-color: var(--color-bg);
+    @apply bg-bg text-text font-sans antialiased;
     font-family: var(--font-sans);
   }
 
   /* Focus visible accessible sur tous les éléments interactifs */
   :focus-visible {
-    @apply outline-none ring-2 ring-eco-600 ring-offset-2;
+    @apply outline-none ring-2 ring-primary ring-offset-2;
   }
 
-  /* Respect de prefers-reduced-motion — WCAG 2.3.3 */
+  /* Respect de prefers-reduced-motion — WCAG 2.3.3
+   * .skeleton est volontairement exclu : le shimmer signale un état de
+   * chargement (information), pas une décoration — direction Estuaire. */
   @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
+    *:not(.skeleton),
+    *:not(.skeleton)::before,
+    *:not(.skeleton)::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
   }
 
-  /* Zones tactiles minimum WCAG 2.5.5 (48px) */
+  /* Layout par défaut (icône + libellé alignés) — sans taille imposée : le
+   * système de contrôle Estuaire (control-xs 28px → control-2xl 52px,
+   * DESIGN-SYSTEM.md §1.6) choisit délibérément des tailles < 48px pour
+   * les contrôles secondaires (chips, tabs, mini-toggles). Un plancher
+   * global min-height/min-width:48px ici les écrasait tous silencieusement
+   * (min-height gagne toujours sur une classe height plus petite, quelle
+   * que soit sa spécificité) — control-lg (44px) reste la cible tactile
+   * minimum documentée pour les actions qui en ont réellement besoin,
+   * posée composant par composant plutôt qu'en règle aveugle. */
   button,
   a,
-  [role="button"] {
-    min-height: 48px;
-    min-width: 48px;
+  [role='button'] {
     @apply flex items-center;
   }
 
   /* Titres */
   h1 {
-    @apply text-h1 font-bold text-slate-900;
+    @apply text-h1 font-bold text-text;
   }
 
   h2 {
-    @apply text-h2 font-semibold text-slate-900;
+    @apply text-h2 font-semibold text-text;
   }
 
   h3 {
-    @apply text-h3 font-semibold text-slate-800;
+    @apply text-h3 font-semibold text-text;
   }
 }
 
 /* ─────────────────────────────────────────────
- * COMPOSANTS UTILITAIRES
+ * COMPOSANTS — direction "Estuaire"
+ * Source de vérité : docs/design/DESIGN-SYSTEM.md. Écrit en @apply (classes
+ * Tailwind) partout où une classe existe — la grille d'espacement/contrôle
+ * Estuaire est un multiple exact de l'échelle Tailwind (--spacing: 4px),
+ * donc h-7/h-9/h-10/h-11/h-12/h-13 = control-xs..2xl sans namespace custom.
+ * Seules les couleurs de mode dynamiques (--mode-color/--mode-surface,
+ * posées inline par le composant appelant, une par transport) restent en
+ * propriété CSS brute : aucune classe Tailwind statique ne peut exprimer
+ * une valeur choisie à l'exécution.
  * ─────────────────────────────────────────────*/
 @layer components {
-
-  /* ── Carte / Panel ── */
-  .card {
-    @apply bg-white rounded-card shadow-card border border-slate-100;
-  }
-
-  .card-hover {
-    @apply bg-white rounded-card shadow-card border border-slate-100 transition-shadow duration-fast hover:shadow-card-md;
-  }
-
-  /* ── Boutons ── */
-  .btn {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-button font-medium text-body-sm transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
-    min-height: 48px;
-  }
-
-  /* En v4, @apply ne peut pas référencer des classes @layer components — on inline les styles */
+  /* ── Bouton primaire — une seule action principale par écran ── */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-button font-medium text-body-sm transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-eco-700 text-white hover:bg-eco-800 active:bg-eco-900 focus-visible:ring-eco-600;
-    min-height: 48px;
+    @apply inline-flex items-center justify-center gap-2 h-13 px-6 rounded-lg border-none cursor-pointer touch-manipulation;
+    @apply bg-primary text-on-primary text-body font-semibold;
+    @apply transition duration-fast ease-ui;
+    @apply hover:bg-primary-hover active:scale-[0.97];
+    @apply disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary;
   }
 
+  /* ── Bouton secondaire ── */
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-button font-medium text-body-sm transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 active:bg-slate-100 focus-visible:ring-slate-400;
-    min-height: 48px;
+    @apply inline-flex items-center justify-center gap-2 h-12 px-5 rounded-md cursor-pointer;
+    @apply bg-transparent text-text text-body font-medium border border-border-strong;
+    @apply transition-colors duration-normal ease-ui;
+    @apply hover:bg-surface-muted;
+    @apply disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary;
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-button font-medium text-body-sm transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-slate-600 hover:bg-slate-100 active:bg-slate-200 focus-visible:ring-slate-400;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-md font-medium text-body-sm transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-text-muted hover:bg-surface-muted active:bg-surface-sunken focus-visible:ring-primary;
     min-height: 48px;
   }
 
   .btn-eco {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-button font-medium text-body-sm transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-eco-50 text-eco-700 border border-eco-200 hover:bg-eco-100 active:bg-eco-200 focus-visible:ring-eco-600;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-3 rounded-md font-medium text-body-sm transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-primary-surface text-primary border border-primary-weak hover:bg-primary-surface active:bg-primary-weak focus-visible:ring-primary;
     min-height: 48px;
   }
 
-  /* ── Inputs ── */
+  /* ── Bouton icône — flottant carte (44px) / desktop (40px) ── */
+  .btn-icon {
+    @apply inline-flex items-center justify-center size-11 shrink-0 rounded-md cursor-pointer;
+    @apply bg-surface text-text-muted border border-border shadow-card;
+    @apply transition-colors duration-fast ease-ui;
+    @apply hover:text-text;
+    @apply disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary;
+  }
+
+  /* ── Carte de composant (résultat, contenu) ── */
+  .card {
+    @apply bg-surface border border-border rounded-xl shadow-card;
+  }
+
+  .card-hover {
+    @apply bg-surface border border-border rounded-xl shadow-card;
+    @apply transition-shadow duration-fast ease-ui hover:shadow-card-md;
+  }
+
+  /* Carte accentuée par mode de transport (liseré gauche, radius inchangé) —
+   * --mode-color posée inline par le composant appelant, une valeur par mode
+   * de transport : aucune classe statique ne peut l'exprimer. */
+  .card-mode-accent {
+    @apply border-l-4;
+    border-left-color: var(--mode-color, var(--color-primary));
+  }
+
+  /* ── Chip de mode / profil (pill) ──
+   * --mode-color / --mode-surface sont posées inline par le composant appelant
+   * (ex: style={{ '--mode-color': 'var(--color-mode-bike)' }}), sinon repli sur primary. */
+  .chip-mode {
+    @apply inline-flex items-center gap-2 h-10 px-3 rounded-full whitespace-nowrap;
+    @apply text-label font-semibold border border-border bg-surface text-text-muted;
+    @apply transition-colors duration-fast ease-ui;
+
+    &[data-selected='true'] {
+      border-width: 1.5px;
+      border-color: var(--mode-color, var(--color-primary));
+      background: var(--mode-surface, var(--color-primary-surface));
+      color: var(--mode-color, var(--color-primary));
+    }
+
+    &[data-size='sm'] {
+      @apply h-9 px-[11px];
+    }
+  }
+
+  /* Marche : toujours en trait pointillé sur la carte, quelle que soit la teinte */
+  .trace-walk {
+    stroke-dasharray: 4 4;
+  }
+
+  /* Tracé d'itinéraire : halo blanc/sombre 2px pour la lisibilité sur la carte */
+  .trace-segment {
+    stroke-width: 4px;
+    paint-order: stroke;
+    stroke: var(--color-surface);
+  }
+
+  /* ── Input ── */
   .input {
-    @apply w-full px-4 py-3 rounded-input bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 text-body transition-colors duration-fast focus:outline-none focus:ring-2 focus:ring-eco-600 focus:border-transparent disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed;
-    min-height: 48px;
+    @apply flex items-center gap-3 w-full h-12 px-4 rounded-md outline-none;
+    @apply bg-surface text-text text-body border border-border;
+    @apply transition-colors duration-normal ease-ui;
+    @apply placeholder:text-text-subtle;
+    @apply focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary;
+    @apply disabled:bg-surface-muted disabled:text-text-disabled disabled:cursor-not-allowed;
+
+    /* Bouton natif d'effacement des <input type="search"> — rendu système non
+     * stylable via `color` (bleu par défaut sur Chromium/WebKit, hors palette
+     * Estuaire) : `-webkit-appearance: none` + masque SVG pour le recolorer
+     * aux tokens du projet, même principe que `.slider` ci-dessous. */
+    &[type='search']::-webkit-search-cancel-button {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      margin-left: 6px;
+      cursor: pointer;
+      background-color: var(--color-text-subtle);
+      mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E");
+      -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E");
+      mask-repeat: no-repeat;
+      -webkit-mask-repeat: no-repeat;
+      mask-size: contain;
+      -webkit-mask-size: contain;
+    }
+    &[type='search']:hover::-webkit-search-cancel-button,
+    &[type='search']:focus::-webkit-search-cancel-button {
+      background-color: var(--color-text-muted);
+    }
   }
 
   /* ── Labels ── */
   .label {
-    @apply block text-body-sm font-medium text-slate-700 mb-1.5;
-  }
-
-  /* ── Badges de mode de transport ── */
-  .mode-badge {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-caption font-medium;
-    min-height: 24px;
-  }
-
-  .mode-badge-walk {
-    @apply bg-slate-100 text-slate-600;
-  }
-
-  .mode-badge-bike {
-    @apply bg-eco-50 text-eco-700;
-  }
-
-  .mode-badge-tram {
-    @apply bg-transit-50 text-transit-700;
-  }
-
-  .mode-badge-bus {
-    @apply bg-amber-50 text-amber-700;
-  }
-
-  .mode-badge-navibus {
-    @apply bg-cyan-50 text-cyan-700;
+    @apply block text-body-sm font-medium text-text-muted mb-1.5;
   }
 
   /* ── Score CO2 ── */
   .co2-positive {
-    @apply text-eco-700 bg-eco-50 rounded-full px-2 py-0.5;
+    @apply text-primary bg-primary-surface rounded-full px-2 py-0.5;
   }
 
   .co2-negative {
-    @apply text-red-600 bg-red-50 rounded-full px-2 py-0.5;
+    @apply text-danger-text bg-danger-surface rounded-full px-2 py-0.5;
   }
 
   .co2-neutral {
-    @apply text-slate-600 bg-slate-100 rounded-full px-2 py-0.5;
+    @apply text-text-muted bg-surface-sunken rounded-full px-2 py-0.5;
   }
 
-  /* ── Toast notifications ── */
+  /* ── Bottom sheet (mobile) — devient un panneau latéral ≥1024px ──
+   * <div role="dialog" aria-labelledby="..."> non modal (sauf état 8, cf. .modal) */
+  .bottom-sheet {
+    @apply fixed inset-x-0 bottom-0 flex flex-col gap-3;
+    @apply bg-surface border-t border-border max-lg:rounded-t-2xl shadow-sheet;
+    @apply px-4 pt-2 pb-3;
+    /* `top`/`bottom`/`max-height` animent les transitions entre états qui
+     * posent déjà des valeurs explicites (settings/results/detail/tracking,
+     * `search` depuis l'ajout de son espacement, et la minimisation
+     * manuelle — cf. `data-mobile-minimized` plus bas, qui pose aussi un
+     * `top`/`bottom` explicites). `collapsed` et `mid` restent en hauteur
+     * intrinsèque (`h-auto` / `max-height` sans `top`) — volontaire, pour ne
+     * pas forcer une hauteur fixe sur du contenu à taille variable (chips de
+     * mode, résultats...) qui laisserait un vide visible sous un contenu
+     * plus court (MIGRATION-TODO.md étape 6). `height` ne s'interpole pas
+     * depuis/vers `auto` en CSS, et `interpolate-size` (seule échappatoire
+     * standard) reste Chromium-only — pas fiable en pratique. La
+     * transition/croissance visible de ces deux états passe donc par
+     * `animate-sheet-grow` (transform, ci-dessous dans `@theme`), pas par ces
+     * propriétés de boîte. `width`/`min-width`/`padding` s'y ajoutent pour le
+     * rail desktop (`data-desktop-collapsed`, ci-dessous) : ce sont des
+     * valeurs explicites des deux côtés (380px ↔ 32px, jamais `auto`), donc
+     * contrairement à `collapsed`/`mid` elles s'interpolent nativement sans
+     * recourir à `animate-sheet-grow`. */
+    @apply transition-[top,bottom,max-height,width,min-width,padding] duration-200 ease-ui;
+    /* Garde-fou structurel : dès qu'un état pose `overflow-y-auto` sur cette
+     * boîte (search/mid/settings/results/detail/tracking), la spec CSS
+     * "promeut" silencieusement `overflow-x` (resté `visible`) en `auto` —
+     * le moindre pixel de débordement horizontal ailleurs dans le sheet
+     * (arrondis, calculs de bleed, sous-pixel...) suffirait alors à rendre
+     * tout le sheet scrollable horizontalement, pas juste l'élément fautif.
+     * `overflow-x-hidden` explicite ici coupe court à cette promotion une
+     * fois pour toutes, sans dépendre de chaque futur ajout. N'empêche pas
+     * un enfant (ex. `ModeChipsFieldset`) d'avoir son propre scroll
+     * horizontal interne : ce sont des contextes de defilement distincts.
+     * `max-lg:` uniquement : en desktop l'onglet d'agrandissement
+     * (`.bottom-sheet-desktop-tab`) dépasse volontairement à droite
+     * (`-right-3.5`), `overflow-x-hidden` le couperait. */
+    @apply max-lg:overflow-x-hidden;
+    /* rounded-r uniquement : l'arête gauche du panneau touche la sidebar,
+     * elle ne doit jamais porter d'arrondi (seule l'arête carte, à droite,
+     * en a un). */
+    @apply lg:static lg:w-100 lg:min-w-[380px] lg:border-t-0 lg:rounded-r-2xl lg:shadow-card;
+    /* Panneaux Leaflet internes (tuiles/marqueurs) déclarés à z-index élevé et
+     * échappant à .leaflet-container (position:relative + z-index:auto ne crée
+     * pas de contexte d'empilement) : sans z-index explicite ici, ils peignent
+     * par-dessus le sheet dans le contexte isolate de <main>. */
+    @apply z-sheet;
+
+    /* Panneau desktop réduit — masque le contenu, ne garde qu'un mince rail
+     * portant l'onglet d'agrandissement (cf. .bottom-sheet-desktop-tab). */
+    &[data-desktop-collapsed='true'] {
+      @apply lg:w-8 lg:min-w-0 lg:p-0 lg:overflow-visible;
+    }
+
+    /* États du bottom sheet mobile (MAQUETTE.md §5.2) — max-lg: n'affecte
+     * jamais le panneau latéral desktop (déjà position:static ci-dessus). */
+    &[data-sheet-state='collapsed'] {
+      /* Seul état où le bottom-nav mobile est aussi affiché (MapPage.tsx) —
+       * les deux sont `fixed bottom-0` : sans ce décalage, le sheet (z-sheet)
+       * recouvre entièrement la nav (z-navbar) en dessous, qui devient
+       * invisible/inaccessible alors qu'elle est bien montée dans le DOM.
+       * Hauteur en `h-auto` (pas les 212px fixes d'origine) : ces 212px
+       * incluaient une marge basse qui ne se voyait pas tant que le sheet
+       * recouvrait la nav — une fois décalé au-dessus d'elle, cette même
+       * marge devenait un vide visible entre les chips et la nav. */
+      @apply max-lg:h-auto max-lg:bottom-[var(--height-bottomnav)];
+    }
+    /* Espacement conservé en haut d'écran (au lieu d'un `top-0` plein écran)
+     * pour que la poignée reste visible et actionnable même en pleine saisie
+     * (réduction possible depuis n'importe quel écran — décision produit,
+     * diverge de la maquette qui va jusqu'à `top:0` sans marge). Même
+     * décalage `bottom` que `collapsed`/`mid` : la nav est réaffichée en
+     * `search` (MapPage.tsx), sans quoi le sheet la recouvrirait. */
+    &[data-sheet-state='search'] {
+      @apply max-lg:top-16 max-lg:bottom-[var(--height-bottomnav)] max-lg:overflow-y-auto;
+    }
+    /* La nav mobile réapparaît en `mid` (comme en `collapsed`) — MAQUETTE.md
+     * §5.2 état 3 "Mi-hauteur" l'inclut explicitement dans la maquette. Même
+     * décalage de `bottom` que `collapsed` pour lui laisser la place. */
+    &[data-sheet-state='mid'] {
+      @apply max-lg:max-h-[52vh] max-lg:bottom-[var(--height-bottomnav)] max-lg:overflow-y-auto;
+    }
+    &[data-sheet-state='settings'] {
+      @apply max-lg:top-[140px] max-lg:overflow-y-auto;
+    }
+    /* Même décalage `bottom` que `collapsed`/`mid` : la nav est réaffichée en
+     * `results` (MapPage.tsx), le sheet ne doit pas la recouvrir. */
+    &[data-sheet-state='results'] {
+      @apply max-lg:top-[132px] max-lg:bottom-[var(--height-bottomnav)] max-lg:overflow-y-auto;
+    }
+    &[data-sheet-state='detail'] {
+      @apply max-lg:top-[152px] max-lg:overflow-y-auto;
+    }
+    &[data-sheet-state='tracking'] {
+      @apply max-lg:top-[172px] max-lg:overflow-y-auto;
+    }
+
+    /* Rétrécissement manuel (swipe bas sur la poignée, MapSheet.tsx) —
+     * indépendant de l'état actif. Contenu réel remplacé par
+     * `MinimizedSearchBar` (MapSheet.tsx), volontairement court.
+     *
+     * Ancienne approche abandonnée : `transform: translateY(calc(100% -
+     * 7rem))` sur la boîte de l'état d'origine. Ça fonctionnait tant que la
+     * nav restait cachée derrière (n'importe quel `bottom` allait, l'excédent
+     * de la boîte finissait de toute façon hors écran) — mais depuis que la
+     * nav réapparaît sous le sheet en `collapsed`/`mid`/`search`/`results`
+     * (`bottom: var(--height-bottomnav)`), `translateY` déplace la boîte en
+     * bloc rigide : son bord bas transformé retombe bien plus bas que prévu,
+     * et la tranche visible dans la fenêtre touche alors le tout bas de
+     * l'écran — recouvrant exactement la zone de la nav, quel que soit le
+     * `bottom` déclaré par l'état d'origine (le calcul du pourcentage ignore
+     * cette valeur). D'où le bug "nav invisible en minimisé sur `search`".
+     *
+     * Remplacé par un `top` explicite calculé pour donner une hauteur fixe
+     * (7rem) avec le bord bas systématiquement calé juste au-dessus de la
+     * nav, peu importe le `top`/`max-height` de l'état d'origine :
+     * `top = 100% − hauteur nav − 7rem`, combiné à `bottom = hauteur nav`
+     * → hauteur résultante = 7rem, top et bottom tous deux explicites (donc
+     * cette transition-ci s'anime bien via `top`/`bottom` — seules
+     * `collapsed`/`mid` sans `top` explicite gardent la limite déjà notée
+     * plus haut). Les deux en `!important` pour gagner de façon fiable sur
+     * la règle de l'état actif, sans dépendre de l'ordre des blocs
+     * `data-sheet-state` ni d'une subtilité Tailwind sur les valeurs
+     * arbitraires. `overflow-hidden` gardé par sécurité (zoom texte élevé
+     * rendant `MinimizedSearchBar` plus haute que 7rem). Swipe haut ou tap
+     * sur la poignée/la barre pour restaurer. */
+    &[data-mobile-minimized='true'] {
+      @apply max-lg:overflow-hidden;
+      top: calc(100% - var(--height-bottomnav) - 7rem) !important;
+      bottom: var(--height-bottomnav) !important;
+    }
+  }
+
+  /* Poignée du bottom sheet (mobile) — pastille purement visuelle, portée par
+   * un vrai <button> (cible tactile 48px via la règle globale `button{}`)
+   * qui agrandit/réduit le sheet d'un cran. */
+  .bottom-sheet-handle {
+    @apply w-10 h-1 rounded-full bg-border;
+  }
+
+  /* Onglet d'agrandissement/réduction du panneau desktop — mi-inséré sur
+   * l'arête droite (côté carte) du panneau, visible replié comme déplié. */
+  .bottom-sheet-desktop-tab {
+    @apply hidden lg:flex items-center justify-center;
+    @apply absolute top-1/2 -translate-y-1/2 -right-3.5 z-10;
+    @apply w-7 h-11 rounded-lg bg-surface border border-border shadow-card text-text-muted;
+    @apply hover:text-text transition-colors duration-fast;
+  }
+
+  /* ── Modale ── */
+  /* <div role="dialog" aria-modal="true" aria-labelledby="..."> */
+  .modal {
+    @apply bg-surface rounded-2xl shadow-modal p-6 lg:w-140 lg:mx-auto;
+  }
+
+  /* ── Bottom navigation (mobile) — devient une sidebar ≥1024px ── */
+  /* <nav aria-label="Navigation principale"> */
+  .bottom-nav {
+    @apply fixed inset-x-0 bottom-0 z-navbar grid grid-cols-4 gap-1 px-2 pt-2;
+    @apply bg-surface border-t border-border;
+    @apply lg:static lg:flex lg:flex-col lg:w-58 lg:h-screen lg:p-4 lg:border-t-0 lg:border-r lg:border-border;
+    /* env() ne peut pas s'exprimer en classe utilitaire */
+    padding-bottom: calc(var(--spacing) * 2 + env(safe-area-inset-bottom));
+    /* Sans z-index explicite, un `position:fixed` sans z-index (auto) se classe
+     * par ordre du DOM parmi les autres éléments qui créent un contexte
+     * d'empilement — hors, tout élément avec `opacity < 1` (ex: un bouton
+     * `disabled:opacity-40`, comme "Échanger" indisponible) en crée un aussi.
+     * La nav étant montée avant le contenu de page dans le DOM, ces boutons
+     * repassaient au-dessus d'elle au scroll. */
+  }
+
+  .bottom-nav-item {
+    @apply flex flex-col items-center gap-[3px] px-0.5 py-[7px] rounded-lg no-underline;
+    @apply text-text-muted text-caption font-medium;
+    @apply transition-colors duration-fast ease-ui;
+    @apply lg:flex-row lg:justify-start lg:gap-[11px] lg:px-3 lg:py-2.5 lg:text-body-sm;
+
+    &[aria-current='page'] {
+      @apply bg-primary-surface text-primary font-bold;
+    }
+  }
+
+  /* ── Toast ── */
+  /* <div role="status" aria-live="polite" aria-atomic="true"> */
   .toast {
-    @apply fixed bottom-20 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-body-sm font-medium px-4 py-3 rounded-card shadow-float animate-slide-up z-toast;
+    @apply fixed left-4 right-4 z-50 flex items-center gap-3;
+    @apply bg-surface border border-border rounded-xl px-4 py-3 shadow-sheet;
+    /* env() ne peut pas s'exprimer en classe utilitaire */
+    bottom: calc(var(--spacing) * 13 + env(safe-area-inset-bottom) + var(--spacing) * 2);
   }
 
-  .toast-success {
-    @apply fixed bottom-20 left-1/2 -translate-x-1/2 bg-eco-700 text-white text-body-sm font-medium px-4 py-3 rounded-card shadow-float animate-slide-up z-toast;
+  /* ── Slider (marche max, etc.) ── Piste 6px + poignée 26px à liseré
+   * primary (maquette "1a Estuaire - Écrans.dc.html" lignes 327-338) —
+   * un `accent-color` seul ne peut pas produire cette poignée large à
+   * bordure épaisse, d'où les pseudo-éléments natifs plutôt qu'un input
+   * "au look navigateur". Le remplissage utilise `--slider-fill` (posée
+   * en style inline par le composant `Slider`, seule valeur calculée à
+   * l'exécution) : Firefox a `::-moz-range-progress` en natif, WebKit non
+   * — d'où le dégradé équivalent sur `::-webkit-slider-runnable-track`. */
+  .slider {
+    @apply w-full appearance-none cursor-pointer bg-transparent outline-none;
+    height: 26px;
+
+    &::-webkit-slider-runnable-track {
+      height: 6px;
+      border-radius: 9999px;
+      background: linear-gradient(
+        to right,
+        var(--color-primary) var(--slider-fill, 0%),
+        var(--color-surface-sunken) var(--slider-fill, 0%)
+      );
+    }
+    &::-webkit-slider-thumb {
+      appearance: none;
+      width: 26px;
+      height: 26px;
+      margin-top: -10px;
+      border-radius: 9999px;
+      background: var(--color-surface);
+      border: 3px solid var(--color-primary);
+      box-shadow: var(--shadow-card);
+      cursor: pointer;
+    }
+    &::-moz-range-track {
+      height: 6px;
+      border-radius: 9999px;
+      background: var(--color-surface-sunken);
+    }
+    &::-moz-range-progress {
+      height: 6px;
+      border-radius: 9999px;
+      background: var(--color-primary);
+    }
+    &::-moz-range-thumb {
+      width: 26px;
+      height: 26px;
+      border-radius: 9999px;
+      background: var(--color-surface);
+      border: 3px solid var(--color-primary);
+      box-shadow: var(--shadow-card);
+      cursor: pointer;
+    }
+    &:focus-visible::-webkit-slider-thumb {
+      box-shadow: var(--focus-ring);
+    }
+    &:focus-visible::-moz-range-thumb {
+      box-shadow: var(--focus-ring);
+    }
   }
 
-  .toast-error {
-    @apply fixed bottom-20 left-1/2 -translate-x-1/2 bg-red-600 text-white text-body-sm font-medium px-4 py-3 rounded-card shadow-float animate-slide-up z-toast;
-  }
-
-  /* ── Skeleton loading ── */
+  /* ── Skeleton (chargement) — shimmer explicitement exempté de
+   * prefers-reduced-motion (cf. règle globale plus bas) : c'est une
+   * information d'état ("en cours de chargement"), pas une décoration.
+   * Dégradé 3 arrêts + animation dédiée : pas de classe Tailwind pour ça. ── */
   .skeleton {
-    @apply bg-slate-200 rounded animate-pulse;
+    @apply rounded-sm;
+    background: linear-gradient(
+      90deg,
+      var(--color-surface-sunken) 0%,
+      var(--color-surface-muted) 50%,
+      var(--color-surface-sunken) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s linear infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
   }
 }
 
@@ -381,9 +1015,14 @@
  * nos variables CSS pour rester cohérents.
  * ─────────────────────────────────────────────*/
 .leaflet-popup-content-wrapper {
-  border-radius: var(--radius-card) !important;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.08) !important;
+  border-radius: var(--radius-xl) !important;
+  box-shadow: var(--shadow-card) !important;
   font-family: var(--font-sans) !important;
+  background: var(--color-surface) !important;
+}
+
+.leaflet-popup-tip {
+  background: var(--color-surface) !important;
 }
 
 .leaflet-popup-content {
@@ -394,7 +1033,7 @@
 }
 
 .leaflet-control-zoom {
-  border-radius: var(--radius-button) !important;
+  border-radius: var(--radius-md) !important;
   overflow: hidden;
   box-shadow: var(--shadow-card) !important;
 }
@@ -403,7 +1042,7 @@
   width: 36px !important;
   height: 36px !important;
   line-height: 36px !important;
-  color: var(--color-text-secondary) !important;
+  color: var(--color-text-muted) !important;
 }
 
 .leaflet-control-zoom a:hover {

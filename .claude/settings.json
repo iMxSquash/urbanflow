@@ -24,9 +24,9 @@
         ],
         "allow": [
             "Read(./**)",
-            "Write(./src/**)",
-            "Write(./.claude/**)",
-            "Write(./public/**)",
+            "Edit(./src/**)",
+            "Edit(./.claude/**)",
+            "Edit(./public/**)",
             "Bash(git status)",
             "Bash(git diff *)",
             "Bash(git log *)",

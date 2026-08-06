@@ -167,6 +167,47 @@ describe('computeComfortScore', () => {
     expect(computeComfortScore(segments, options)).toBe(50)
   })
 
+  describe('avoidElevation — pénalité vélo (approximation sans données DEM)', () => {
+    it('avoidElevation + vélo → pénalité −30', () => {
+      const segments = [seg('bike', 3, 12)]
+      const options: JourneyOptions = {
+        preference: 'balanced',
+        modes: ['bike'],
+        avoidElevation: true,
+      }
+      // base = 100 (vélo = mode préféré) − 30
+      expect(computeComfortScore(segments, options)).toBe(70)
+    })
+
+    it('avoidElevation sans vélo (bus seul) → aucune pénalité', () => {
+      const segments = [seg('bus', 3, 15)]
+      const options: JourneyOptions = {
+        preference: 'balanced',
+        modes: ['bus'],
+        avoidElevation: true,
+      }
+      expect(computeComfortScore(segments, options)).toBe(100)
+    })
+
+    it('vélo présent mais avoidElevation absent → aucune pénalité', () => {
+      const segments = [seg('bike', 3, 12)]
+      const options: JourneyOptions = { preference: 'balanced', modes: ['bike'] }
+      expect(computeComfortScore(segments, options)).toBe(100)
+    })
+
+    it('avoidElevation + PMR + vélo → pénalités cumulées (−50 −30), plancher à 0 si besoin', () => {
+      const segments = [seg('bike', 3, 12)]
+      const options: JourneyOptions = {
+        preference: 'balanced',
+        modes: ['bike'],
+        pmrAccessibility: true,
+        avoidElevation: true,
+      }
+      // base=100, PMR+bike → −50 = 50, avoidElevation+bike → −30 = 20
+      expect(computeComfortScore(segments, options)).toBe(20)
+    })
+  })
+
   describe('météo — pénalités vélo', () => {
     it('pluie + vélo → −30 sur la base', () => {
       const segments = [seg('bike', 3, 12)]

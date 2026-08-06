@@ -12,6 +12,7 @@ export interface JourneyProfile {
   preferredModes: TransportMode[]
   maxWalkMinutes: number
   pmrAccessibility: boolean
+  avoidElevation?: boolean
 }
 
 export async function planJourney(
@@ -35,6 +36,7 @@ export async function planJourney(
             preferredModes: profile.preferredModes,
             maxWalkMinutes: profile.maxWalkMinutes,
             pmrAccessibility: profile.pmrAccessibility,
+            avoidElevation: profile.avoidElevation ?? false,
           }
         : {}),
     }),

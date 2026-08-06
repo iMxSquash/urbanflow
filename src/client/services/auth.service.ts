@@ -1,3 +1,5 @@
+import { apiFetch } from '../utils/api-client'
+
 interface RegisterPayload {
   email: string
   password: string
@@ -45,6 +47,17 @@ export async function logout(): Promise<void> {
     method: 'POST',
     credentials: 'include',
   })
+}
+
+// authGuard exige un Bearer token (contrairement aux autres endpoints de ce
+// fichier, qui ne s'appuient que sur le cookie de refresh) — passe par apiFetch.
+export async function deleteAccount(): Promise<void> {
+  const res = await apiFetch('/api/auth/me', { method: 'DELETE' })
+  if (!res.ok) {
+    const data: unknown = await res.json().catch(() => null)
+    const err = data as { error?: string } | null
+    throw new Error(err?.error ?? 'Impossible de supprimer le compte')
+  }
 }
 
 export async function login(payload: LoginPayload): Promise<AuthTokenResponse> {

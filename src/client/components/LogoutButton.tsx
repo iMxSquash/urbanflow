@@ -34,7 +34,7 @@ export default function LogoutButton() {
         <>
           <span
             aria-hidden="true"
-            className="inline-block w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"
+            className="inline-block w-4 h-4 border-2 border-text-muted border-t-transparent rounded-full animate-spin"
           />
           <span>Déconnexion…</span>
         </>
