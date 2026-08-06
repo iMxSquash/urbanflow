@@ -240,6 +240,7 @@ CORS_ORIGIN=http://localhost:5173
 - Durée de conservation des données de trajets et récompenses : 12 mois max, purgés par un job planifié quotidien (`src/server/jobs/purge-old-trips.job.ts`, 3h15 heure de pointe basse)
 - Aucune coordonnée GPS précise stockée en base au-delà du calcul d'itinéraire (table `trips` ne conserve que modes/CO2/points, jamais origin/destination)
 - Aucun partage de données GPS à des tiers ; coordonnées arrondies à 4 décimales avant transmission à Transitous/OSRM
+- Pages publiques dédiées : `/mentions-legales`, `/cgu`, `/confidentialite`
 
 ## Facteurs CO2 (ADEME)
 

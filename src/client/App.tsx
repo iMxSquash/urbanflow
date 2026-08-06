@@ -13,6 +13,9 @@ const DashboardBadgesPage = lazy(() => import('./pages/DashboardBadgesPage'))
 const RewardsPage = lazy(() => import('./pages/RewardsPage'))
 const MapPage = lazy(() => import('./pages/MapPage'))
 const ParametresPage = lazy(() => import('./pages/ParametresPage'))
+const MentionsLegalesPage = lazy(() => import('./pages/MentionsLegalesPage'))
+const CguPage = lazy(() => import('./pages/CguPage'))
+const PolitiqueConfidentialitePage = lazy(() => import('./pages/PolitiqueConfidentialitePage'))
 
 function PageSpinner() {
   return (
@@ -40,6 +43,9 @@ function AppRoutes() {
         {/* Routes publiques */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/mentions-legales" element={<MentionsLegalesPage />} />
+        <Route path="/cgu" element={<CguPage />} />
+        <Route path="/confidentialite" element={<PolitiqueConfidentialitePage />} />
 
         {/* Routes protégées — redirige vers /login si non authentifié */}
         <Route element={<ProtectedRoute />}>

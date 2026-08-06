@@ -493,6 +493,23 @@ export default function ParametresPage() {
                   <SettingsRow
                     icon={
                       <>
+                        <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+                        <path d="M14 3v6h6M9 13h6M9 17h6" />
+                      </>
+                    }
+                    title="Politique de confidentialité"
+                    action={
+                      <Link
+                        to="/confidentialite"
+                        className="text-caption font-semibold text-primary shrink-0"
+                      >
+                        Consulter
+                      </Link>
+                    }
+                  />
+                  <SettingsRow
+                    icon={
+                      <>
                         <path d="M12 15V3m0 12-4-4m4 4 4-4" />
                         <path d="M3 15v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4" />
                       </>
@@ -574,6 +591,21 @@ export default function ParametresPage() {
                   Supprimer mon compte
                 </button>
               </div>
+
+              <nav
+                aria-label="Documents légaux"
+                className="flex flex-wrap gap-x-4 gap-y-1.5 px-1 text-caption text-text-muted"
+              >
+                <Link to="/mentions-legales" className="underline underline-offset-2">
+                  Mentions légales
+                </Link>
+                <Link to="/cgu" className="underline underline-offset-2">
+                  CGU
+                </Link>
+                <Link to="/confidentialite" className="underline underline-offset-2">
+                  Politique de confidentialité
+                </Link>
+              </nav>
             </div>
           </div>
         </main>
