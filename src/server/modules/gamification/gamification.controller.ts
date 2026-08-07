@@ -24,11 +24,10 @@ export async function getBadges(req: Request, res: Response): Promise<void> {
 }
 
 export async function getStats(req: Request, res: Response): Promise<void> {
-  const { period } = req.query
-  if (period !== 'month') {
-    res.status(400).json({ error: "Paramètre period invalide — valeur acceptée : 'month'" })
-    return
-  }
+  // req.validatedQuery n'est pas relu ici : getStatsQuerySchema n'accepte que
+  // 'month', il n'y a donc rien à faire varier dans getDashboardStats. Le
+  // middleware sert uniquement à rejeter les valeurs invalides avant d'arriver
+  // ici — à relire si `period` gagne d'autres valeurs un jour.
   try {
     const stats = await gamificationService.getDashboardStats(req.user!.sub)
     res.status(200).json(stats)

@@ -1,3 +1,14 @@
+import type { TransportMode } from '../../../shared/types/index.js'
+
+// Miroir de l'enum PostgreSQL `threshold_type` (005-create-badges.sql)
+export const THRESHOLD_TYPES = [
+  'total_trips',
+  'total_co2_saved_grams',
+  'total_points',
+  'streak_days',
+] as const
+export type ThresholdType = (typeof THRESHOLD_TYPES)[number]
+
 export interface RecordTripResult {
   tripId: string
   co2SavedGrams: number
@@ -8,8 +19,8 @@ export interface RecordTripResult {
 
 export interface TripRecord {
   id: string
-  modesUsed: string[]
-  primaryMode: string
+  modesUsed: TransportMode[]
+  primaryMode: TransportMode
   co2SavedGrams: number
   pointsEarned: number
   createdAt: string
@@ -19,9 +30,9 @@ export interface BadgeWithStatus {
   id: string
   name: string
   description: string
-  thresholdType: string
+  thresholdType: ThresholdType
   thresholdValue: number
-  modeFilter: string | null
+  modeFilter: TransportMode | null
   unlocked: boolean
   unlockedAt: string | null
 }
@@ -32,7 +43,7 @@ export interface WeeklyBar {
 }
 
 export interface ModeCount {
-  mode: string
+  mode: TransportMode
   count: number
 }
 
