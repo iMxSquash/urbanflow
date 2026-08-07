@@ -39,12 +39,11 @@ const recordTripRateLimit = rateLimit({
  *           example: 4.2
  *     RecordTripInput:
  *       type: object
- *       required: [origin, destination, segments]
+ *       required: [segments]
+ *       description: >
+ *         Pas de coordonnées de départ/arrivée : elles ne sont jamais transmises
+ *         au-delà du calcul d'itinéraire ni stockées (minimisation RGPD).
  *       properties:
- *         origin:
- *           $ref: '#/components/schemas/Coordinates'
- *         destination:
- *           $ref: '#/components/schemas/Coordinates'
  *         segments:
  *           type: array
  *           minItems: 1

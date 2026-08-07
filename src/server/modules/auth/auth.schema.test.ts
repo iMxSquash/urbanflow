@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest'
 import { registerSchema, loginSchema } from './auth.schema.js'
 
 describe('registerSchema', () => {
-  const valid = { email: 'alice@nantes.fr', password: 'Password1' }
+  const valid = { email: 'alice@nantes.fr', password: 'Password1', termsAccepted: true }
 
-  it('accepte un email et un mot de passe valides', () => {
+  it('accepte un email, un mot de passe valides et les CGU acceptées', () => {
     expect(registerSchema.safeParse(valid).success).toBe(true)
   })
 
@@ -30,6 +30,15 @@ describe('registerSchema', () => {
 
   it('rejette un corps vide', () => {
     expect(registerSchema.safeParse({}).success).toBe(false)
+  })
+
+  it('rejette les CGU non acceptées', () => {
+    expect(registerSchema.safeParse({ ...valid, termsAccepted: false }).success).toBe(false)
+  })
+
+  it('rejette termsAccepted manquant', () => {
+    const { termsAccepted: _, ...withoutTerms } = valid
+    expect(registerSchema.safeParse(withoutTerms).success).toBe(false)
   })
 })
 

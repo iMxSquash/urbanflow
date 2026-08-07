@@ -15,6 +15,7 @@ import rateLimit from 'express-rate-limit'
 import cookieParser from 'cookie-parser'
 import swaggerUi from 'swagger-ui-express'
 import { runMigrations } from './db/migrate.js'
+import { schedulePurgeJob } from './jobs/purge-old-trips.job.js'
 import { swaggerSpec } from './config/swagger.js'
 import authRouter from './modules/auth/index.js'
 import profileRouter from './modules/profile/index.js'
@@ -61,13 +62,19 @@ app.get(['/health', '/api/health'], (_req, res) => {
 })
 
 async function start(): Promise<void> {
+  let dbAvailable = true
   try {
     await runMigrations()
   } catch (err) {
+    dbAvailable = false
     console.warn('[server] DB indisponible, migrations ignorées :', (err as Error).message)
     if (process.env.NODE_ENV === 'production') {
       process.exit(1)
     }
+  }
+
+  if (dbAvailable && process.env.DEMO_MODE !== 'true') {
+    schedulePurgeJob()
   }
 
   app.listen(PORT, () => {

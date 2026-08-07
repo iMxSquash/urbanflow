@@ -1,5 +1,14 @@
 import type { Coordinates } from '@shared/types/index.js'
 
+// 4 décimales ≈ 11 m de précision — suffisant pour le routage, sans exposer la
+// position exacte de l'utilisateur aux APIs tierces (RGPD, minimisation).
+export function roundCoord(point: Coordinates): Coordinates {
+  return {
+    lat: Math.round(point.lat * 10_000) / 10_000,
+    lng: Math.round(point.lng * 10_000) / 10_000,
+  }
+}
+
 export function haversineKm(a: Coordinates, b: Coordinates): number {
   const R = 6371
   const dLat = ((b.lat - a.lat) * Math.PI) / 180

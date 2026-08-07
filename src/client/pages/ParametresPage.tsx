@@ -6,6 +6,7 @@ import { useThemeStore } from '../stores/theme.store'
 import type { ThemePreference } from '../stores/theme.store'
 import { useInstallPrompt } from '../hooks/useInstallPrompt'
 import { DeleteAccountModal } from '../components/DeleteAccountModal'
+import { exportUserData } from '../services/auth.service'
 import LogoutButton from '../components/LogoutButton'
 import { PageWithSidebar } from '../components/PageWithSidebar'
 import type { Coordinates } from '@shared/types/index'
@@ -102,6 +103,8 @@ export default function ParametresPage() {
   const { canInstall, promptInstall } = useInstallPrompt()
 
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
   const themeGroupRef = useRef<HTMLSpanElement>(null)
 
   const geoGranted = geolocationConsent === 'granted'
@@ -117,6 +120,18 @@ export default function ParametresPage() {
   function handleActivateGeo() {
     resetGeolocation()
     navigate('/')
+  }
+
+  async function handleExport() {
+    setIsExporting(true)
+    setExportError(null)
+    try {
+      await exportUserData()
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : "Impossible d'exporter vos données")
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   return (
@@ -143,7 +158,7 @@ export default function ParametresPage() {
           </div>
         </header>
 
-        <main className="max-w-2xl mx-auto px-4 py-4 flex flex-col gap-4 lg:max-w-260 lg:px-10 lg:py-8">
+        <main className="max-w-2xl mx-auto px-4 pt-4 pb-28 flex flex-col gap-4 lg:max-w-260 lg:px-10 lg:py-8">
           {/* ── Mode démo ────────────────────────────────────────────────── */}
           {demoMode !== null && (
             <section
@@ -474,9 +489,51 @@ export default function ParametresPage() {
                     title="Conservation des données"
                     subtitle="Trajets et historique supprimés après 12 mois"
                     action={null}
+                  />
+                  <SettingsRow
+                    icon={
+                      <>
+                        <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+                        <path d="M14 3v6h6M9 13h6M9 17h6" />
+                      </>
+                    }
+                    title="Politique de confidentialité"
+                    action={
+                      <Link
+                        to="/confidentialite"
+                        className="text-caption font-semibold text-primary shrink-0"
+                      >
+                        Consulter
+                      </Link>
+                    }
+                  />
+                  <SettingsRow
+                    icon={
+                      <>
+                        <path d="M12 15V3m0 12-4-4m4 4 4-4" />
+                        <path d="M3 15v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4" />
+                      </>
+                    }
+                    title="Exporter mes données"
+                    subtitle="Téléchargement JSON — droit à la portabilité"
+                    action={
+                      <button
+                        type="button"
+                        onClick={() => void handleExport()}
+                        disabled={isExporting}
+                        className="text-caption font-semibold text-primary shrink-0 disabled:opacity-50"
+                      >
+                        {isExporting ? 'Export…' : 'Télécharger'}
+                      </button>
+                    }
                     border={false}
                   />
                 </div>
+                {exportError && (
+                  <p role="alert" className="text-caption text-danger-text">
+                    {exportError}
+                  </p>
+                )}
               </div>
 
               {/* ── Vos droits RGPD ──────────────────────────────────────────── */}
@@ -534,6 +591,21 @@ export default function ParametresPage() {
                   Supprimer mon compte
                 </button>
               </div>
+
+              <nav
+                aria-label="Documents légaux"
+                className="flex flex-wrap gap-x-4 gap-y-1.5 px-1 text-caption text-text-muted"
+              >
+                <Link to="/mentions-legales" className="underline underline-offset-2">
+                  Mentions légales
+                </Link>
+                <Link to="/cgu" className="underline underline-offset-2">
+                  CGU
+                </Link>
+                <Link to="/confidentialite" className="underline underline-offset-2">
+                  Politique de confidentialité
+                </Link>
+              </nav>
             </div>
           </div>
         </main>

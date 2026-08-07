@@ -8,6 +8,7 @@ erDiagram
         TEXT email "UNIQUE NOT NULL"
         TEXT password_hash "NOT NULL"
         TIMESTAMPTZ rgpd_consent_at ""
+        TIMESTAMPTZ terms_accepted_at ""
         INTEGER total_points "NOT NULL DEFAULT 0"
         TIMESTAMPTZ created_at "NOT NULL DEFAULT now()"
     }
@@ -24,8 +25,6 @@ erDiagram
     trips {
         UUID id PK "DEFAULT gen_random_uuid()"
         UUID user_id "FK users.id ON DELETE CASCADE · INDEX"
-        GEOGRAPHY origin "POINT 4326 NOT NULL · GiST"
-        GEOGRAPHY destination "POINT 4326 NOT NULL · GiST"
         TEXT_ARRAY modes_used "NOT NULL DEFAULT {}"
         TEXT primary_mode "NOT NULL DEFAULT walk · INDEX"
         INTEGER co2_saved_grams "NOT NULL DEFAULT 0"
@@ -83,8 +82,6 @@ erDiagram
 |---|---|---|---|
 | `users` | `email` | B-tree UNIQUE | 002 |
 | `trips` | `user_id` | B-tree | 004 |
-| `trips` | `origin` | GiST PostGIS | 004 |
-| `trips` | `destination` | GiST PostGIS | 004 |
 | `trips` | `created_at` | B-tree | 004 |
 | `trips` | `(user_id, primary_mode, created_at)` | B-tree composé | 012 |
 | `user_badges` | `user_id` | B-tree | 006 |
@@ -94,7 +91,7 @@ erDiagram
 
 Le schéma s'organise autour de quatre entités racines. `users` porte l'identité et le solde de points cumulé (`total_points`), dénormalisé pour éviter un recalcul par agrégation à chaque affichage du tableau de bord. `mobility_profiles` est en relation 1-1 avec `users` : chaque utilisateur possède exactement un profil de mobilité, supprimé en cascade avec son compte.
 
-`trips` enregistre chaque itinéraire effectué, avec les coordonnées d'origine et de destination en `GEOGRAPHY(POINT, 4326)` pour permettre des requêtes géospatiales (distance, recherche par rayon) via les index GiST. Seuls les indicateurs de synthèse utiles à la gamification et au tableau de bord sont persistés (`co2_saved_grams`, `points_earned`) : la durée, la distance et le score détaillés d'un itinéraire restent des valeurs calculées à la volée par le moteur de scoring, jamais stockées.
+`trips` enregistre chaque itinéraire effectué. Aucune coordonnée GPS n'y est persistée (migration 016, cf. F-contraintes-transversales.md « Zéro partage GPS ») : seuls les indicateurs de synthèse utiles à la gamification et au tableau de bord sont stockés (`modes_used`, `primary_mode`, `co2_saved_grams`, `points_earned`) — la position, la durée, la distance et le score détaillés d'un itinéraire restent des valeurs calculées à la volée, jamais persistées.
 
 `badges` et `user_badges` modélisent la progression de gamification : `badges` définit un catalogue de paliers (nombre de trajets, CO2 économisé, points totaux, séquence de jours consécutifs) et `user_badges` matérialise le déverrouillage d'un badge par un utilisateur, avec une clé primaire composée `(user_id, badge_id)` qui interdit nativement le déverrouillage en double.
 

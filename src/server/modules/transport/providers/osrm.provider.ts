@@ -12,7 +12,7 @@ import { computeScore } from '../../routing/scoring.service.js'
 import { getBiclooStations } from '../bicloo.service.js'
 import type { TransportProvider } from '../transport-provider.interface.js'
 import { fetchWithTimeout } from '../../../utils/fetch-external.js'
-import { haversineKm } from '../../../utils/geo.js'
+import { haversineKm, roundCoord } from '../../../utils/geo.js'
 
 // ─── Types OSRM ───────────────────────────────────────────────────────────────
 
@@ -65,8 +65,12 @@ async function fetchOsrmRoute(
   to: Coordinates,
   profile: 'cycling' | 'foot'
 ): Promise<OsrmResult> {
+  // Coordonnées arrondies à 4 décimales avant transmission au serveur OSRM public
+  // (minimisation RGPD — ~11 m de précision, suffisant pour le calcul d'itinéraire).
+  const roundedFrom = roundCoord(from)
+  const roundedTo = roundCoord(to)
   const url =
-    `${OSRM_BASE}/route/v1/${profile}/${from.lng},${from.lat};${to.lng},${to.lat}` +
+    `${OSRM_BASE}/route/v1/${profile}/${roundedFrom.lng},${roundedFrom.lat};${roundedTo.lng},${roundedTo.lat}` +
     `?overview=full&geometries=geojson`
 
   try {

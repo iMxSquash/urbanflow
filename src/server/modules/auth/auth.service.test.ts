@@ -21,7 +21,7 @@ beforeAll(() => {
 // Imports après les mocks
 import { pool } from '../../db/pool.js'
 import bcrypt from 'bcrypt'
-import { registerUser, loginUser, refreshTokens, logoutUser } from './auth.service.js'
+import { registerUser, loginUser, refreshTokens, logoutUser, recordRgpdConsent } from './auth.service.js'
 
 const mockQuery = pool.query as ReturnType<typeof vi.fn>
 const mockHash = bcrypt.hash as ReturnType<typeof vi.fn>
@@ -174,5 +174,19 @@ describe('logoutUser', () => {
   it("ne lance pas d'erreur si le token est invalide (révoqué ou expiré)", async () => {
     await expect(logoutUser('token.invalide')).resolves.toBeUndefined()
     expect(mockQuery).not.toHaveBeenCalled()
+  })
+})
+
+// ─── recordRgpdConsent ────────────────────────────────────────────────────────
+
+describe('recordRgpdConsent', () => {
+  it("horodate le consentement de l'utilisateur", async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [] })
+
+    await recordRgpdConsent(USER_ID)
+
+    expect(mockQuery).toHaveBeenCalledWith('UPDATE users SET rgpd_consent_at = now() WHERE id = $1', [
+      USER_ID,
+    ])
   })
 })

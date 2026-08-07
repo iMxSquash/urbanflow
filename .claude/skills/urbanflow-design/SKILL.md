@@ -30,10 +30,10 @@ sombre). Ce fichier reflète l'état réel du code.
 Remplace l'ancienne direction "Urban Night". Différences structurantes :
 - **Le mode clair est le défaut** (sable et vert profond), le sombre est une surcharge
   `[data-theme="dark"]` sur `<html>` (posée par `useThemeSync`, store `theme.store.ts`).
-- **Police Instrument Sans** (400/500/600/700), plus Inter.
-- **Pas de glassmorphism / `backdrop-filter`** — 3 niveaux d'ombre plats seulement
-  (`shadow-card`, `shadow-sheet`, `shadow-modal`). C'était autorisé sous "Urban Night",
-  c'est interdit sous Estuaire (ex. `WeatherBadge` corrigé en ce sens).
+- **Police Instrument Sans** (400/500/600/700), remplace Inter.
+- **Pas de glassmorphism / `backdrop-filter`** — 4 niveaux d'ombre plats seulement
+  (`shadow-card`, `shadow-card-md`, `shadow-sheet`, `shadow-modal`). C'était autorisé sous
+  "Urban Night", c'est interdit sous Estuaire (ex. `WeatherBadge` corrigé en ce sens).
 
 Cinq principes directeurs, non négociables :
 1. **La carte reste le sujet** — tout le flux carte/recherche/itinéraire tient dans un
@@ -125,13 +125,17 @@ composants pas encore migrés qui utilisent encore la syntaxe Tailwind à palier
 (paliers 600/50 exacts, le reste interpolé). **Un composant neuf utilise directement les
 tokens sémantiques** (`primary`, `transit`), jamais ces rampes.
 
-### Alias legacy `radius-card` / `radius-button` / `shadow-card-md` / `shadow-float`
+### Alias legacy `radius-card` / `radius-button` / `shadow-float`
 
 Ajoutés pour les mêmes raisons (composants anciens utilisant `rounded-card`,
-`rounded-button`, `shadow-card-md`, `shadow-float`). Équivalents : `radius-card` =
-`radius-xl`, `radius-button` = `radius-md`, `shadow-float` = `shadow-modal` (dialogues
-flottants type consentement géoloc / résumé de trajet). Code neuf : préférer directement
-`rounded-xl`, `rounded-md`, `shadow-modal`.
+`rounded-button`, `shadow-float`). Équivalents : `radius-card` = `radius-xl`,
+`radius-button` = `radius-md`, `shadow-float` = `shadow-modal` (dialogues flottants type
+consentement géoloc / résumé de trajet). Code neuf : préférer directement `rounded-xl`,
+`rounded-md`, `shadow-modal`.
+
+`shadow-card-md` n'est **pas** un alias legacy : c'est le 4e niveau d'ombre actif
+(`--shadow-card-md`, panneaux flottants / cartes mises en avant), utilisé notamment par
+`.card-hover:hover`. À utiliser normalement dans du code neuf.
 
 ---
 
@@ -570,7 +574,8 @@ une règle globale ou un `transform`.
 - PAS de règle globale `min-height`/`min-width: 48px` sur les éléments interactifs (voir
   « Pièges connus »)
 - PAS de nouvelle utilisation des rampes `eco-*`/`transit-*` ou des alias `radius-card`/
-  `radius-button`/`shadow-card-md` dans du code neuf (legacy uniquement)
+  `radius-button`/`shadow-float` dans du code neuf (legacy uniquement — `shadow-card-md`
+  n'est pas concerné, c'est un token actif)
 - PAS de `outline-none` sans focus visible compensatoire
 - PAS de `!important` Tailwind sauf override Leaflet documenté ou cas de spécificité
   explicitement commenté (ex. rail de minimisation du bottom sheet)

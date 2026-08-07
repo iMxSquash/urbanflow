@@ -3,11 +3,8 @@ import { TRANSPORT_MODES } from '../../../shared/types/index.js'
 import { recordTripSchema } from './gamification.schema.js'
 
 const VALID_SEGMENT = { mode: 'tramway', distanceKm: 5 }
-const VALID_COORDS = { lat: 47.218, lng: -1.553 }
 
 const VALID = {
-  origin: VALID_COORDS,
-  destination: { lat: 47.225, lng: -1.56 },
   segments: [VALID_SEGMENT],
 }
 
@@ -44,16 +41,6 @@ describe('recordTripSchema', () => {
       segments: [{ mode: 'walk', distanceKm: 0 }],
     })
     expect(result.success).toBe(true)
-  })
-
-  it('accepte les coordonnées aux limites exactes (lat ±90, lng ±180)', () => {
-    expect(
-      recordTripSchema.safeParse({
-        ...VALID,
-        origin: { lat: 90, lng: 180 },
-        destination: { lat: -90, lng: -180 },
-      }).success
-    ).toBe(true)
   })
 
   // ── Segments ─────────────────────────────────────────────────────────────────
@@ -110,20 +97,6 @@ describe('recordTripSchema', () => {
     expect(result.success).toBe(false)
   })
 
-  // ── Coordonnées ───────────────────────────────────────────────────────────────
-
-  it('rejette NaN comme coordonnée', () => {
-    expect(recordTripSchema.safeParse({ ...VALID, origin: { lat: NaN, lng: 0 } }).success).toBe(
-      false
-    )
-  })
-
-  it('rejette Infinity comme coordonnée', () => {
-    expect(
-      recordTripSchema.safeParse({ ...VALID, origin: { lat: Infinity, lng: 0 } }).success
-    ).toBe(false)
-  })
-
   it('rejette NaN comme distanceKm', () => {
     expect(
       recordTripSchema.safeParse({ ...VALID, segments: [{ mode: 'walk', distanceKm: NaN }] })
@@ -136,40 +109,6 @@ describe('recordTripSchema', () => {
       recordTripSchema.safeParse({ ...VALID, segments: [{ mode: 'walk', distanceKm: Infinity }] })
         .success
     ).toBe(false)
-  })
-
-  it('rejette lat > 90', () => {
-    expect(recordTripSchema.safeParse({ ...VALID, origin: { lat: 91, lng: 0 } }).success).toBe(
-      false
-    )
-  })
-
-  it('rejette lat < -90', () => {
-    expect(recordTripSchema.safeParse({ ...VALID, origin: { lat: -91, lng: 0 } }).success).toBe(
-      false
-    )
-  })
-
-  it('rejette lng > 180', () => {
-    expect(recordTripSchema.safeParse({ ...VALID, origin: { lat: 0, lng: 181 } }).success).toBe(
-      false
-    )
-  })
-
-  it('rejette lng < -180', () => {
-    expect(recordTripSchema.safeParse({ ...VALID, origin: { lat: 0, lng: -181 } }).success).toBe(
-      false
-    )
-  })
-
-  it('rejette origin manquant', () => {
-    const { origin: _, ...withoutOrigin } = VALID
-    expect(recordTripSchema.safeParse(withoutOrigin).success).toBe(false)
-  })
-
-  it('rejette destination manquant', () => {
-    const { destination: _, ...withoutDestination } = VALID
-    expect(recordTripSchema.safeParse(withoutDestination).success).toBe(false)
   })
 
   it('rejette un payload vide', () => {

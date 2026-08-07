@@ -97,7 +97,7 @@ export function AuthFooterNotice({ onContinueAsGuest }: AuthFooterNoticeProps) {
         </svg>
         <span className="text-caption text-text-muted leading-snug">
           Aucune donnée de trajet n'est enregistrée avant votre accord.{' '}
-          <Link to="/parametres" className="underline underline-offset-2">
+          <Link to="/confidentialite" className="inline underline underline-offset-2">
             Politique de confidentialité
           </Link>
         </span>

@@ -8,6 +8,7 @@ import type {
   DashboardStats,
   ModeCount,
   RecordTripResult,
+  TripRecord,
   WeeklyBar,
 } from './gamification.types.js'
 
@@ -165,7 +166,7 @@ export async function recordTrip(
   userId: string,
   input: RecordTripInput
 ): Promise<RecordTripResult> {
-  const { origin, destination, segments, gpsVerified } = input
+  const { segments, gpsVerified } = input
 
   const { co2SavedGrams } = computeCo2Saved(segments)
   // Unverified trips earn 0 points to discourage fake submissions
@@ -178,20 +179,10 @@ export async function recordTrip(
     await client.query('BEGIN')
 
     const tripResult = await client.query<{ id: string }>(
-      `INSERT INTO trips (user_id, origin, destination, modes_used, primary_mode, co2_saved_grams, points_earned)
-       VALUES ($1, ST_SetSRID(ST_MakePoint($2, $3), 4326), ST_SetSRID(ST_MakePoint($4, $5), 4326), $6, $7, $8, $9)
+      `INSERT INTO trips (user_id, modes_used, primary_mode, co2_saved_grams, points_earned)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING id`,
-      [
-        userId,
-        origin.lng,
-        origin.lat,
-        destination.lng,
-        destination.lat,
-        modesUsed,
-        mainMode,
-        co2SavedGrams,
-        pointsEarned,
-      ]
+      [userId, modesUsed, mainMode, co2SavedGrams, pointsEarned]
     )
 
     const userResult = await client.query<{ total_points: number }>(
@@ -298,6 +289,35 @@ export async function getDashboardStats(userId: string): Promise<DashboardStats>
     weeklyCo2,
     modeBreakdown,
   }
+}
+
+// ── getUserTrips ──────────────────────────────────────────────────────────────
+// Historique complet (pas seulement le mois en cours) — utilisé par l'export de
+// données RGPD (droit à la portabilité, art. 20). Aucune coordonnée GPS : la
+// table trips n'en stocke plus (cf. migration 016).
+
+export async function getUserTrips(userId: string): Promise<TripRecord[]> {
+  const { rows } = await pool.query<{
+    id: string
+    modes_used: string[]
+    primary_mode: string
+    co2_saved_grams: number
+    points_earned: number
+    created_at: string
+  }>(
+    `SELECT id, modes_used, primary_mode, co2_saved_grams, points_earned, created_at
+     FROM trips WHERE user_id = $1 ORDER BY created_at DESC`,
+    [userId]
+  )
+
+  return rows.map((row) => ({
+    id: row.id,
+    modesUsed: row.modes_used,
+    primaryMode: row.primary_mode,
+    co2SavedGrams: row.co2_saved_grams,
+    pointsEarned: row.points_earned,
+    createdAt: new Date(row.created_at).toISOString(),
+  }))
 }
 
 // ── getUserBadges ─────────────────────────────────────────────────────────────

@@ -89,7 +89,11 @@ export function useActiveTracking({
         (err) => {
           pendingRef.current = false
           console.warn('[tracking] getCurrentPosition error:', err.code, err.message)
-          setCallbackError('Localisation perdue — vérifiez vos réglages GPS')
+          setCallbackError(
+            err.code === GeolocationPositionError.PERMISSION_DENIED
+              ? 'Accès à la localisation refusé — vérifiez les autorisations du site'
+              : 'Localisation perdue — vérifiez vos réglages GPS'
+          )
         },
         // enableHighAccuracy: false → network/WiFi triangulation, no GPS chip
         // maximumAge: 0 → always a fresh fix per poll (network triangulation is fast)

@@ -10,7 +10,7 @@ import { computeScore } from '../../routing/scoring.service.js'
 import type { TransportProvider } from '../transport-provider.interface.js'
 import { getShapeForLeg } from '../gtfs-shapes.service.js'
 import { fetchWithTimeout } from '../../../utils/fetch-external.js'
-import { haversineKm } from '../../../utils/geo.js'
+import { haversineKm, roundCoord } from '../../../utils/geo.js'
 
 // ─── Types réponse Transitous (OTP-like, sans wrapper plan) ──────────────────
 
@@ -287,9 +287,14 @@ export class TransitousProvider implements TransportProvider {
   ): Promise<Journey[]> {
     const refTime = options.departureTime ?? new Date()
 
+    // Coordonnées arrondies à 4 décimales avant transmission à Transitous
+    // (minimisation RGPD — ~11 m de précision, suffisant pour le calcul d'itinéraire).
+    const roundedFrom = roundCoord(from)
+    const roundedTo = roundCoord(to)
+
     const params = new URLSearchParams({
-      fromPlace: `${from.lat},${from.lng}`,
-      toPlace: `${to.lat},${to.lng}`,
+      fromPlace: `${roundedFrom.lat},${roundedFrom.lng}`,
+      toPlace: `${roundedTo.lat},${roundedTo.lng}`,
       numItineraries: '5',
       time: refTime.toISOString(), // MOTIS2 accepte ISO 8601 UTC (ex: 2026-05-27T13:35:00.000Z)
       arriveBy: options.datetimeType === 'arrival' ? 'true' : 'false',

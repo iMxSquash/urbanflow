@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { register } from '../services/auth.service'
 import { useAuthStore } from '../stores/auth.store'
 import { AuthShell, AuthFooterNotice } from '../components/AuthShell'
@@ -8,9 +8,15 @@ interface FormErrors {
   email?: string
   password?: string
   confirm?: string
+  terms?: string
 }
 
-function validate(email: string, password: string, confirm: string): FormErrors {
+function validate(
+  email: string,
+  password: string,
+  confirm: string,
+  termsAccepted: boolean
+): FormErrors {
   const errors: FormErrors = {}
 
   if (!email) {
@@ -35,6 +41,10 @@ function validate(email: string, password: string, confirm: string): FormErrors 
     errors.confirm = 'Les mots de passe ne correspondent pas'
   }
 
+  if (!termsAccepted) {
+    errors.terms = "L'acceptation des CGU est requise pour créer un compte"
+  }
+
   return errors
 }
 
@@ -46,6 +56,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
+  const [termsAccepted, setTermsAccepted] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<FormErrors>({})
   const [apiError, setApiError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -56,13 +67,13 @@ export default function RegisterPage() {
     setSubmitted(true)
     setApiError(null)
 
-    const errors = validate(email, password, confirm)
+    const errors = validate(email, password, confirm, termsAccepted)
     setFieldErrors(errors)
     if (Object.keys(errors).length > 0) return
 
     setIsLoading(true)
     try {
-      const { accessToken } = await register({ email, password })
+      const { accessToken } = await register({ email, password, termsAccepted })
       setAuth(accessToken)
       navigate('/onboarding')
     } catch (err) {
@@ -74,17 +85,22 @@ export default function RegisterPage() {
 
   function handleEmailChange(v: string) {
     setEmail(v)
-    if (submitted) setFieldErrors(validate(v, password, confirm))
+    if (submitted) setFieldErrors(validate(v, password, confirm, termsAccepted))
   }
 
   function handlePasswordChange(v: string) {
     setPassword(v)
-    if (submitted) setFieldErrors(validate(email, v, confirm))
+    if (submitted) setFieldErrors(validate(email, v, confirm, termsAccepted))
   }
 
   function handleConfirmChange(v: string) {
     setConfirm(v)
-    if (submitted) setFieldErrors(validate(email, password, v))
+    if (submitted) setFieldErrors(validate(email, password, v, termsAccepted))
+  }
+
+  function handleTermsChange(v: boolean) {
+    setTermsAccepted(v)
+    if (submitted) setFieldErrors(validate(email, password, confirm, v))
   }
 
   function handleContinueAsGuest() {
@@ -200,6 +216,46 @@ export default function RegisterPage() {
           >
             {fieldErrors.confirm && (
               <p className="text-body-sm text-danger-text">{fieldErrors.confirm}</p>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <label className="flex items-start gap-2.5 cursor-pointer text-body-sm text-text">
+            <input
+              type="checkbox"
+              checked={termsAccepted}
+              onChange={(e) => handleTermsChange(e.target.checked)}
+              aria-required="true"
+              aria-invalid={!!fieldErrors.terms}
+              aria-describedby="register-terms-error"
+              disabled={isLoading}
+              className="size-[22px] rounded-xs accent-primary shrink-0 mt-0.5"
+            />
+            <span>
+              J'accepte les{' '}
+              <Link
+                to="/cgu"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline text-primary underline"
+              >
+                CGU
+              </Link>{' '}
+              et la{' '}
+              <Link
+                to="/confidentialite"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline text-primary underline"
+              >
+                politique de confidentialité
+              </Link>
+            </span>
+          </label>
+          <div id="register-terms-error" aria-live="polite" aria-atomic="true" className="mt-1.5">
+            {fieldErrors.terms && (
+              <p className="text-body-sm text-danger-text">{fieldErrors.terms}</p>
             )}
           </div>
         </div>

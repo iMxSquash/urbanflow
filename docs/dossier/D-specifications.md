@@ -271,7 +271,8 @@ Le planificateur interagit avec trois tables PostgreSQL. L'extension PostGIS est
 | id | UUID | PK, DEFAULT gen_random_uuid() |
 | email | TEXT | UNIQUE, NOT NULL |
 | password_hash | TEXT | NOT NULL |
-| rgpd_consent_at | TIMESTAMPTZ | horodatage du consentement RGPD |
+| rgpd_consent_at | TIMESTAMPTZ | horodatage du consentement géolocalisation |
+| terms_accepted_at | TIMESTAMPTZ | horodatage de l'acceptation des CGU à l'inscription |
 | total_points | INTEGER | NOT NULL, DEFAULT 0 |
 | created_at | TIMESTAMPTZ | NOT NULL, DEFAULT now() |
 
@@ -292,15 +293,13 @@ Le planificateur interagit avec trois tables PostgreSQL. L'extension PostGIS est
 |---|---|---|
 | id | UUID | PK, DEFAULT gen_random_uuid() |
 | user_id | UUID | FK users.id ON DELETE CASCADE, INDEX |
-| origin | GEOGRAPHY(POINT, 4326) | NOT NULL, index GiST |
-| destination | GEOGRAPHY(POINT, 4326) | NOT NULL, index GiST |
 | modes_used | TEXT[] | NOT NULL, DEFAULT {} |
 | primary_mode | TEXT | NOT NULL, DEFAULT 'walk', INDEX |
 | co2_saved_grams | INTEGER | NOT NULL, DEFAULT 0 |
 | points_earned | INTEGER | NOT NULL, DEFAULT 0 |
 | created_at | TIMESTAMPTZ | NOT NULL, DEFAULT now(), INDEX |
 
-La durée totale, la distance totale et le score renvoyés par l'endpoint de calcul sont des indicateurs calculés à la volée par le moteur de scoring. Ils ne sont pas persistés : seuls les indicateurs de synthèse nécessaires au tableau de bord et à la gamification (économie CO2, points gagnés) sont conservés dans `trips`.
+La durée totale, la distance totale et le score renvoyés par l'endpoint de calcul sont des indicateurs calculés à la volée par le moteur de scoring. Ils ne sont pas persistés : seuls les indicateurs de synthèse nécessaires au tableau de bord et à la gamification (économie CO2, points gagnés) sont conservés dans `trips`. Les coordonnées de départ/arrivée ne sont pas non plus persistées (minimisation RGPD, migration 016) : elles ne servent qu'au calcul d'itinéraire côté client et backend, le temps de la requête.
 
 La rétention des enregistrements `trips` est limitée à 12 mois, conformément à la politique définie dans la section consacrée aux contraintes RGPD. Un job planifié supprime les enregistrements dont `created_at` est antérieur à cette limite.
 

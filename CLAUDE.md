@@ -234,9 +234,14 @@ CORS_ORIGIN=http://localhost:5173
 
 - Popup de consentement AVANT activation de la géolocalisation
 - L'utilisateur peut désactiver la géolocalisation et saisir manuellement
-- Endpoint `DELETE /api/users/me` pour le droit à l'effacement
-- Durée de conservation des données de trajets : 12 mois max, documenté dans le dossier
-- Aucun partage de données GPS à des tiers
+- Endpoint `DELETE /api/auth/me` pour le droit à l'effacement
+- Endpoint `GET /api/auth/me/export` pour le droit à la portabilité (art. 20)
+- Endpoint `POST /api/auth/consent` pour tracer côté serveur le consentement géolocalisation (`users.rgpd_consent_at`)
+- Acceptation des CGU obligatoire à l'inscription (`registerSchema.termsAccepted`), horodatée dans `users.terms_accepted_at`
+- Durée de conservation des données de trajets et récompenses : 12 mois max, purgés par un job planifié quotidien (`src/server/jobs/purge-old-trips.job.ts`, 3h15 heure de pointe basse)
+- Aucune coordonnée GPS précise stockée en base au-delà du calcul d'itinéraire (table `trips` ne conserve que modes/CO2/points, jamais origin/destination)
+- Aucun partage de données GPS à des tiers ; coordonnées arrondies à 4 décimales avant transmission à Transitous/OSRM
+- Pages publiques dédiées : `/mentions-legales`, `/cgu`, `/confidentialite`
 
 ## Facteurs CO2 (ADEME)
 

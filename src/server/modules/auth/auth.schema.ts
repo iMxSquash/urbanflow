@@ -7,6 +7,7 @@ export const registerSchema = z.object({
     .min(8, { message: 'Minimum 8 caractères' })
     .regex(/[A-Z]/, { message: 'Au moins une majuscule requise' })
     .regex(/[0-9]/, { message: 'Au moins un chiffre requis' }),
+  termsAccepted: z.literal(true, { message: "L'acceptation des CGU est requise" }),
 })
 
 export const loginSchema = z.object({

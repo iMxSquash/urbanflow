@@ -1,5 +1,8 @@
 import type { Request, Response } from 'express'
 import * as authService from './auth.service.js'
+import * as profileService from '../profile/profile.service.js'
+import * as gamificationService from '../gamification/gamification.service.js'
+import * as rewardsService from '../rewards/rewards.service.js'
 
 const REFRESH_COOKIE = 'refresh_token'
 
@@ -61,6 +64,42 @@ export async function deleteAccount(req: Request, res: Response): Promise<void> 
   try {
     await authService.deleteAccount(req.user!.sub)
     res.clearCookie(REFRESH_COOKIE, cookieBase)
+    res.status(204).send()
+  } catch {
+    res.status(500).json({ error: 'Erreur interne du serveur' })
+  }
+}
+
+// Droit à la portabilité (RGPD art. 20) : export JSON machine-readable de
+// l'ensemble des données personnelles liées au compte connecté.
+export async function exportData(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = req.user!.sub
+    const [account, profile, trips, badges, redemptions] = await Promise.all([
+      authService.getAccountInfo(userId),
+      profileService.getProfile(userId),
+      gamificationService.getUserTrips(userId),
+      gamificationService.getUserBadges(userId),
+      rewardsService.getUserRedemptions(userId),
+    ])
+
+    res.setHeader('Content-Disposition', 'attachment; filename="urbanflow-donnees.json"')
+    res.status(200).json({
+      exportedAt: new Date().toISOString(),
+      account,
+      mobilityProfile: profile,
+      trips,
+      badges: badges.filter((b) => b.unlocked),
+      rewardRedemptions: redemptions,
+    })
+  } catch {
+    res.status(500).json({ error: 'Erreur interne du serveur' })
+  }
+}
+
+export async function recordConsent(req: Request, res: Response): Promise<void> {
+  try {
+    await authService.recordRgpdConsent(req.user!.sub)
     res.status(204).send()
   } catch {
     res.status(500).json({ error: 'Erreur interne du serveur' })

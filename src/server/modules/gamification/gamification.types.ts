@@ -6,6 +6,15 @@ export interface RecordTripResult {
   newlyUnlockedBadges: string[]
 }
 
+export interface TripRecord {
+  id: string
+  modesUsed: string[]
+  primaryMode: string
+  co2SavedGrams: number
+  pointsEarned: number
+  createdAt: string
+}
+
 export interface BadgeWithStatus {
   id: string
   name: string
