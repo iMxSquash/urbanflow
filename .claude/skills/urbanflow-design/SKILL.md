@@ -19,6 +19,13 @@ d'écran), synchronisés depuis le projet Claude Design "Urbanflow design direct
 après la rédaction des docs (ex. `--color-text-subtle` et `--color-on-primary-muted` en
 sombre). Ce fichier reflète l'état réel du code.
 
+**Aucun outil de vérification visuelle n'est disponible dans cet environnement**
+(pas de navigateur, pas d'Axe DevTools, pas de Chrome DevTools MCP) : vérifier via
+`tsc --noEmit`, `eslint`, `vitest run`, `vite build`, et signaler explicitement toute
+vérification visuelle, clavier ou responsive qui n'a pas pu être faite plutôt que
+d'affirmer un résultat non contrôlé. S'applique à toute la checklist accessibilité et
+responsive plus bas.
+
 ---
 
 ## Identité visuelle — "Estuaire"
@@ -92,9 +99,11 @@ c'est le mode que le produit pousse.
 - `warning` (`text-warning`, `bg-warning-surface`, `border-warning-border`,
   `text-on-warning`) : état inhabituel — mode démo, trajet écarté par un filtre, hors
   ligne, récompense expirée. **Toujours** icône + libellé, jamais la couleur seule.
-- `danger` (`text-danger-text`, `bg-danger-surface`) : réservé **exclusivement** à la
-  suppression de compte. Ne pas l'utiliser pour une erreur de formulaire générique
-  (`ErrorBanner` utilise ces tokens uniquement parce qu'une erreur réseau bloque l'action).
+- `danger` (`text-danger-text`, `bg-danger-surface`) : réservé à la suppression de compte,
+  plus une exception nommée — **erreur bloquante** : une erreur qui empêche totalement de
+  continuer l'action en cours (ex. `ErrorBanner` sur une erreur réseau qui bloque l'écran).
+  Toute autre erreur de formulaire générique (validation, champ invalide) reste sur
+  `warning`, jamais `danger`.
 
 ### Couleurs par mode de transport
 
@@ -116,26 +125,6 @@ Les 7 teintes sont vérifiées distinguables en deutéranopie/protanopie, mais l
 (`constants/mode-icons.tsx`) reste toujours le vecteur d'information principal — jamais
 la couleur seule. La marche est toujours en trait pointillé sur la carte (`.trace-walk`),
 tout tracé porte un halo `.trace-segment` de 2px pour la lisibilité sur les tuiles.
-
-### Rampes `eco-*` / `transit-*` (compat legacy — ne pas utiliser dans du code neuf)
-
-`--color-eco-50..900` et `--color-transit-50..900` existent uniquement pour les
-composants pas encore migrés qui utilisent encore la syntaxe Tailwind à paliers
-(`bg-eco-50`, `text-transit-700`...). Elles sont dérivées des tokens Estuaire réels
-(paliers 600/50 exacts, le reste interpolé). **Un composant neuf utilise directement les
-tokens sémantiques** (`primary`, `transit`), jamais ces rampes.
-
-### Alias legacy `radius-card` / `radius-button` / `shadow-float`
-
-Ajoutés pour les mêmes raisons (composants anciens utilisant `rounded-card`,
-`rounded-button`, `shadow-float`). Équivalents : `radius-card` = `radius-xl`,
-`radius-button` = `radius-md`, `shadow-float` = `shadow-modal` (dialogues flottants type
-consentement géoloc / résumé de trajet). Code neuf : préférer directement `rounded-xl`,
-`rounded-md`, `shadow-modal`.
-
-`shadow-card-md` n'est **pas** un alias legacy : c'est le 4e niveau d'ombre actif
-(`--shadow-card-md`, panneaux flottants / cartes mises en avant), utilisé notamment par
-`.card-hover:hover`. À utiliser normalement dans du code neuf.
 
 ---
 
@@ -317,9 +306,10 @@ divergeaient avant correction — cf. historique Git si besoin de contexte).
 
 Il n'existe **pas** de bibliothèque d'icônes externe (pas de Lucide/Heroicons en
 dépendance) : le set Estuaire est dessiné à la main dans `mode-icons.tsx` et inline dans
-les composants (`viewBox 0 0 24 24`, `stroke-linecap/linejoin="round"`, épaisseur 1,75 à
-2,6px selon la taille — voir `MAQUETTE.md` §1.7). Réutiliser un path existant avant d'en
-dessiner un nouveau.
+les composants — `viewBox 0 0 24 24`, extrémités/jonctions arrondies (`round`
+linecap/linejoin), épaisseur 1,75px (icônes 20-26px), 1,9-2px (15-18px), 2,2-2,6px
+(12-13px), pastilles d'icône 30/34/40/46px (rayon pill ou 12px). Détail source :
+`MAQUETTE.md` §1.7. Réutiliser un path existant avant d'en dessiner un nouveau.
 
 ---
 
@@ -391,6 +381,26 @@ jamais ajouter une règle globale `min-height:48px`/`min-width:48px` sur `button
 
 ---
 
+## Legacy compat
+
+Ces alias existent uniquement pour les composants pas encore migrés vers les tokens
+Estuaire actuels — **aucun composant neuf ne doit les utiliser**.
+
+- **Rampes `eco-*` / `transit-*`** (`--color-eco-50..900`, `--color-transit-50..900`) :
+  syntaxe Tailwind à paliers (`bg-eco-50`, `text-transit-700`...), dérivées des tokens
+  Estuaire réels (paliers 600/50 exacts, le reste interpolé). Code neuf : utiliser
+  directement les tokens sémantiques (`primary`, `transit`).
+- **`radius-card` / `radius-button` / `shadow-float`** : équivalents `radius-card` =
+  `radius-xl`, `radius-button` = `radius-md`, `shadow-float` = `shadow-modal`
+  (dialogues flottants type consentement géoloc / résumé de trajet). Code neuf :
+  préférer directement `rounded-xl`, `rounded-md`, `shadow-modal`.
+
+`shadow-card-md` n'est **pas** concerné par cette liste : c'est le 4e niveau d'ombre actif
+(`--shadow-card-md`, panneaux flottants / cartes mises en avant), utilisé notamment par
+`.card-hover:hover`. À utiliser normalement dans du code neuf.
+
+---
+
 ## Accessibilité (WCAG 2.1 AA) — Non-négociable
 
 1. **Images** : `alt` descriptif, `alt=""` si décorative.
@@ -421,10 +431,8 @@ jamais ajouter une règle globale `min-height:48px`/`min-width:48px` sur `button
     graphique" (a11y).
 14. **`aria-current="page"`** sur l'item de nav actif (déjà géré par `BottomNav`/`NavLink`).
 
-Pas d'outil Axe DevTools disponible dans cet environnement d'exécution (pas de
-navigateur outillé) — vérifier manuellement (labels, rôles, roving-tabindex, focus trap,
-régions live) et le signaler explicitement si un audit visuel/clavier réel n'a pas pu
-être fait, plutôt que de prétendre l'accessibilité validée.
+Vérification manuelle uniquement ici (labels, rôles, roving-tabindex, focus trap,
+régions live) — voir la limite d'outillage en tête de fichier.
 
 ---
 
@@ -478,10 +486,8 @@ de `lg:`, `.bottom-sheet`/`.bottom-nav` restent `fixed`; au-delà, ils passent e
 statique (`lg:static`) intégré au flex de la page — jamais de composant ou d'asset
 desktop-only, mêmes SVG et tokens partout.
 
-**Aucun outil navigateur n'est disponible dans cet environnement** (pas de Chrome
-DevTools MCP) — vérifier par `tsc --noEmit`, `eslint`, `vitest run`, `vite build`, et le
-signaler explicitement si un rendu visuel réel (≥1024px en particulier) n'a pas pu être
-contrôlé, plutôt que d'affirmer un résultat non vérifié.
+Vérification par `tsc --noEmit`/`eslint`/`vitest run`/`vite build` uniquement ici, en
+particulier pour le rendu ≥1024px — voir la limite d'outillage en tête de fichier.
 
 ---
 
