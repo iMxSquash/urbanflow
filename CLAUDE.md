@@ -34,13 +34,21 @@ Nantes Métropole — réseau Naolib (Semitan). Toutes les coordonnées GPS, don
 - JWT avec access token (15min) + refresh token en cookie HttpOnly
 - bcrypt pour le hashage des mots de passe
 - Jamais stocker de token dans localStorage
-- Refresh token à usage unique : rotation à chaque `/refresh` (ancien jti supprimé,
-  nouveau jti stocké), table dédiée `refresh_tokens` — limite la fenêtre d'exploitation
-  d'un token volé
+- Refresh token à usage unique : rotation à chaque `/refresh` (ancien jti marqué
+  `rotated_at`/`replaced_by`, nouveau jti stocké), table dédiée `refresh_tokens` —
+  limite la fenêtre d'exploitation d'un token volé
+- Fenêtre de grâce de rotation (10s, `ROTATION_GRACE_MS`) : si le même jti déjà
+  tourné est représenté dans ce délai (double onglet, retry réseau, double appel
+  React StrictMode en dev), le serveur retrouve la session active en suivant
+  `replaced_by` au lieu de renvoyer 401 — au-delà de la fenêtre, un jti déjà
+  tourné est traité comme un rejeu et refusé
 - `loginUser` exécute toujours un `bcrypt.compare` (contre un hash factice si l'email
   n'existe pas) pour égaliser le timing et empêcher l'énumération de comptes par
   mesure de latence
 - Mot de passe : 8 caractères min, 1 majuscule, 1 chiffre (`registerSchema`)
+- « Rester connecté » (login uniquement) : coché → cookie de refresh persistant
+  (7j) ; décoché → cookie de session, effacé à la fermeture du navigateur (le
+  token reste valide 7j côté serveur, seule la persistance du cookie change)
 
 ### Tests
 - Vitest pour les tests unitaires et d'intégration

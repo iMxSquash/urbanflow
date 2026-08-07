@@ -37,9 +37,16 @@ export async function register(req: Request, res: Response): Promise<void> {
 
 export async function login(req: Request, res: Response): Promise<void> {
   try {
-    const { email, password } = req.body as { email: string; password: string }
-    const { accessToken, refreshToken } = await authService.loginUser(email, password)
-    res.cookie(REFRESH_COOKIE, refreshToken, cookieOptions)
+    const { email, password, rememberMe } = req.body as {
+      email: string
+      password: string
+      rememberMe?: boolean
+    }
+    const { accessToken, refreshToken } = await authService.loginUser(email, password, !!rememberMe)
+    // rememberMe coché : cookie persistant (7j, maxAge). Décoché : cookie de
+    // session — le refresh token reste valide 7j côté serveur, mais le
+    // navigateur l'efface à la fermeture, donc pas de reconnexion silencieuse.
+    res.cookie(REFRESH_COOKIE, refreshToken, rememberMe ? cookieOptions : cookieBase)
     res.status(200).json({ accessToken })
   } catch (err) {
     handleAuthError(err, res)
@@ -53,8 +60,12 @@ export async function refresh(req: Request, res: Response): Promise<void> {
     return
   }
   try {
-    const { accessToken, refreshToken } = await authService.refreshTokens(incomingToken)
-    res.cookie(REFRESH_COOKIE, refreshToken, cookieOptions)
+    const { accessToken, refreshToken, rememberMe } = await authService.refreshTokens(incomingToken)
+    // Repose le même type de cookie que celui posé au login (persistant vs
+    // session) — rememberMe est reporté par le service à travers la rotation,
+    // sinon un cookie de session serait remplacé par un cookie persistant (ou
+    // l'inverse) dès le premier refresh.
+    res.cookie(REFRESH_COOKIE, refreshToken, rememberMe ? cookieOptions : cookieBase)
     res.status(200).json({ accessToken })
   } catch (err) {
     handleAuthError(err, res)

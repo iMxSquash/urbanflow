@@ -109,6 +109,12 @@ router.post('/register', credentialsRateLimit, validate(registerSchema), authCon
  *               password:
  *                 type: string
  *                 example: Password1
+ *               rememberMe:
+ *                 type: boolean
+ *                 description: >
+ *                   Coché : cookie de refresh persistant (7j). Décoché : cookie de
+ *                   session, effacé à la fermeture du navigateur (le token reste
+ *                   valide 7j côté serveur, seule la persistance du cookie change).
  *     responses:
  *       200:
  *         description: Connexion réussie — access token retourné, refresh token en cookie HttpOnly
