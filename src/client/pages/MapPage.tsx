@@ -434,7 +434,7 @@ export default function MapPage() {
         {!isOnline && trackingPhase !== 'active' && <OfflinePanel />}
 
         <main
-          className="h-full relative overflow-hidden isolate"
+          className="h-full relative overflow-hidden isolate group"
           role="application"
           aria-label="Carte de mobilité de Nantes"
         >
@@ -491,11 +491,7 @@ export default function MapPage() {
               key={isDarkMode ? 'dark' : 'light'}
               url={isDarkMode ? CARTO_POSITRON_DARK : CARTO_POSITRON_LIGHT}
               attribution={CARTO_ATTRIBUTION}
-              className={
-                isDarkMode
-                  ? 'brightness-110 contrast-[.9] saturate-150 -hue-rotate-[70deg]'
-                  : undefined
-              }
+              className={isDarkMode ? 'saturate-[.5] brightness-[.92]' : 'saturate-[.55] contrast-[1.02]'}
             />
             <MapResizeSync />
             {layers.tanLines && (
@@ -533,6 +529,19 @@ export default function MapPage() {
               <JourneyLayer journey={selectedJourney} activeSegmentIdx={activeSegmentIdx} />
             )}
           </MapContainer>
+
+          {/* Teinte de survol carte (DESIGN-SYSTEM.md / MAQUETTE.md §6). Les tuiles
+           * Leaflet sont des <img> (élément remplacé) : ::after n'y a aucun effet, donc
+           * pas de teinte tuile par tuile en CSS pur — un calque plein cadre en
+           * mix-blend-mode au-dessus de la carte reproduit le même rendu. */}
+          <div
+            aria-hidden="true"
+            className={
+              isDarkMode
+                ? 'absolute inset-0 pointer-events-none opacity-0 mix-blend-screen bg-primary-surface transition-opacity duration-fast group-hover:opacity-30'
+                : 'absolute inset-0 pointer-events-none opacity-0 mix-blend-multiply bg-primary transition-opacity duration-fast group-hover:opacity-10'
+            }
+          />
 
           <MapLayerToggle
             hasJourney={journeys.length > 0 || !!selectedJourney}

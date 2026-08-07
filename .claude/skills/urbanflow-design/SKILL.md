@@ -272,6 +272,25 @@ initiales de l'email — le modèle `AuthUser` ne porte que `email`, ne pas inve
 Pages hors carte : envelopper le contenu dans `PageWithSidebar` plutôt que de recâbler
 `BottomNav` soi-même.
 
+### Carte Leaflet — teinte des tuiles
+
+Fond CartoDB : `basemaps.cartocdn.com/light_all` (clair) / `dark_all` (sombre —
+`CARTO_POSITRON_DARK` malgré son nom, c'est bien Dark Matter), choisi via `isDarkMode`
+sur `<TileLayer key={...} url={...} className={...}>` (`MapPage.tsx`). Teinte 100% CSS
+(`filter`), aucun style vectoriel custom chargé — coût réseau nul.
+
+- **Clair** : `saturate-[.55] contrast-[1.02]` sur le `TileLayer`.
+- **Sombre** : `saturate-[.5] brightness-[.92]` sur le `TileLayer`.
+- **Survol** : calque `absolute inset-0 pointer-events-none` plein cadre, dernier enfant
+  du `<main role="application">` (marqué `group`), plutôt qu'un ciblage tuile par tuile —
+  les tuiles Leaflet sont des `<img>` (élément remplacé), `::after` n'y a aucun effet.
+  Clair : `mix-blend-multiply bg-primary group-hover:opacity-10`. Sombre :
+  `mix-blend-screen bg-primary-surface group-hover:opacity-30` (`bg-primary-surface`
+  résout à `#0F3A2C` en thème sombre — pas de hex en dur).
+
+Ces valeurs correspondent maintenant à DESIGN-SYSTEM.md/MAQUETTE.md §6 (elles en
+divergeaient avant correction — cf. historique Git si besoin de contexte).
+
 ---
 
 ## Composants React réutilisables — ne pas dupliquer
@@ -451,11 +470,13 @@ des besoins ponctuels : `xs` (375px) et `map` (900px, mise en page carte spécif
 <div className="lg:px-8 px-4">
 ```
 
-Constantes de layout desktop : sidebar `--nav-rail`/`w-58` = 232px, panneau recherche
-`w-100`/`min-w-[380px]` = 400px, largeur de lecture max 1040px, modale 560px
-(`lg:w-140`). En dessous de `lg:`, `.bottom-sheet`/`.bottom-nav` restent `fixed`; au-delà,
-ils passent en layout statique (`lg:static`) intégré au flex de la page — jamais de
-composant ou d'asset desktop-only, mêmes SVG et tokens partout.
+Constantes de layout desktop : sidebar `w-58` = 232px, panneau recherche `w-100`/
+`min-w-[380px]` = 400px, largeur de lecture max 1040px, modale 560px (`lg:w-140`). Ce
+sont des classes Tailwind à paliers en dur — il n'existe pas de variable CSS `--nav-rail`
+ou `--search-panel` dans `index.css`, ne pas les inventer dans du code neuf. En dessous
+de `lg:`, `.bottom-sheet`/`.bottom-nav` restent `fixed`; au-delà, ils passent en layout
+statique (`lg:static`) intégré au flex de la page — jamais de composant ou d'asset
+desktop-only, mêmes SVG et tokens partout.
 
 **Aucun outil navigateur n'est disponible dans cet environnement** (pas de Chrome
 DevTools MCP) — vérifier par `tsc --noEmit`, `eslint`, `vitest run`, `vite build`, et le
