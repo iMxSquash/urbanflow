@@ -3,6 +3,7 @@ import { apiFetch } from '../utils/api-client'
 interface RegisterPayload {
   email: string
   password: string
+  termsAccepted: boolean
 }
 
 interface LoginPayload {

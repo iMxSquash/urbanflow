@@ -53,7 +53,7 @@ const router = Router()
  *         application/json:
  *           schema:
  *             type: object
- *             required: [email, password]
+ *             required: [email, password, termsAccepted]
  *             properties:
  *               email:
  *                 type: string
@@ -64,6 +64,10 @@ const router = Router()
  *                 minLength: 8
  *                 description: Min 8 chars, 1 majuscule, 1 chiffre
  *                 example: Password1
+ *               termsAccepted:
+ *                 type: boolean
+ *                 enum: [true]
+ *                 description: Doit valoir `true` — horodaté côté serveur dans `users.terms_accepted_at`
  *     responses:
  *       201:
  *         description: Utilisateur créé — access token retourné, refresh token en cookie HttpOnly

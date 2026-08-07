@@ -8,6 +8,7 @@ erDiagram
         TEXT email "UNIQUE NOT NULL"
         TEXT password_hash "NOT NULL"
         TIMESTAMPTZ rgpd_consent_at ""
+        TIMESTAMPTZ terms_accepted_at ""
         INTEGER total_points "NOT NULL DEFAULT 0"
         TIMESTAMPTZ created_at "NOT NULL DEFAULT now()"
     }

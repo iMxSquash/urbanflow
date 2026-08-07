@@ -271,7 +271,8 @@ Le planificateur interagit avec trois tables PostgreSQL. L'extension PostGIS est
 | id | UUID | PK, DEFAULT gen_random_uuid() |
 | email | TEXT | UNIQUE, NOT NULL |
 | password_hash | TEXT | NOT NULL |
-| rgpd_consent_at | TIMESTAMPTZ | horodatage du consentement RGPD |
+| rgpd_consent_at | TIMESTAMPTZ | horodatage du consentement géolocalisation |
+| terms_accepted_at | TIMESTAMPTZ | horodatage de l'acceptation des CGU à l'inscription |
 | total_points | INTEGER | NOT NULL, DEFAULT 0 |
 | created_at | TIMESTAMPTZ | NOT NULL, DEFAULT now() |
 

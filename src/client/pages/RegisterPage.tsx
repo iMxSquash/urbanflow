@@ -73,7 +73,7 @@ export default function RegisterPage() {
 
     setIsLoading(true)
     try {
-      const { accessToken } = await register({ email, password })
+      const { accessToken } = await register({ email, password, termsAccepted })
       setAuth(accessToken)
       navigate('/onboarding')
     } catch (err) {
