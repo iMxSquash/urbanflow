@@ -131,9 +131,17 @@ Variable d'env `DEMO_MODE=true` fait basculer TOUS les appels API externes vers 
 | Transitous | `TRANSITOUS_URL=https://api.transitous.org/api/` | Routage TC multimodal (cloud) |
 | OSRM public | `OSRM_URL=http://router.project-osrm.org` | Routage vélo/marche/scooter (shape + distance) |
 | OpenWeatherMap | `OPENWEATHER_API_KEY=xxx` | Météo pour scoring (intégré — cache mémoire 10 min, re-scoring confort en fin de routing) |
-| GBFS Bicloo | URL fixe transport.data.gouv.fr | Stations vélos |
+| Bicloo (stations vélos) | URL fixe — API Explore v2.1 de data.nantesmetropole.fr | Stations vélos temps réel, routing Bicloo |
+| TAN circuits & arrêts | `NANTES_API_URL` (défaut : API Explore v2.1 de data.nantesmetropole.fr) | Lignes et arrêts pour affichage carte |
 | SIRI-Lite Naolib | `RequestorRef: opendata` | Prochains passages temps réel (non encore intégré) |
 | CartoDB Positron | URL fixe basemaps.cartocdn.com | Tuiles cartographiques |
+
+> **Écart avec le flux GBFS documenté historiquement** : `bicloo.service.ts` et
+> `tan.service.ts` interrogent en réalité l'API Explore (Opendatasoft) de
+> data.nantesmetropole.fr, pas le flux GBFS v2.3 de transport.data.gouv.fr. Les
+> deux intégrations fonctionnent (avec fallback `demo-data/` si l'API est
+> indisponible) — voir `docs/06-APIS-DONNEES.md` §5 pour le détail des endpoints
+> réels.
 
 ## Variables d'environnement
 
@@ -149,6 +157,7 @@ DEMO_MODE=false
 TRANSITOUS_URL=https://api.transitous.org/api/
 OSRM_URL=http://router.project-osrm.org
 OPENWEATHER_API_KEY=
+NANTES_API_URL=https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets
 
 # Auth
 JWT_SECRET=
@@ -311,6 +320,19 @@ Pondérations par préférence utilisateur :
 **PMR (`pmrAccessibility: true`) dans le score confort :**
 - Seuil marche réduit à 5 min pour la pénalité (−60 pts au lieu de −40)
 - Pénalité supplémentaire −50 pts si un segment vélo est présent
+
+**Dénivelé (`avoidElevation: true`) dans le score confort :**
+- Pénalité −30 pts si un segment vélo est présent, sinon aucun effet
+- Approximation : OSRM public ne fournit pas de profil DEM (altimétrie) pour le
+  profil `driving` utilisé côté serveur ; le vélo est le seul mode réellement
+  affecté par le relief dans ce produit, donc c'est le seul pénalisé
+
+**Météo dans le score confort** (uniquement si la météo a pu être récupérée) :
+- Pluie/neige/orage, ou vent > 40 km/h : pénalité −30 pts si un segment vélo est présent
+- Pluie/neige/orage avec un trajet 100% TC (aucun vélo) : bonus +10 pts (abri)
+- Ces pénalités/bonus ne se cumulent pas entre eux (un seul −30 max, un seul +10 max)
+
+Toutes les pénalités/bonus ci-dessus sont plafonnés à `[0, 100]` sur le score confort final.
 
 **Non encore implémenté :** pondération heure de pointe.
 
