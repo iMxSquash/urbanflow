@@ -1,12 +1,18 @@
 import { randomUUID } from 'crypto'
 import type pg from 'pg'
 import { pool } from '../../db/pool.js'
+import { withTransaction } from '../../db/with-transaction.js'
 import type { PurchaseResult, RewardCatalog, RewardType, UserRedemption } from './rewards.types.js'
 
 const MAX_CODE_GENERATION_ATTEMPTS = 3
+const POSTGRES_UNIQUE_VIOLATION = '23505'
+
+function hasErrorCode(err: unknown): err is { code: string } {
+  return typeof err === 'object' && err !== null && 'code' in err && typeof err.code === 'string'
+}
 
 function isUniqueViolation(err: unknown): boolean {
-  return (err as { code?: string }).code === '23505'
+  return hasErrorCode(err) && err.code === POSTGRES_UNIQUE_VIOLATION
 }
 
 function generateRedemptionCode(): string {
@@ -128,10 +134,7 @@ export async function getUserRedemptions(userId: string): Promise<UserRedemption
 // ── purchaseReward ────────────────────────────────────────────────────────────
 
 export async function purchaseReward(userId: string, rewardId: string): Promise<PurchaseResult> {
-  const client = await pool.connect()
-  try {
-    await client.query('BEGIN')
-
+  return withTransaction(async (client) => {
     const rewardResult = await client.query<{ points_cost: number; active: boolean }>(
       `SELECT points_cost, active FROM rewards WHERE id = $1`,
       [rewardId]
@@ -169,18 +172,11 @@ export async function purchaseReward(userId: string, rewardId: string): Promise<
       reward.points_cost
     )
 
-    await client.query('COMMIT')
-
     return {
       redemptionId,
       code,
       pointsSpent: reward.points_cost,
       totalPoints: userRow.total_points,
     }
-  } catch (err) {
-    await client.query('ROLLBACK')
-    throw err
-  } finally {
-    client.release()
-  }
+  })
 }
