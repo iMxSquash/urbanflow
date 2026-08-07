@@ -2,6 +2,13 @@ import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { randomUUID } from 'crypto'
 import { pool } from '../../db/pool.js'
+import { requireEnv } from '../../config/env.js'
+import {
+  EmailExistsError,
+  InvalidCredentialsError,
+  InvalidTokenError,
+  UserNotFoundError,
+} from './auth.errors.js'
 import type { AuthTokenPayload, RefreshTokenPayload } from './auth.types.js'
 
 const BCRYPT_ROUNDS = 10
@@ -18,11 +25,11 @@ async function getDummyHash(): Promise<string> {
 }
 
 function signAccessToken(payload: AuthTokenPayload): string {
-  return jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: ACCESS_EXPIRY })
+  return jwt.sign(payload, requireEnv('JWT_SECRET'), { expiresIn: ACCESS_EXPIRY })
 }
 
 function signRefreshToken(payload: AuthTokenPayload, jti: string): string {
-  return jwt.sign({ ...payload, jti }, process.env.JWT_REFRESH_SECRET!, {
+  return jwt.sign({ ...payload, jti }, requireEnv('JWT_REFRESH_SECRET'), {
     expiresIn: REFRESH_EXPIRY,
   })
 }
@@ -34,6 +41,16 @@ async function storeRefreshToken(userId: string, jti: string): Promise<void> {
     userId,
     expiresAt,
   ])
+}
+
+async function issueTokenPair(
+  payload: AuthTokenPayload
+): Promise<{ accessToken: string; refreshToken: string }> {
+  const jti = randomUUID()
+  const accessToken = signAccessToken(payload)
+  const refreshToken = signRefreshToken(payload, jti)
+  await storeRefreshToken(payload.sub, jti)
+  return { accessToken, refreshToken }
 }
 
 export async function registerUser(
@@ -52,19 +69,11 @@ export async function registerUser(
     )
     user = result.rows[0] as { id: string; email: string }
   } catch (err) {
-    if ((err as { code?: string }).code === '23505') throw new Error('EMAIL_EXISTS', { cause: err })
+    if ((err as { code?: string }).code === '23505') throw new EmailExistsError(err)
     throw err
   }
-  const payload: AuthTokenPayload = { sub: user.id, email: user.email }
-  const jti = randomUUID()
 
-  const [accessToken, refreshToken] = await Promise.all([
-    Promise.resolve(signAccessToken(payload)),
-    Promise.resolve(signRefreshToken(payload, jti)),
-    storeRefreshToken(user.id, jti),
-  ])
-
-  return { accessToken, refreshToken }
+  return issueTokenPair({ sub: user.id, email: user.email })
 }
 
 export async function loginUser(
@@ -81,19 +90,10 @@ export async function loginUser(
   const valid = await bcrypt.compare(password, hashToCompare)
 
   if (!user || !valid) {
-    throw new Error('INVALID_CREDENTIALS')
+    throw new InvalidCredentialsError()
   }
 
-  const payload: AuthTokenPayload = { sub: user.id, email: user.email }
-  const jti = randomUUID()
-
-  const [accessToken, refreshToken] = await Promise.all([
-    Promise.resolve(signAccessToken(payload)),
-    Promise.resolve(signRefreshToken(payload, jti)),
-    storeRefreshToken(user.id, jti),
-  ])
-
-  return { accessToken, refreshToken }
+  return issueTokenPair({ sub: user.id, email: user.email })
 }
 
 export async function refreshTokens(
@@ -101,9 +101,9 @@ export async function refreshTokens(
 ): Promise<{ accessToken: string; refreshToken: string }> {
   let payload: RefreshTokenPayload
   try {
-    payload = jwt.verify(incomingToken, process.env.JWT_REFRESH_SECRET!) as RefreshTokenPayload
+    payload = jwt.verify(incomingToken, requireEnv('JWT_REFRESH_SECRET')) as RefreshTokenPayload
   } catch {
-    throw new Error('INVALID_TOKEN')
+    throw new InvalidTokenError()
   }
 
   // Rotation : delete old jti, only if not expired in DB
@@ -112,19 +112,10 @@ export async function refreshTokens(
     [payload.jti, payload.sub]
   )
   if (deleted.rowCount === 0) {
-    throw new Error('INVALID_TOKEN')
+    throw new InvalidTokenError()
   }
 
-  const newPayload: AuthTokenPayload = { sub: payload.sub, email: payload.email }
-  const newJti = randomUUID()
-
-  const [accessToken, refreshToken] = await Promise.all([
-    Promise.resolve(signAccessToken(newPayload)),
-    Promise.resolve(signRefreshToken(newPayload, newJti)),
-    storeRefreshToken(payload.sub, newJti),
-  ])
-
-  return { accessToken, refreshToken }
+  return issueTokenPair({ sub: payload.sub, email: payload.email })
 }
 
 export async function deleteAccount(userId: string): Promise<void> {
@@ -158,7 +149,7 @@ export async function getAccountInfo(userId: string): Promise<AccountInfo> {
     [userId]
   )
   const row = result.rows[0]
-  if (!row) throw new Error('USER_NOT_FOUND')
+  if (!row) throw new UserNotFoundError()
 
   return {
     email: row.email,
@@ -172,7 +163,7 @@ export async function getAccountInfo(userId: string): Promise<AccountInfo> {
 export async function logoutUser(incomingToken: string): Promise<void> {
   let payload: RefreshTokenPayload
   try {
-    payload = jwt.verify(incomingToken, process.env.JWT_REFRESH_SECRET!) as RefreshTokenPayload
+    payload = jwt.verify(incomingToken, requireEnv('JWT_REFRESH_SECRET')) as RefreshTokenPayload
   } catch {
     return // Token invalide ou expiré — rien à révoquer
   }
