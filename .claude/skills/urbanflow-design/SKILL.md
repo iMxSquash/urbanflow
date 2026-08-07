@@ -279,17 +279,17 @@ Fond CartoDB : `basemaps.cartocdn.com/light_all` (clair) / `dark_all` (sombre �
 sur `<TileLayer key={...} url={...} className={...}>` (`MapPage.tsx`). Teinte 100% CSS
 (`filter`), aucun style vectoriel custom chargé — coût réseau nul.
 
-- **Sombre** : `brightness-110 contrast-[.9] saturate-150 -hue-rotate-[70deg]`.
-- **Clair** : aucun filtre (`className={undefined}`).
-- **Survol** : aucune teinte au survol des tuiles n'est implémentée.
+- **Clair** : `saturate-[.55] contrast-[1.02]` sur le `TileLayer`.
+- **Sombre** : `saturate-[.5] brightness-[.92]` sur le `TileLayer`.
+- **Survol** : calque `absolute inset-0 pointer-events-none` plein cadre, dernier enfant
+  du `<main role="application">` (marqué `group`), plutôt qu'un ciblage tuile par tuile —
+  les tuiles Leaflet sont des `<img>` (élément remplacé), `::after` n'y a aucun effet.
+  Clair : `mix-blend-multiply bg-primary group-hover:opacity-10`. Sombre :
+  `mix-blend-screen bg-primary-surface group-hover:opacity-30` (`bg-primary-surface`
+  résout à `#0F3A2C` en thème sombre — pas de hex en dur).
 
-⚠️ **Ces valeurs divergent de DESIGN-SYSTEM.md/MAQUETTE.md §6**, qui documentent
-`saturate(.55) contrast(1.02)` (clair), `saturate(.5) brightness(.92)` (sombre) et une
-teinte de survol (`multiply` 10% primary clair / `screen` 30% `#0F3A2C` sombre) — aucune
-des deux ne correspond au code actuel. Le paragraphe ci-dessus documente ce que fait
-réellement `MapPage.tsx` aujourd'hui, pas la spec des deux fichiers ; à réconcilier
-(aligner le code sur la doc ou l'inverse) avant de citer l'un des deux comme source de
-vérité pour ces filtres.
+Ces valeurs correspondent maintenant à DESIGN-SYSTEM.md/MAQUETTE.md §6 (elles en
+divergeaient avant correction — cf. historique Git si besoin de contexte).
 
 ---
 
