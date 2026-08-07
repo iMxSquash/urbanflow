@@ -1,13 +1,13 @@
 import type {
   JourneyOptions,
   JourneySegment,
-  TransportMode,
   UserPreference,
   WeatherCondition,
 } from '@shared/types/index.js'
 import { CO2_FACTORS } from '@shared/constants/co2-factors.js'
+import { TC_TRANSPORT_MODES } from '@shared/constants/transport-modes.js'
 
-const TC_MODES: TransportMode[] = ['bus', 'tramway', 'navibus', 'train']
+const TC_MODES = TC_TRANSPORT_MODES
 
 export const NAOLIB_TICKET_EUR = 1.7
 
@@ -36,6 +36,15 @@ export function scoringWeights(preference: UserPreference): Weights {
   }
 }
 
+// ─── Seuil marche effectif ────────────────────────────────────────────────────
+
+// PMR réduit le seuil de marche à 5 min (filtre dur routing.service.ts ET
+// pénalité confort ci-dessous partagent cette même formule).
+export function effectiveMaxWalkMinutes(options: JourneyOptions): number {
+  const maxWalkMinutes = options.maxWalkMinutes ?? 30
+  return options.pmrAccessibility ? Math.min(maxWalkMinutes, 5) : maxWalkMinutes
+}
+
 // ─── Score confort ────────────────────────────────────────────────────────────
 
 export function computeComfortScore(
@@ -47,7 +56,7 @@ export function computeComfortScore(
   const pmr = options.pmrAccessibility ?? false
 
   // PMR : seuil de marche réduit à 5 min, et le vélo est fortement pénalisé
-  const maxWalk = pmr ? Math.min(options.maxWalkMinutes ?? 30, 5) : (options.maxWalkMinutes ?? 30)
+  const maxWalk = effectiveMaxWalkMinutes(options)
 
   // Base : ratio de segments utilisant un mode préféré (50 si aucune préférence)
   let base =

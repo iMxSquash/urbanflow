@@ -6,7 +6,6 @@ import type {
   TransportMode,
 } from '@shared/types/index.js'
 import { CO2_FACTORS } from '@shared/constants/co2-factors.js'
-import { computeScore } from '../../routing/scoring.service.js'
 import type { TransportProvider } from '../transport-provider.interface.js'
 import { getShapeForLeg } from '../gtfs-shapes.service.js'
 import { fetchWithTimeout } from '../../../utils/fetch-external.js'
@@ -122,14 +121,11 @@ function modeLabel(mode: TransportMode): string {
   return labels[mode]
 }
 
-// ─── Scoring multicritères ────────────────────────────────────────────────────
-// Logique centralisée dans scoring.service.ts — computeScore importé.
+// score est un placeholder — routing.service.ts recalcule le score final (avec
+// météo) une fois tous les itinéraires fusionnés ; les providers ne dépendent
+// jamais de routing/scoring.service.ts (pas de dépendance circulaire).
 
-async function mapItinerary(
-  itin: OtpItinerary,
-  idx: number,
-  options: JourneyOptions
-): Promise<Journey> {
+async function mapItinerary(itin: OtpItinerary, idx: number): Promise<Journey> {
   const nowMs = Date.now()
   const TC_MODES_OTP = new Set(['BUS', 'TRAM', 'RAIL', 'FERRY', 'SUBWAY'])
 
@@ -249,8 +245,6 @@ async function mapItinerary(
   const totalCo2g = segments.reduce((s, seg) => s + seg.co2g, 0)
   const co2SavingG = Math.max(0, Math.round(totalDistanceKm * CO2_FACTORS.car) - totalCo2g)
 
-  const score = computeScore(segments, totalDurationMin, totalDistanceKm, totalCo2g, options)
-
   const usedModes = [...new Set(segments.map((s) => s.mode))]
   const label = usedModes.map(modeLabel).join(' + ')
 
@@ -267,7 +261,7 @@ async function mapItinerary(
     totalDistanceKm,
     totalCo2g,
     co2SavingG,
-    score,
+    score: 0,
     ...(departureTime ? { departureTime } : {}),
   }
 }
@@ -341,9 +335,7 @@ export class TransitousProvider implements TransportProvider {
     }
 
     const itineraries = raw.itineraries ?? []
-    const journeys = await Promise.all(
-      itineraries.map((itin, idx) => mapItinerary(itin, idx, options))
-    )
+    const journeys = await Promise.all(itineraries.map((itin, idx) => mapItinerary(itin, idx)))
     console.log(`[routing] TransitousProvider: ${journeys.length} itinéraires mappés`)
     return journeys
   }
