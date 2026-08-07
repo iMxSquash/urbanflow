@@ -8,6 +8,7 @@ import type {
   TransportMode,
 } from '@shared/types/index.js'
 import { CO2_FACTORS } from '@shared/constants/co2-factors.js'
+import { ACTIVE_TRANSPORT_MODES } from '@shared/constants/transport-modes.js'
 import { getBiclooStations } from '../bicloo.service.js'
 import type { TransportProvider } from '../transport-provider.interface.js'
 import { fetchWithTimeout } from '../../../utils/fetch-external.js'
@@ -243,7 +244,7 @@ async function buildWalkJourney(from: Coordinates, to: Coordinates): Promise<Jou
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
 export class OsrmProvider implements TransportProvider {
-  readonly supportedModes: TransportMode[] = ['bike', 'walk', 'scooter']
+  readonly supportedModes: TransportMode[] = ACTIVE_TRANSPORT_MODES
 
   async getJourneys(
     from: Coordinates,
