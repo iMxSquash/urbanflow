@@ -111,7 +111,7 @@ Trois implémentations actives :
 - `OsrmProvider` — modes actifs : bike, walk, scooter (router.project-osrm.org, profil cycling/foot)
 - `DemoProvider` — tous les modes (fichiers JSON statiques, `DEMO_MODE=true`)
 
-Sélection dans `routing.service.ts` via `selectProviders()` en fonction des modes demandés par l'utilisateur :
+Sélection via `selectProviders()` (`transport/provider-registry.ts` — seul module à instancier les classes concrètes des providers), appelée depuis `routing.service.ts` qui ne manipule que l'interface `TransportProvider`, en fonction des modes demandés par l'utilisateur :
 - au moins un mode TC (bus/tramway/navibus/train) → `TransitousProvider` activé
 - au moins un mode actif (bike/walk/scooter) → `OsrmProvider` activé
 - `DEMO_MODE=true` → `DemoProvider` uniquement, quelle que soit la sélection
@@ -329,8 +329,9 @@ Pondérations par préférence utilisateur :
 
 **Météo dans le score confort** (uniquement si la météo a pu être récupérée) :
 - Pluie/neige/orage, ou vent > 40 km/h : pénalité −30 pts si un segment vélo est présent
-- Pluie/neige/orage avec un trajet 100% TC (aucun vélo) : bonus +10 pts (abri)
-- Ces pénalités/bonus ne se cumulent pas entre eux (un seul −30 max, un seul +10 max)
+- Pluie/neige/orage sur un trajet sans vélo comportant au moins un segment TC (marche autorisée en complément) : bonus +10 pts (abri) — un trajet marche+tramway est éligible, pas besoin que 100 % des segments soient du TC
+- Ces deux règles météo s'excluent mutuellement (la présence ou l'absence de vélo détermine laquelle s'applique, jamais les deux)
+- En revanche la pénalité météo vélo (−30) et la pénalité dénivelé (−30, ci-dessus) sont deux vérifications indépendantes : un trajet vélo avec `avoidElevation: true` sous la pluie cumule les deux (−60), ce n'est pas plafonné à −30
 
 Toutes les pénalités/bonus ci-dessus sont plafonnés à `[0, 100]` sur le score confort final.
 

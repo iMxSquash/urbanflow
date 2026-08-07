@@ -6,6 +6,7 @@ import type {
   TransportMode,
 } from '@shared/types/index.js'
 import { CO2_FACTORS } from '@shared/constants/co2-factors.js'
+import { TC_TRANSPORT_MODES } from '@shared/constants/transport-modes.js'
 import type { TransportProvider } from '../transport-provider.interface.js'
 import { getShapeForLeg } from '../gtfs-shapes.service.js'
 import { fetchWithTimeout } from '../../../utils/fetch-external.js'
@@ -269,7 +270,7 @@ async function mapItinerary(itin: OtpItinerary, idx: number): Promise<Journey> {
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
 export class TransitousProvider implements TransportProvider {
-  readonly supportedModes: TransportMode[] = ['bus', 'tramway', 'navibus', 'train']
+  readonly supportedModes: TransportMode[] = TC_TRANSPORT_MODES
   private readonly baseUrl = (
     process.env.TRANSITOUS_URL ?? 'https://api.transitous.org/api/'
   ).replace(/\/$/, '')
