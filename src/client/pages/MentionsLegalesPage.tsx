@@ -11,7 +11,7 @@ export default function MentionsLegalesPage() {
         </p>
         <p>
           Contact :{' '}
-          <a href="mailto:coussotelwen@gmail.com" className="text-primary underline">
+          <a href="mailto:coussotelwen@gmail.com" className="inline text-primary underline">
             coussotelwen@gmail.com
           </a>
         </p>

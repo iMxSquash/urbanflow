@@ -7,7 +7,7 @@ export default function PolitiqueConfidentialitePage() {
         <p>
           Le développeur du projet UrbanFlow SmartRoute est responsable du traitement des données
           personnelles décrit ci-dessous. Contact :{' '}
-          <a href="mailto:coussotelwen@gmail.com" className="text-primary underline">
+          <a href="mailto:coussotelwen@gmail.com" className="inline text-primary underline">
             coussotelwen@gmail.com
           </a>
         </p>

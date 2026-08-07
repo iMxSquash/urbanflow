@@ -234,7 +234,12 @@ export default function RegisterPage() {
             />
             <span>
               J'accepte les{' '}
-              <Link to="/cgu" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+              <Link
+                to="/cgu"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline text-primary underline"
+              >
                 CGU
               </Link>{' '}
               et la{' '}
@@ -242,7 +247,7 @@ export default function RegisterPage() {
                 to="/confidentialite"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary underline"
+                className="inline text-primary underline"
               >
                 politique de confidentialité
               </Link>
