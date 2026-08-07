@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
 import type { WeatherCondition } from '@shared/types/index'
 import { getWeather } from '../services/routing.service'
+import { useFetchResource } from './useFetchResource'
 
 interface WeatherState {
   weather: WeatherCondition | null
@@ -8,19 +8,11 @@ interface WeatherState {
   error: string | null
 }
 
+// Aligné sur le cache mémoire OpenWeather côté serveur (10 min, CLAUDE.md) —
+// pas d'intérêt à refetch plus souvent que le serveur ne rafraîchit lui-même.
+const TTL_MS = 10 * 60 * 1000
+
 export function useWeather(): WeatherState {
-  const [state, setState] = useState<WeatherState>({ weather: null, loading: true, error: null })
-
-  useEffect(() => {
-    const controller = new AbortController()
-    getWeather(controller.signal)
-      .then((weather) => setState({ weather, loading: false, error: null }))
-      .catch((err: Error) => {
-        if (err.name !== 'AbortError')
-          setState({ weather: null, loading: false, error: err.message })
-      })
-    return () => controller.abort()
-  }, [])
-
-  return state
+  const { data, loading, error } = useFetchResource('weather', () => getWeather(), TTL_MS)
+  return { weather: data ?? null, loading, error }
 }

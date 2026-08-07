@@ -5,6 +5,9 @@ import type { BadgeWithStatus } from '../services/gamification.service'
 import { BadgeGrid } from '../components/BadgeGrid'
 import { PageWithSidebar } from '../components/PageWithSidebar'
 import { useGamificationStore } from '../stores/gamification.store'
+import { fetchCached } from '../stores/resource-cache.store'
+
+const BADGES_TTL_MS = 5 * 60 * 1000
 
 /** Écran badges — drill-down depuis « Mes progrès » (MAQUETTE.md §5.4, 3.2 · Badges). */
 export default function DashboardBadgesPage() {
@@ -15,7 +18,7 @@ export default function DashboardBadgesPage() {
   const clearNewlyUnlocked = useGamificationStore((s) => s.clearNewlyUnlockedBadges)
 
   useEffect(() => {
-    getUserBadges()
+    fetchCached('gamification-badges', getUserBadges, BADGES_TTL_MS)
       .then(setBadges)
       .catch(() => {
         /* silencieux — badges non critiques */

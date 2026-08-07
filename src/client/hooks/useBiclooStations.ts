@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
 import type { BiclooStation } from '@shared/types/index'
 import { getBiclooStations } from '../services/transport.service'
+import { useFetchResource } from './useFetchResource'
 
 interface BiclooState {
   stations: BiclooStation[]
@@ -8,26 +8,14 @@ interface BiclooState {
   error: string | null
 }
 
+// Stations Bicloo — quasi temps réel (remplissage), TTL court.
+const TTL_MS = 60 * 1000
+
 export function useBiclooStations(): BiclooState {
-  const [state, setState] = useState<BiclooState>({
-    stations: [],
-    loading: true,
-    error: null,
-  })
-
-  useEffect(() => {
-    const controller = new AbortController()
-
-    getBiclooStations(controller.signal)
-      .then((stations) => setState({ stations, loading: false, error: null }))
-      .catch((err: Error) => {
-        if (err.name !== 'AbortError') {
-          setState({ stations: [], loading: false, error: err.message })
-        }
-      })
-
-    return () => controller.abort()
-  }, [])
-
-  return state
+  const { data, loading, error } = useFetchResource(
+    'bicloo-stations',
+    () => getBiclooStations(),
+    TTL_MS
+  )
+  return { stations: data ?? [], loading, error }
 }

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
 import type { TanLine } from '@shared/types/index'
 import { getTanLines } from '../services/transport.service'
+import { useFetchResource } from './useFetchResource'
 
 interface TanLinesState {
   lines: TanLine[]
@@ -8,22 +8,10 @@ interface TanLinesState {
   error: string | null
 }
 
+// Lignes Naolib — référence quasi statique en session, TTL long.
+const TTL_MS = 10 * 60 * 1000
+
 export function useTanLines(): TanLinesState {
-  const [state, setState] = useState<TanLinesState>({ lines: [], loading: true, error: null })
-
-  useEffect(() => {
-    const controller = new AbortController()
-
-    getTanLines(controller.signal)
-      .then((lines) => setState({ lines, loading: false, error: null }))
-      .catch((err: Error) => {
-        if (err.name !== 'AbortError') {
-          setState({ lines: [], loading: false, error: err.message })
-        }
-      })
-
-    return () => controller.abort()
-  }, [])
-
-  return state
+  const { data, loading, error } = useFetchResource('tan-lines', () => getTanLines(), TTL_MS)
+  return { lines: data ?? [], loading, error }
 }

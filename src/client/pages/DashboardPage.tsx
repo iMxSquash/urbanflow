@@ -2,6 +2,10 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getDashboardStats, getUserBadges } from '../services/gamification.service'
 import type { BadgeWithStatus, DashboardStats } from '../services/gamification.service'
+import { fetchCached } from '../stores/resource-cache.store'
+
+const STATS_TTL_MS = 5 * 60 * 1000
+const BADGES_TTL_MS = 5 * 60 * 1000
 import { BadgeGrid } from '../components/BadgeGrid'
 import { Co2FactorsNote } from '../components/Co2FactorsNote'
 import { PageWithSidebar } from '../components/PageWithSidebar'
@@ -61,7 +65,10 @@ export default function DashboardPage() {
   const clearNewlyUnlocked = useGamificationStore((s) => s.clearNewlyUnlockedBadges)
 
   useEffect(() => {
-    Promise.all([getDashboardStats(), getUserBadges()])
+    Promise.all([
+      fetchCached('gamification-dashboard-stats', getDashboardStats, STATS_TTL_MS),
+      fetchCached('gamification-badges', getUserBadges, BADGES_TTL_MS),
+    ])
       .then(([s, b]) => {
         setStats(s)
         setBadges(b)

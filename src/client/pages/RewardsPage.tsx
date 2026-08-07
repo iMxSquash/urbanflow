@@ -7,6 +7,10 @@ import type {
   UserRedemption,
 } from '../services/rewards.service'
 import { PageWithSidebar } from '../components/PageWithSidebar'
+import { fetchCached } from '../stores/resource-cache.store'
+
+const CATALOG_TTL_MS = 10 * 60 * 1000
+const REDEMPTIONS_TTL_MS = 2 * 60 * 1000
 
 // ── Formatage ──────────────────────────────────────────────────────────────────
 
@@ -357,8 +361,11 @@ export default function RewardsPage() {
     totalPoints: number
   } | null>(null)
 
-  const load = useCallback(() => {
-    return Promise.all([getRewardCatalog(), getMyRedemptions()]).then(([c, r]) => {
+  const load = useCallback((force = false) => {
+    return Promise.all([
+      fetchCached('rewards-catalog', getRewardCatalog, CATALOG_TTL_MS, force),
+      fetchCached('rewards-redemptions', getMyRedemptions, REDEMPTIONS_TTL_MS, force),
+    ]).then(([c, r]) => {
       setCatalog(c)
       setRedemptions(r)
     })
@@ -386,7 +393,7 @@ export default function RewardsPage() {
           pointsSpent: result.pointsSpent,
           totalPoints: result.totalPoints,
         })
-        await load()
+        await load(true) // force : le solde de points et l'historique viennent de changer
       } catch (err) {
         setPurchaseError(
           err instanceof Error ? err.message : "Impossible d'échanger cette récompense"
