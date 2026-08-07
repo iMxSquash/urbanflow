@@ -7,12 +7,12 @@ export default function MentionsLegalesPage() {
         <p>
           UrbanFlow SmartRoute est un projet académique réalisé dans le cadre du Titre 6
           Concepteur Développeur Solutions Digitales (RNCP 36146), session de septembre 2026, par
-          un développeur solo.
+          Elwen COUSSOT, développeur solo.
         </p>
         <p>
           Contact :{' '}
-          <a href="mailto:coussotelwen@gmail.com" className="inline text-primary underline">
-            coussotelwen@gmail.com
+          <a href="mailto:contact@elwen.dev" className="inline text-primary underline">
+            contact@elwen.dev
           </a>
         </p>
       </LegalSection>
@@ -33,14 +33,14 @@ export default function MentionsLegalesPage() {
       </LegalSection>
 
       <LegalSection heading="Directeur de publication">
-        <p>Le développeur du projet, identifié au paragraphe « Éditeur » ci-dessus.</p>
+        <p>Elwen COUSSOT, identifié au paragraphe « Éditeur » ci-dessus.</p>
       </LegalSection>
 
       <LegalSection heading="Propriété intellectuelle">
         <p>
           Le code source, les textes, la charte graphique et les éléments visuels du site sont la
-          propriété du développeur du projet, sauf mention contraire (bibliothèques tierces
-          utilisées sous leurs licences respectives).
+          propriété d'Elwen COUSSOT, sauf mention contraire (bibliothèques tierces utilisées sous
+          leurs licences respectives).
         </p>
       </LegalSection>
     </LegalPageLayout>

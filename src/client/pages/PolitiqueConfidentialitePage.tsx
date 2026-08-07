@@ -5,10 +5,10 @@ export default function PolitiqueConfidentialitePage() {
     <LegalPageLayout title="Politique de confidentialité">
       <LegalSection heading="Responsable de traitement">
         <p>
-          Le développeur du projet UrbanFlow SmartRoute est responsable du traitement des données
-          personnelles décrit ci-dessous. Contact :{' '}
-          <a href="mailto:coussotelwen@gmail.com" className="inline text-primary underline">
-            coussotelwen@gmail.com
+          Elwen COUSSOT, développeur du projet UrbanFlow SmartRoute, est responsable du traitement
+          des données personnelles décrit ci-dessous. Contact :{' '}
+          <a href="mailto:contact@elwen.dev" className="inline text-primary underline">
+            contact@elwen.dev
           </a>
         </p>
       </LegalSection>
