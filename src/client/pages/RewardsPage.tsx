@@ -8,6 +8,7 @@ import type {
 } from '../services/rewards.service'
 import { PageWithSidebar } from '../components/PageWithSidebar'
 import { useFetchResource } from '../hooks/useFetchResource'
+import { useResourceCacheStore } from '../stores/resource-cache.store'
 import { CACHE_KEYS, CACHE_TTL_MS } from '../constants/cache-keys'
 
 // ── Formatage ──────────────────────────────────────────────────────────────────
@@ -393,6 +394,9 @@ export default function RewardsPage() {
         })
         // force : le solde de points et l'historique viennent de changer
         await Promise.all([refetchCatalog(true), refetchRedemptions(true)])
+        // Le solde affiché sur Dashboard (gamification-dashboard-stats) vient
+        // aussi de changer — invalidé pour ne pas montrer un total périmé.
+        useResourceCacheStore.getState().invalidate(CACHE_KEYS.gamificationDashboardStats)
       } catch (err) {
         setPurchaseError(
           err instanceof Error ? err.message : "Impossible d'échanger cette récompense"
