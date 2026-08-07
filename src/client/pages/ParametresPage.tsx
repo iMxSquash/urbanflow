@@ -158,7 +158,7 @@ export default function ParametresPage() {
           </div>
         </header>
 
-        <main className="max-w-2xl mx-auto px-4 py-4 flex flex-col gap-4 lg:max-w-260 lg:px-10 lg:py-8">
+        <main className="max-w-2xl mx-auto px-4 pt-4 pb-28 flex flex-col gap-4 lg:max-w-260 lg:px-10 lg:py-8">
           {/* ── Mode démo ────────────────────────────────────────────────── */}
           {demoMode !== null && (
             <section
