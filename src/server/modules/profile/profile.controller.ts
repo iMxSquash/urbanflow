@@ -6,7 +6,8 @@ export async function getProfile(req: Request, res: Response): Promise<void> {
   try {
     const profile = await profileService.getProfile(req.user!.sub)
     res.status(200).json(profile)
-  } catch {
+  } catch (err) {
+    console.error('[profile] getProfile error:', err)
     res.status(500).json({ error: 'Erreur interne du serveur' })
   }
 }
@@ -14,14 +15,10 @@ export async function getProfile(req: Request, res: Response): Promise<void> {
 export async function updateProfile(req: Request, res: Response): Promise<void> {
   try {
     const input = req.body as UpdateProfileInput
-    const profile = await profileService.upsertProfile(req.user!.sub, {
-      preferredModes: input.preferredModes,
-      maxWalkMinutes: input.maxWalkMinutes,
-      preference: input.preference,
-      pmrAccessibility: input.pmrAccessibility,
-    })
+    const profile = await profileService.upsertProfile(req.user!.sub, input)
     res.status(200).json(profile)
-  } catch {
+  } catch (err) {
+    console.error('[profile] updateProfile error:', err)
     res.status(500).json({ error: 'Erreur interne du serveur' })
   }
 }
