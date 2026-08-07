@@ -34,6 +34,21 @@ Nantes Métropole — réseau Naolib (Semitan). Toutes les coordonnées GPS, don
 - JWT avec access token (15min) + refresh token en cookie HttpOnly
 - bcrypt pour le hashage des mots de passe
 - Jamais stocker de token dans localStorage
+- Refresh token à usage unique : rotation à chaque `/refresh` (ancien jti marqué
+  `rotated_at`/`replaced_by`, nouveau jti stocké), table dédiée `refresh_tokens` —
+  limite la fenêtre d'exploitation d'un token volé
+- Fenêtre de grâce de rotation (10s, `ROTATION_GRACE_MS`) : si le même jti déjà
+  tourné est représenté dans ce délai (double onglet, retry réseau, double appel
+  React StrictMode en dev), le serveur retrouve la session active en suivant
+  `replaced_by` au lieu de renvoyer 401 — au-delà de la fenêtre, un jti déjà
+  tourné est traité comme un rejeu et refusé
+- `loginUser` exécute toujours un `bcrypt.compare` (contre un hash factice si l'email
+  n'existe pas) pour égaliser le timing et empêcher l'énumération de comptes par
+  mesure de latence
+- Mot de passe : 8 caractères min, 1 majuscule, 1 chiffre (`registerSchema`)
+- « Rester connecté » (login uniquement) : coché → cookie de refresh persistant
+  (7j) ; décoché → cookie de session, effacé à la fermeture du navigateur (le
+  token reste valide 7j côté serveur, seule la persistance du cookie change)
 
 ### Tests
 - Vitest pour les tests unitaires et d'intégration
@@ -220,7 +235,11 @@ CORS_ORIGIN=http://localhost:5173
 ## Sécurité (OWASP) — Règles strictes
 
 - Helmet activé sur toutes les routes
-- Rate limiting global (100 req/15min par IP pour l'auth)
+- Rate limiting global : 100 req/15min par IP sur l'ensemble de l'API (`index.ts`)
+- Rate limiting spécifique aux routes `/api/auth` (plus strict, par route) :
+  - `register`/`login` : 5 req/15min (anti credential-stuffing)
+  - `refresh`/`logout`/`me/export`/`consent` : 60 req/15min
+  - `DELETE /me` : 3 req/15min (route destructive)
 - CORS restreint à l'origine du frontend
 - Validation Zod de toutes les entrées utilisateur
 - Hashage bcrypt (rounds ≥ 10)

@@ -3,17 +3,27 @@ import * as authService from './auth.service.js'
 import * as profileService from '../profile/profile.service.js'
 import * as gamificationService from '../gamification/gamification.service.js'
 import * as rewardsService from '../rewards/rewards.service.js'
+import { AuthError } from './auth.errors.js'
 
 const REFRESH_COOKIE = 'refresh_token'
 
 const cookieBase = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
+  secure: true,
   sameSite: 'strict' as const,
   path: '/',
 }
 
 const cookieOptions = { ...cookieBase, maxAge: 7 * 24 * 60 * 60 * 1000 }
+
+function handleAuthError(err: unknown, res: Response): void {
+  if (err instanceof AuthError) {
+    res.status(err.status).json({ error: err.clientMessage })
+    return
+  }
+  console.error('[auth] unhandled error:', err)
+  res.status(500).json({ error: 'Erreur interne du serveur' })
+}
 
 export async function register(req: Request, res: Response): Promise<void> {
   try {
@@ -22,26 +32,25 @@ export async function register(req: Request, res: Response): Promise<void> {
     res.cookie(REFRESH_COOKIE, refreshToken, cookieOptions)
     res.status(201).json({ accessToken })
   } catch (err) {
-    if ((err as Error).message === 'EMAIL_EXISTS') {
-      res.status(409).json({ error: 'Cet email est déjà utilisé' })
-      return
-    }
-    res.status(500).json({ error: 'Erreur interne du serveur' })
+    handleAuthError(err, res)
   }
 }
 
 export async function login(req: Request, res: Response): Promise<void> {
   try {
-    const { email, password } = req.body as { email: string; password: string }
-    const { accessToken, refreshToken } = await authService.loginUser(email, password)
-    res.cookie(REFRESH_COOKIE, refreshToken, cookieOptions)
+    const { email, password, rememberMe } = req.body as {
+      email: string
+      password: string
+      rememberMe?: boolean
+    }
+    const { accessToken, refreshToken } = await authService.loginUser(email, password, !!rememberMe)
+    // rememberMe coché : cookie persistant (7j, maxAge). Décoché : cookie de
+    // session — le refresh token reste valide 7j côté serveur, mais le
+    // navigateur l'efface à la fermeture, donc pas de reconnexion silencieuse.
+    res.cookie(REFRESH_COOKIE, refreshToken, rememberMe ? cookieOptions : cookieBase)
     res.status(200).json({ accessToken })
   } catch (err) {
-    if ((err as Error).message === 'INVALID_CREDENTIALS') {
-      res.status(401).json({ error: 'Identifiants incorrects' })
-      return
-    }
-    res.status(500).json({ error: 'Erreur interne du serveur' })
+    handleAuthError(err, res)
   }
 }
 
@@ -52,11 +61,15 @@ export async function refresh(req: Request, res: Response): Promise<void> {
     return
   }
   try {
-    const { accessToken, refreshToken } = await authService.refreshTokens(incomingToken)
-    res.cookie(REFRESH_COOKIE, refreshToken, cookieOptions)
+    const { accessToken, refreshToken, rememberMe } = await authService.refreshTokens(incomingToken)
+    // Repose le même type de cookie que celui posé au login (persistant vs
+    // session) — rememberMe est reporté par le service à travers la rotation,
+    // sinon un cookie de session serait remplacé par un cookie persistant (ou
+    // l'inverse) dès le premier refresh.
+    res.cookie(REFRESH_COOKIE, refreshToken, rememberMe ? cookieOptions : cookieBase)
     res.status(200).json({ accessToken })
-  } catch {
-    res.status(401).json({ error: 'Token invalide ou expiré' })
+  } catch (err) {
+    handleAuthError(err, res)
   }
 }
 
@@ -65,8 +78,8 @@ export async function deleteAccount(req: Request, res: Response): Promise<void> 
     await authService.deleteAccount(req.user!.sub)
     res.clearCookie(REFRESH_COOKIE, cookieBase)
     res.status(204).send()
-  } catch {
-    res.status(500).json({ error: 'Erreur interne du serveur' })
+  } catch (err) {
+    handleAuthError(err, res)
   }
 }
 
@@ -92,8 +105,8 @@ export async function exportData(req: Request, res: Response): Promise<void> {
       badges: badges.filter((b) => b.unlocked),
       rewardRedemptions: redemptions,
     })
-  } catch {
-    res.status(500).json({ error: 'Erreur interne du serveur' })
+  } catch (err) {
+    handleAuthError(err, res)
   }
 }
 
@@ -101,8 +114,8 @@ export async function recordConsent(req: Request, res: Response): Promise<void> 
   try {
     await authService.recordRgpdConsent(req.user!.sub)
     res.status(204).send()
-  } catch {
-    res.status(500).json({ error: 'Erreur interne du serveur' })
+  } catch (err) {
+    handleAuthError(err, res)
   }
 }
 

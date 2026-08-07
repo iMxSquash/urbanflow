@@ -50,7 +50,7 @@ export default function LoginPage() {
 
     setIsLoading(true)
     try {
-      const { accessToken } = await login({ email, password })
+      const { accessToken } = await login({ email, password, rememberMe })
       setAuth(accessToken)
       navigate('/')
     } catch (err) {

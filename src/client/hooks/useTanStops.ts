@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
 import type { TanStop } from '@shared/types/index'
 import { getTanStops } from '../services/transport.service'
+import { CACHE_KEYS, CACHE_TTL_MS } from '../constants/cache-keys'
+import { useFetchResource } from './useFetchResource'
 
 interface TanStopsState {
   stops: TanStop[]
@@ -9,21 +10,10 @@ interface TanStopsState {
 }
 
 export function useTanStops(): TanStopsState {
-  const [state, setState] = useState<TanStopsState>({ stops: [], loading: true, error: null })
-
-  useEffect(() => {
-    const controller = new AbortController()
-
-    getTanStops(controller.signal)
-      .then((stops) => setState({ stops, loading: false, error: null }))
-      .catch((err: Error) => {
-        if (err.name !== 'AbortError') {
-          setState({ stops: [], loading: false, error: err.message })
-        }
-      })
-
-    return () => controller.abort()
-  }, [])
-
-  return state
+  const { data, loading, error } = useFetchResource(
+    CACHE_KEYS.tanStops,
+    getTanStops,
+    CACHE_TTL_MS.tanStops
+  )
+  return { stops: data ?? [], loading, error }
 }

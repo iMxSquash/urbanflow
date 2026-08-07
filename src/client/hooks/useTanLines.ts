@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
 import type { TanLine } from '@shared/types/index'
 import { getTanLines } from '../services/transport.service'
+import { CACHE_KEYS, CACHE_TTL_MS } from '../constants/cache-keys'
+import { useFetchResource } from './useFetchResource'
 
 interface TanLinesState {
   lines: TanLine[]
@@ -9,21 +10,10 @@ interface TanLinesState {
 }
 
 export function useTanLines(): TanLinesState {
-  const [state, setState] = useState<TanLinesState>({ lines: [], loading: true, error: null })
-
-  useEffect(() => {
-    const controller = new AbortController()
-
-    getTanLines(controller.signal)
-      .then((lines) => setState({ lines, loading: false, error: null }))
-      .catch((err: Error) => {
-        if (err.name !== 'AbortError') {
-          setState({ lines: [], loading: false, error: err.message })
-        }
-      })
-
-    return () => controller.abort()
-  }, [])
-
-  return state
+  const { data, loading, error } = useFetchResource(
+    CACHE_KEYS.tanLines,
+    getTanLines,
+    CACHE_TTL_MS.tanLines
+  )
+  return { lines: data ?? [], loading, error }
 }

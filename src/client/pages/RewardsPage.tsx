@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { getMyRedemptions, getRewardCatalog, purchaseReward } from '../services/rewards.service'
 import type {
   RewardCatalog,
@@ -7,6 +7,9 @@ import type {
   UserRedemption,
 } from '../services/rewards.service'
 import { PageWithSidebar } from '../components/PageWithSidebar'
+import { useFetchResource } from '../hooks/useFetchResource'
+import { useResourceCacheStore } from '../stores/resource-cache.store'
+import { CACHE_KEYS, CACHE_TTL_MS } from '../constants/cache-keys'
 
 // ── Formatage ──────────────────────────────────────────────────────────────────
 
@@ -344,10 +347,28 @@ type Tab = 'catalog' | 'history'
 
 export default function RewardsPage() {
   const [tab, setTab] = useState<Tab>('catalog')
-  const [catalog, setCatalog] = useState<RewardCatalog | null>(null)
-  const [redemptions, setRedemptions] = useState<UserRedemption[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+
+  const {
+    data: catalogData,
+    loading: catalogLoading,
+    error: catalogError,
+    refetch: refetchCatalog,
+  } = useFetchResource(CACHE_KEYS.rewardsCatalog, getRewardCatalog, CACHE_TTL_MS.rewardsCatalog)
+  const {
+    data: redemptionsData,
+    loading: redemptionsLoading,
+    error: redemptionsError,
+    refetch: refetchRedemptions,
+  } = useFetchResource(
+    CACHE_KEYS.rewardsRedemptions,
+    getMyRedemptions,
+    CACHE_TTL_MS.rewardsRedemptions
+  )
+
+  const catalog = catalogData ?? null
+  const redemptions = redemptionsData ?? []
+  const loading = catalogLoading || redemptionsLoading
+  const error = catalogError ?? redemptionsError
 
   const [purchasingId, setPurchasingId] = useState<string | null>(null)
   const [purchaseError, setPurchaseError] = useState<string | null>(null)
@@ -356,21 +377,6 @@ export default function RewardsPage() {
     pointsSpent: number
     totalPoints: number
   } | null>(null)
-
-  const load = useCallback(() => {
-    return Promise.all([getRewardCatalog(), getMyRedemptions()]).then(([c, r]) => {
-      setCatalog(c)
-      setRedemptions(r)
-    })
-  }, [])
-
-  useEffect(() => {
-    load()
-      .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : 'Erreur de chargement')
-      })
-      .finally(() => setLoading(false))
-  }, [load])
 
   const handlePurchase = useCallback(
     async (rewardId: string) => {
@@ -386,7 +392,11 @@ export default function RewardsPage() {
           pointsSpent: result.pointsSpent,
           totalPoints: result.totalPoints,
         })
-        await load()
+        // force : le solde de points et l'historique viennent de changer
+        await Promise.all([refetchCatalog(true), refetchRedemptions(true)])
+        // Le solde affiché sur Dashboard (gamification-dashboard-stats) vient
+        // aussi de changer — invalidé pour ne pas montrer un total périmé.
+        useResourceCacheStore.getState().invalidate(CACHE_KEYS.gamificationDashboardStats)
       } catch (err) {
         setPurchaseError(
           err instanceof Error ? err.message : "Impossible d'échanger cette récompense"
@@ -395,7 +405,7 @@ export default function RewardsPage() {
         setPurchasingId(null)
       }
     },
-    [catalog, load]
+    [catalog, refetchCatalog, refetchRedemptions]
   )
 
   return (

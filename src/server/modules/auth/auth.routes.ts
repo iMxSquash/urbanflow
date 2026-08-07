@@ -5,32 +5,24 @@ import { authGuard } from '../../middleware/auth-guard.js'
 import { registerSchema, loginSchema } from './auth.schema.js'
 import * as authController from './auth.controller.js'
 
+function makeAuthRateLimit(limit: number, message: string): ReturnType<typeof rateLimit> {
+  return rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit,
+    message: { error: message },
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+  })
+}
+
 // Credentials : 5 req/15min — protège contre le credential stuffing
-const credentialsRateLimit = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 5,
-  message: { error: 'Trop de tentatives, réessayez dans 15 minutes' },
-  standardHeaders: 'draft-8',
-  legacyHeaders: false,
-})
+const credentialsRateLimit = makeAuthRateLimit(5, 'Trop de tentatives, réessayez dans 15 minutes')
 
 // Refresh : 60 req/15min — déclenché automatiquement à chaque chargement d'app
-const refreshRateLimit = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 60,
-  message: { error: 'Trop de requêtes, réessayez plus tard' },
-  standardHeaders: 'draft-8',
-  legacyHeaders: false,
-})
+const refreshRateLimit = makeAuthRateLimit(60, 'Trop de requêtes, réessayez plus tard')
 
 // Suppression compte : 3 req/15min — route destructive, anti-abus si token volé
-const deleteAccountRateLimit = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 3,
-  message: { error: 'Trop de tentatives, réessayez plus tard' },
-  standardHeaders: 'draft-8',
-  legacyHeaders: false,
-})
+const deleteAccountRateLimit = makeAuthRateLimit(3, 'Trop de tentatives, réessayez plus tard')
 
 const router = Router()
 
@@ -117,6 +109,12 @@ router.post('/register', credentialsRateLimit, validate(registerSchema), authCon
  *               password:
  *                 type: string
  *                 example: Password1
+ *               rememberMe:
+ *                 type: boolean
+ *                 description: >
+ *                   Coché : cookie de refresh persistant (7j). Décoché : cookie de
+ *                   session, effacé à la fermeture du navigateur (le token reste
+ *                   valide 7j côté serveur, seule la persistance du cookie change).
  *     responses:
  *       200:
  *         description: Connexion réussie — access token retourné, refresh token en cookie HttpOnly

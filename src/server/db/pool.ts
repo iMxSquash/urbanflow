@@ -9,7 +9,9 @@ if (!process.env.DATABASE_URL) {
 
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  // ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  // rejectUnauthorized: false — le pooler Supabase (aws-0-eu-west-3.pooler.supabase.com)
+  // présente un certificat dont la chaîne n'est pas dans le CA bundle Node par défaut ;
+  // la connexion reste chiffrée (TLS), seule la vérification de la chaîne est relâchée.
   ssl: process.env.DATABASE_URL?.includes('localhost') ? false : { rejectUnauthorized: false },
   max: 10,
   idleTimeoutMillis: 30_000,

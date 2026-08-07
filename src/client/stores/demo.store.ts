@@ -5,6 +5,8 @@ import {
   patchDemoWeather,
   patchProvidersDemo,
 } from '../services/demo.service'
+import { fetchCached, useResourceCacheStore } from './resource-cache.store'
+import { CACHE_KEYS, CACHE_TTL_MS } from '../constants/cache-keys'
 
 interface DemoState {
   demoMode: boolean | null
@@ -25,7 +27,7 @@ export const useDemoStore = create<DemoState>((set) => ({
 
   fetch: async () => {
     try {
-      const status = await getDemoStatus()
+      const status = await fetchCached(CACHE_KEYS.demoStatus, getDemoStatus, CACHE_TTL_MS.demoStatus)
       set({
         demoMode: status.demoMode,
         providersDemo: status.providersDemo,
@@ -41,6 +43,7 @@ export const useDemoStore = create<DemoState>((set) => ({
     try {
       const status = await patchDemoMode(enabled)
       set({ demoMode: status.demoMode, providersDemo: status.providersDemo })
+      useResourceCacheStore.getState().invalidate(CACHE_KEYS.demoStatus)
     } finally {
       set({ loading: false })
     }
@@ -51,6 +54,7 @@ export const useDemoStore = create<DemoState>((set) => ({
     try {
       const status = await patchProvidersDemo(enabled)
       set({ providersDemo: status.providersDemo })
+      useResourceCacheStore.getState().invalidate(CACHE_KEYS.demoStatus)
     } finally {
       set({ loading: false })
     }
@@ -61,6 +65,7 @@ export const useDemoStore = create<DemoState>((set) => ({
     try {
       await patchDemoWeather(weather)
       set({ weather })
+      useResourceCacheStore.getState().invalidate(CACHE_KEYS.demoStatus)
     } finally {
       set({ loading: false })
     }
