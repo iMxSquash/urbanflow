@@ -148,32 +148,44 @@ export async function refreshTokens(
     throw new InvalidTokenError()
   }
 
+  const currentRow = await getTokenRow(payload.jti, payload.sub)
+  if (!currentRow) {
+    throw new InvalidTokenError()
+  }
+
   const newPayload: AuthTokenPayload = { sub: payload.sub, email: payload.email }
   const newJti = randomUUID()
 
+  // La contrainte FK sur replaced_by exige que la nouvelle ligne existe
+  // AVANT que l'ancienne ne la référence — insérée avec rotated_at NULL,
+  // elle ne devient "gagnante" que si le CAS ci-dessous réussit.
+  // remember_me est reporté tel quel : le choix "Rester connecté" du login
+  // doit survivre à toutes les rotations d'une même session, sinon /refresh
+  // écraserait un cookie de session par un cookie persistant (ou l'inverse)
+  // à chaque appel.
+  await storeRefreshToken(payload.sub, newJti, currentRow.remember_me)
+
   // Rotation : le WHERE rotated_at IS NULL agit comme un CAS atomique — une
   // seule requête concurrente peut gagner la rotation d'un jti donné.
-  // remember_me est reporté tel quel sur la nouvelle ligne : le choix
-  // "Rester connecté" du login doit survivre à toutes les rotations d'une
-  // même session, sinon /refresh écraserait un cookie de session par un
-  // cookie persistant (ou l'inverse) à chaque appel.
-  const rotated = await pool.query<{ id: string; remember_me: boolean }>(
+  const rotated = await pool.query(
     `UPDATE refresh_tokens SET rotated_at = now(), replaced_by = $1
      WHERE id = $2 AND user_id = $3 AND expires_at > now() AND rotated_at IS NULL
-     RETURNING id, remember_me`,
+     RETURNING id`,
     [newJti, payload.jti, payload.sub]
   )
-  const rotatedRow = rotated.rows[0]
 
-  if (rotatedRow) {
-    await storeRefreshToken(payload.sub, newJti, rotatedRow.remember_me)
+  if (rotated.rowCount === 1) {
     return {
       accessToken: signAccessToken(newPayload),
       refreshToken: signRefreshToken(newPayload, newJti),
-      rememberMe: rotatedRow.remember_me,
+      rememberMe: currentRow.remember_me,
     }
   }
 
+  // CAS perdu (jti déjà tourné avant ou pendant cette requête) — la ligne
+  // insérée plus haut est orpheline, personne ne la référence : on la
+  // retire pour ne pas laisser traîner un jti valide mais inatteignable.
+  await pool.query('DELETE FROM refresh_tokens WHERE id = $1', [newJti])
   return refreshWithinGraceWindow(payload)
 }
 

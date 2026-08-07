@@ -146,8 +146,11 @@ describe('refreshTokens', () => {
     const token = makeRefreshToken(jti)
 
     mockQuery
-      .mockResolvedValueOnce({ rows: [{ id: 'new-jti-placeholder', remember_me: true }] }) // UPDATE ... WHERE rotated_at IS NULL (rotation gagnée)
-      .mockResolvedValueOnce({ rows: [] }) // INSERT new jti
+      .mockResolvedValueOnce({
+        rows: [{ id: jti, rotated_at: null, replaced_by: null, remember_me: true }],
+      }) // getTokenRow : jti valide, pas encore tourné
+      .mockResolvedValueOnce({ rows: [] }) // INSERT nouvelle ligne (avant l'UPDATE, contrainte FK replaced_by)
+      .mockResolvedValueOnce({ rowCount: 1 }) // UPDATE ... WHERE rotated_at IS NULL (rotation gagnée)
 
     const result = await refreshTokens(token)
 
@@ -164,13 +167,17 @@ describe('refreshTokens', () => {
     const token = makeRefreshToken(jti)
 
     mockQuery
-      .mockResolvedValueOnce({ rows: [{ id: 'new-jti-placeholder', remember_me: false }] })
+      .mockResolvedValueOnce({
+        rows: [{ id: jti, rotated_at: null, replaced_by: null, remember_me: false }],
+      })
       .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rowCount: 1 })
 
     const result = await refreshTokens(token)
 
     expect(result.rememberMe).toBe(false)
-    expect(mockQuery).toHaveBeenLastCalledWith(
+    expect(mockQuery).toHaveBeenNthCalledWith(
+      2,
       'INSERT INTO refresh_tokens (id, user_id, expires_at, remember_me) VALUES ($1, $2, $3, $4)',
       expect.arrayContaining([expect.any(String), USER_ID, expect.any(Date), false])
     )
@@ -182,25 +189,43 @@ describe('refreshTokens', () => {
 
   it('lance INVALID_TOKEN si le jti est absent de la base (révoqué)', async () => {
     const token = makeRefreshToken('cccccccc-0000-0000-0000-000000000003')
-    mockQuery
-      .mockResolvedValueOnce({ rows: [] }) // UPDATE ne trouve rien
-      .mockResolvedValueOnce({ rows: [] }) // SELECT de la fenêtre de grâce : rien non plus
+    mockQuery.mockResolvedValueOnce({ rows: [] }) // getTokenRow ne trouve rien
 
     await expect(refreshTokens(token)).rejects.toThrow('INVALID_TOKEN')
+    expect(mockQuery).toHaveBeenCalledTimes(1)
+  })
+
+  it('insère la nouvelle ligne avant de tourner l\'ancienne (contrainte FK replaced_by)', async () => {
+    const jti = 'bbbbbbbd-0000-0000-0000-00000000000b'
+    const token = makeRefreshToken(jti)
+
+    mockQuery
+      .mockResolvedValueOnce({
+        rows: [{ id: jti, rotated_at: null, replaced_by: null, remember_me: true }],
+      })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rowCount: 1 })
+
+    await refreshTokens(token)
+
+    const [firstQuery] = mockQuery.mock.calls[1] as [string]
+    const [secondQuery] = mockQuery.mock.calls[2] as [string]
+    expect(firstQuery).toContain('INSERT INTO refresh_tokens')
+    expect(secondQuery).toContain('UPDATE refresh_tokens')
   })
 
   it('rejoue le même jti déjà tourné dans la fenêtre de grâce → réémet pour la feuille active (pas de 401)', async () => {
     const jti = 'eeeeeeee-0000-0000-0000-000000000005'
     const leafJti = 'ffffffff-0000-0000-0000-000000000006'
     const token = makeRefreshToken(jti)
+    const rotatedRow = { id: jti, rotated_at: new Date().toISOString(), replaced_by: leafJti, remember_me: true }
 
     mockQuery
-      .mockResolvedValueOnce({ rows: [] }) // UPDATE : déjà tourné par la requête concurrente gagnante
-      .mockResolvedValueOnce({
-        rows: [
-          { id: jti, rotated_at: new Date().toISOString(), replaced_by: leafJti, remember_me: true },
-        ],
-      }) // SELECT fenêtre de grâce : tourné il y a <10s
+      .mockResolvedValueOnce({ rows: [rotatedRow] }) // getTokenRow : déjà tourné il y a <10s
+      .mockResolvedValueOnce({ rows: [] }) // INSERT (ligne orpheline, le CAS va échouer)
+      .mockResolvedValueOnce({ rowCount: 0 }) // UPDATE : perdu la course, déjà tourné
+      .mockResolvedValueOnce({ rows: [] }) // DELETE de la ligne orpheline
+      .mockResolvedValueOnce({ rows: [rotatedRow] }) // getTokenRow (fenêtre de grâce) : même état
       .mockResolvedValueOnce({
         rows: [{ id: leafJti, rotated_at: null, replaced_by: null, remember_me: true }],
       }) // resolveLeafToken trouve la feuille
@@ -217,12 +242,14 @@ describe('refreshTokens', () => {
     const jti = 'aaaaaaab-0000-0000-0000-000000000007'
     const token = makeRefreshToken(jti)
     const rotatedAt = new Date(Date.now() - 15_000).toISOString()
+    const rotatedRow = { id: jti, rotated_at: rotatedAt, replaced_by: 'whatever', remember_me: true }
 
     mockQuery
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({
-        rows: [{ id: jti, rotated_at: rotatedAt, replaced_by: 'whatever', remember_me: true }],
-      })
+      .mockResolvedValueOnce({ rows: [rotatedRow] }) // getTokenRow : déjà tourné il y a >10s
+      .mockResolvedValueOnce({ rows: [] }) // INSERT (orpheline)
+      .mockResolvedValueOnce({ rowCount: 0 }) // UPDATE : perdu la course
+      .mockResolvedValueOnce({ rows: [] }) // DELETE de la ligne orpheline
+      .mockResolvedValueOnce({ rows: [rotatedRow] }) // getTokenRow (fenêtre de grâce) : hors délai
 
     await expect(refreshTokens(token)).rejects.toThrow('INVALID_TOKEN')
   })

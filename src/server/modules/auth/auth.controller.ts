@@ -21,6 +21,7 @@ function handleAuthError(err: unknown, res: Response): void {
     res.status(err.status).json({ error: err.clientMessage })
     return
   }
+  console.error('[auth] unhandled error:', err)
   res.status(500).json({ error: 'Erreur interne du serveur' })
 }
 
