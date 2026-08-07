@@ -15,3 +15,9 @@ export const recordTripSchema = z.object({
 })
 
 export type RecordTripInput = z.infer<typeof recordTripSchema>
+
+export const getStatsQuerySchema = z.object({
+  period: z.literal('month'),
+})
+
+export type GetStatsQuery = z.infer<typeof getStatsQuerySchema>

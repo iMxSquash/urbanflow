@@ -38,9 +38,14 @@ Justification : disponibilité de données ouvertes standardisées (GTFS, SIRI, 
 ## Fonctionnalité au choix retenue : Gamification éco-mobilité
 
 - Chaque itinéraire choisi génère un score CO2 (basé sur les facteurs ADEME)
-- Points accumulés quand l'utilisateur choisit un mode doux
+- Points accumulés quand l'utilisateur choisit un mode doux (trajet non vérifié
+  GPS → 0 point, cf. CLAUDE.md § Gamification, pour dissuader les déclarations
+  fictives)
 - Badges débloqués selon des seuils : « 10 trajets vélo », « 50 kg CO2 évités »
 - Dashboard personnel avec progression mensuelle (graphique Recharts)
+- Extension ajoutée en cours de projet : catalogue de récompenses (rachat de
+  points contre des avantages partenaires fictifs) — module `rewards`, cf.
+  CLAUDE.md § Module Rewards
 
 ---
 

@@ -1,5 +1,6 @@
 import type pg from 'pg'
 import { pool } from '../../db/pool.js'
+import { withTransaction } from '../../db/with-transaction.js'
 import { CO2_FACTORS } from '../../../shared/constants/co2-factors.js'
 import type { TransportMode } from '../../../shared/types/index.js'
 import type { RecordTripInput } from './gamification.schema.js'
@@ -8,6 +9,7 @@ import type {
   DashboardStats,
   ModeCount,
   RecordTripResult,
+  ThresholdType,
   TripRecord,
   WeeklyBar,
 } from './gamification.types.js'
@@ -60,9 +62,9 @@ export function computePoints(co2SavedGrams: number): number {
 interface BadgeRow {
   id: string
   name: string
-  threshold_type: string
+  threshold_type: ThresholdType
   threshold_value: number
-  mode_filter: string | null
+  mode_filter: TransportMode | null
 }
 
 async function checkAndUnlockBadges(userId: string, client: pg.PoolClient): Promise<string[]> {
@@ -94,10 +96,10 @@ async function checkAndUnlockBadges(userId: string, client: pg.PoolClient): Prom
   const stats = statsRows[0]
 
   // Comptage par mode (uniquement si des badges mode-spécifiques sont en attente)
-  const modeCounts: Record<string, number> = {}
+  const modeCounts: Partial<Record<TransportMode, number>> = {}
   const needsModeCounts = pending.some((b) => b.mode_filter !== null)
   if (needsModeCounts) {
-    const { rows: modeRows } = await client.query<{ mode: string; count: number }>(
+    const { rows: modeRows } = await client.query<{ mode: TransportMode; count: number }>(
       `SELECT unnest(modes_used) AS mode, COUNT(*)::int AS count
        FROM trips WHERE user_id = $1 GROUP BY mode`,
       [userId]
@@ -106,7 +108,7 @@ async function checkAndUnlockBadges(userId: string, client: pg.PoolClient): Prom
   }
 
   // Types de seuil implémentés — les autres (ex. streak_days) sont exclus explicitement
-  const SUPPORTED_THRESHOLD_TYPES = new Set([
+  const SUPPORTED_THRESHOLD_TYPES = new Set<ThresholdType>([
     'total_trips',
     'total_co2_saved_grams',
     'total_points',
@@ -174,10 +176,7 @@ export async function recordTrip(
   const modesUsed = [...new Set(segments.map((s) => s.mode))]
   const mainMode = primaryMode(modesUsed)
 
-  const client = await pool.connect()
-  try {
-    await client.query('BEGIN')
-
+  return withTransaction(async (client) => {
     const tripResult = await client.query<{ id: string }>(
       `INSERT INTO trips (user_id, modes_used, primary_mode, co2_saved_grams, points_earned)
        VALUES ($1, $2, $3, $4, $5)
@@ -198,8 +197,6 @@ export async function recordTrip(
 
     const newlyUnlockedBadges = gpsVerified ? await checkAndUnlockBadges(userId, client) : []
 
-    await client.query('COMMIT')
-
     return {
       tripId: tripRow.id,
       co2SavedGrams,
@@ -207,12 +204,7 @@ export async function recordTrip(
       totalPoints: userRow.total_points,
       newlyUnlockedBadges,
     }
-  } catch (err) {
-    await client.query('ROLLBACK')
-    throw err
-  } finally {
-    client.release()
-  }
+  })
 }
 
 // ── getDashboardStats ─────────────────────────────────────────────────────────
@@ -258,7 +250,7 @@ export async function getDashboardStats(userId: string): Promise<DashboardStats>
       [userId]
     ),
     // Mode principal par trajet — 1 ligne par trip, somme = tripCount
-    pool.query<{ mode: string; count: number }>(
+    pool.query<{ mode: TransportMode; count: number }>(
       `SELECT primary_mode AS mode, COUNT(*)::int AS count
        FROM trips
        WHERE user_id = $1
@@ -299,8 +291,8 @@ export async function getDashboardStats(userId: string): Promise<DashboardStats>
 export async function getUserTrips(userId: string): Promise<TripRecord[]> {
   const { rows } = await pool.query<{
     id: string
-    modes_used: string[]
-    primary_mode: string
+    modes_used: TransportMode[]
+    primary_mode: TransportMode
     co2_saved_grams: number
     points_earned: number
     created_at: string
@@ -327,9 +319,9 @@ export async function getUserBadges(userId: string): Promise<BadgeWithStatus[]> 
     id: string
     name: string
     description: string
-    threshold_type: string
+    threshold_type: ThresholdType
     threshold_value: number
-    mode_filter: string | null
+    mode_filter: TransportMode | null
     unlocked_at: string | null
   }>(
     `SELECT

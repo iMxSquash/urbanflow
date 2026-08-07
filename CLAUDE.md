@@ -78,6 +78,7 @@ src/
 │   │   ├── profile/         # Profil de mobilité
 │   │   ├── routing/         # Orchestrateur itinéraires + scoring
 │   │   ├── gamification/    # Points, badges, dashboard
+│   │   ├── rewards/         # Catalogue de récompenses, rachat par points (cf. note ci-dessous)
 │   │   └── transport/       # Couche abstraction providers
 │   ├── middleware/           # helmet, rate-limit, cors, auth guard, zod validation
 │   ├── config/              # Variables d'env, constantes
@@ -93,6 +94,15 @@ src/
     ├── stations-bicloo.json
     └── departures-stop.json
 ```
+
+## Module Rewards — extension assumée de la gamification
+
+`server/modules/rewards/` (catalogue de récompenses, rachat par points, partenaires
+fictifs) n'était pas prévu dans le périmètre initial (`01-PERIMETRE-MVP.md`), mais
+est aujourd'hui implémenté, testé et branché au frontend (`RewardsPage.tsx`) —
+conservé et documenté ici plutôt que retiré avant la soutenance. Il consomme le
+solde `users.total_points` déjà alimenté par `gamification.service.ts`, sans
+dupliquer sa logique.
 
 ## Pattern Stratégie — Transport Providers
 
@@ -292,6 +302,18 @@ export const CO2_FACTORS = {
 Score CO2 d'un itinéraire = somme des (distance_segment_km × facteur_mode).
 Économie CO2 = score_voiture_equivalent – score_itinéraire_choisi.
 Source à citer : Base Empreinte de l'ADEME.
+
+## Gamification — points et badges
+
+Implémenté dans `server/modules/gamification/gamification.service.ts`.
+
+- 1 point attribué par tranche de 10 g de CO2 économisé (`GRAMS_PER_POINT`)
+- `gpsVerified: false` (valeur par défaut si le champ est omis) → **0 point attribué et
+  aucune vérification de badge**, même si le trajet est enregistré. Dissuade les
+  déclarations de trajet fictives côté client, qui ne peut pas prouver le suivi GPS
+  autrement qu'en le déclarant
+- Badges débloqués par seuil (`total_trips`, `total_co2_saved_grams`, `total_points`,
+  ou par mode via `mode_filter`) — évalués uniquement si `gpsVerified: true`
 
 ## Scoring itinéraire — Logique métier
 

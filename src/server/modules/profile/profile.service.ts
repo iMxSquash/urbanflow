@@ -1,5 +1,6 @@
 import { pool } from '../../db/pool.js'
 import type { MobilityProfile } from './profile.types.js'
+import type { UpdateProfileInput } from './profile.schema.js'
 import {
   TRANSPORT_MODES,
   USER_PREFERENCES,
@@ -57,12 +58,7 @@ export async function getProfile(userId: string): Promise<MobilityProfile> {
 
 export async function upsertProfile(
   userId: string,
-  data: {
-    preferredModes: TransportMode[]
-    maxWalkMinutes: number
-    preference: UserPreference
-    pmrAccessibility: boolean
-  }
+  data: UpdateProfileInput
 ): Promise<MobilityProfile> {
   const result = await pool.query<ProfileRow>(
     `INSERT INTO mobility_profiles

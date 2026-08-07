@@ -1,8 +1,8 @@
 import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
 import { authGuard } from '../../middleware/auth-guard.js'
-import { validate } from '../../middleware/validate.js'
-import { recordTripSchema } from './gamification.schema.js'
+import { validate, validateQuery } from '../../middleware/validate.js'
+import { recordTripSchema, getStatsQuerySchema } from './gamification.schema.js'
 import * as gamificationController from './gamification.controller.js'
 
 const router = Router()
@@ -274,6 +274,6 @@ router.get('/badges', authGuard, gamificationController.getBadges)
  *       500:
  *         $ref: '#/components/responses/InternalError'
  */
-router.get('/stats', authGuard, gamificationController.getStats)
+router.get('/stats', authGuard, validateQuery(getStatsQuerySchema), gamificationController.getStats)
 
 export default router
