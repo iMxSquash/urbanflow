@@ -7,11 +7,12 @@ import type {
   JourneySegment,
   TransportMode,
 } from '@shared/types/index.js'
+import { TC_TRANSPORT_MODES } from '@shared/constants/transport-modes.js'
 import type { TransportProvider } from '../transport-provider.interface.js'
 import { getDemoWeather } from '../../demo/demo-config.js'
 import { getShapeForLeg } from '../gtfs-shapes.service.js'
 
-const TC_MODES: TransportMode[] = ['bus', 'tramway', 'navibus', 'train']
+const TC_MODES: TransportMode[] = TC_TRANSPORT_MODES
 
 async function applyGtfsShapes(journeys: Journey[]): Promise<Journey[]> {
   return Promise.all(

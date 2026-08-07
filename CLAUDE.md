@@ -111,7 +111,7 @@ Trois implémentations actives :
 - `OsrmProvider` — modes actifs : bike, walk, scooter (router.project-osrm.org, profil cycling/foot)
 - `DemoProvider` — tous les modes (fichiers JSON statiques, `DEMO_MODE=true`)
 
-Sélection dans `routing.service.ts` via `selectProviders()` en fonction des modes demandés par l'utilisateur :
+Sélection via `selectProviders()` (`transport/provider-registry.ts` — seul module à instancier les classes concrètes des providers), appelée depuis `routing.service.ts` qui ne manipule que l'interface `TransportProvider`, en fonction des modes demandés par l'utilisateur :
 - au moins un mode TC (bus/tramway/navibus/train) → `TransitousProvider` activé
 - au moins un mode actif (bike/walk/scooter) → `OsrmProvider` activé
 - `DEMO_MODE=true` → `DemoProvider` uniquement, quelle que soit la sélection
@@ -131,9 +131,17 @@ Variable d'env `DEMO_MODE=true` fait basculer TOUS les appels API externes vers 
 | Transitous | `TRANSITOUS_URL=https://api.transitous.org/api/` | Routage TC multimodal (cloud) |
 | OSRM public | `OSRM_URL=http://router.project-osrm.org` | Routage vélo/marche/scooter (shape + distance) |
 | OpenWeatherMap | `OPENWEATHER_API_KEY=xxx` | Météo pour scoring (intégré — cache mémoire 10 min, re-scoring confort en fin de routing) |
-| GBFS Bicloo | URL fixe transport.data.gouv.fr | Stations vélos |
+| Bicloo (stations vélos) | URL fixe — API Explore v2.1 de data.nantesmetropole.fr | Stations vélos temps réel, routing Bicloo |
+| TAN circuits & arrêts | `NANTES_API_URL` (défaut : API Explore v2.1 de data.nantesmetropole.fr) | Lignes et arrêts pour affichage carte |
 | SIRI-Lite Naolib | `RequestorRef: opendata` | Prochains passages temps réel (non encore intégré) |
 | CartoDB Positron | URL fixe basemaps.cartocdn.com | Tuiles cartographiques |
+
+> **Écart avec le flux GBFS documenté historiquement** : `bicloo.service.ts` et
+> `tan.service.ts` interrogent en réalité l'API Explore (Opendatasoft) de
+> data.nantesmetropole.fr, pas le flux GBFS v2.3 de transport.data.gouv.fr. Les
+> deux intégrations fonctionnent (avec fallback `demo-data/` si l'API est
+> indisponible) — voir `docs/06-APIS-DONNEES.md` §5 pour le détail des endpoints
+> réels.
 
 ## Variables d'environnement
 
@@ -149,6 +157,7 @@ DEMO_MODE=false
 TRANSITOUS_URL=https://api.transitous.org/api/
 OSRM_URL=http://router.project-osrm.org
 OPENWEATHER_API_KEY=
+NANTES_API_URL=https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets
 
 # Auth
 JWT_SECRET=
@@ -311,6 +320,20 @@ Pondérations par préférence utilisateur :
 **PMR (`pmrAccessibility: true`) dans le score confort :**
 - Seuil marche réduit à 5 min pour la pénalité (−60 pts au lieu de −40)
 - Pénalité supplémentaire −50 pts si un segment vélo est présent
+
+**Dénivelé (`avoidElevation: true`) dans le score confort :**
+- Pénalité −30 pts si un segment vélo est présent, sinon aucun effet
+- Approximation : OSRM public ne fournit pas de profil DEM (altimétrie) pour le
+  profil `driving` utilisé côté serveur ; le vélo est le seul mode réellement
+  affecté par le relief dans ce produit, donc c'est le seul pénalisé
+
+**Météo dans le score confort** (uniquement si la météo a pu être récupérée) :
+- Pluie/neige/orage, ou vent > 40 km/h : pénalité −30 pts si un segment vélo est présent
+- Pluie/neige/orage sur un trajet sans vélo comportant au moins un segment TC (marche autorisée en complément) : bonus +10 pts (abri) — un trajet marche+tramway est éligible, pas besoin que 100 % des segments soient du TC
+- Ces deux règles météo s'excluent mutuellement (la présence ou l'absence de vélo détermine laquelle s'applique, jamais les deux)
+- En revanche la pénalité météo vélo (−30) et la pénalité dénivelé (−30, ci-dessus) sont deux vérifications indépendantes : un trajet vélo avec `avoidElevation: true` sous la pluie cumule les deux (−60), ce n'est pas plafonné à −30
+
+Toutes les pénalités/bonus ci-dessus sont plafonnés à `[0, 100]` sur le score confort final.
 
 **Non encore implémenté :** pondération heure de pointe.
 

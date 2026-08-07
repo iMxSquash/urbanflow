@@ -8,7 +8,8 @@
 | OSRM public | Routage vélo/marche/scooter | GeoJSON | Aucune | Distance réelle + shape polyline |
 | GTFS Naolib | Horaires théoriques | ZIP/CSV | Aucune (téléchargement) | Affichage arrêts, lignes |
 | SIRI-Lite Naolib | Prochains passages | JSON/XML | `RequestorRef: opendata` | Horaires temps réel (non intégré) |
-| GBFS Bicloo (JCDecaux) | Stations vélos | JSON | Aucune | Marqueurs vélos sur carte + routing Bicloo |
+| Bicloo (API Explore Nantes Métropole) | Stations vélos temps réel | JSON | Aucune | Marqueurs vélos sur carte + routing Bicloo |
+| TAN circuits & arrêts (API Explore Nantes Métropole) | Lignes et arrêts TAN | JSON | Aucune | Affichage lignes/arrêts sur carte |
 | OpenWeatherMap | Météo | JSON | API key (free tier) | Pondération scoring (non intégré) |
 | CartoDB Positron | Tuiles carte | PNG tiles | Aucune | Fond de carte Leaflet |
 
@@ -185,25 +186,59 @@ Le flux SIRI complet (positions véhicules, perturbations détaillées) nécessi
 
 ---
 
-## 5. GBFS Bicloo (JCDecaux) — Stations vélos
+## 5. Bicloo — Stations vélos
+
+> **Écart avec la doc historique** : cette section documentait initialement le flux
+> GBFS v2.3 de transport.data.gouv.fr. L'implémentation réelle (`bicloo.service.ts`)
+> utilise l'API Explore (Opendatasoft) de data.nantesmetropole.fr — un jeu de
+> données différent, pas au format GBFS. Documenté ici tel qu'implémenté.
 
 ### Endpoint
 
-Format GBFS v2.3 disponible sur transport.data.gouv.fr :
+URL fixe (non paramétrable par variable d'env) :
 ```
-https://transport.data.gouv.fr/datasets/offre-et-temps-reel-du-service-velos-en-libre-service-naolib-de-nantes-metropole-au-format-gbfs
+https://data.nantesmetropole.fr/api/explore/v2.1/catalog/datasets/244400404_disponibilite-temps-reel-velos-libre-service-naolib-nantes-metropole/records
 ```
+
+Pagination par 100 résultats (`limit=100&offset=...`), deux pages suffisent pour couvrir toutes les stations Bicloo de la métropole.
 
 ### Ce que ça retourne
 
-- Position de chaque station (lat/lon)
-- Nombre de vélos disponibles
-- Nombre de places libres
-- Statut de la station (active/inactive)
+- Position de chaque station (`position.lat`/`position.lon`)
+- Nombre de vélos disponibles (`available_bikes`)
+- Nombre de places libres (`available_bike_stands`)
+- Capacité totale (`bike_stands`)
+
+### Fallback
+
+En cas d'échec (timeout, HTTP non-2xx) ou en mode démo (`DEMO_MODE=true`), bascule sur `src/demo-data/stations-bicloo.json`.
 
 ### ⚠️ Risque identifié
 
 Le contrat Nantes Métropole / JCDecaux pour Bicloo expire en 2026. L'API pourrait changer. Données mockées en fallback (mode démo).
+
+---
+
+## 5bis. TAN circuits & arrêts — Lignes et arrêts pour affichage carte
+
+### Endpoint
+
+Base configurable via `NANTES_API_URL` (défaut : API Explore v2.1 de data.nantesmetropole.fr) :
+```
+${NANTES_API_URL}/244400404_tan-circuits/records   # lignes (route_id, tracé, couleur)
+${NANTES_API_URL}/244400404_tan-arrets/records      # arrêts (stop_id, coordonnées, accessibilité PMR)
+```
+
+### Ce que ça retourne
+
+- Lignes : id, noms court/long, type de route, couleur, tracé géographique
+- Arrêts : id, nom, coordonnées, accessibilité fauteuil roulant (`wheelchair_boarding`)
+
+### Cache et fallback
+
+Résultat mis en cache en mémoire pour la durée de vie du process (données quasi
+statiques). En cas d'échec ou en mode démo, bascule sur `src/demo-data/tan-lines.json`
+et `src/demo-data/tan-stops.json`.
 
 ---
 

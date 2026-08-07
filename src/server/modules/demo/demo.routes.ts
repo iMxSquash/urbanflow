@@ -1,17 +1,8 @@
-import { Router, type Request, type Response } from 'express'
-import {
-  isWeatherDemoMode,
-  isDemoMode,
-  setWeatherDemoMode,
-  setProvidersDemo,
-  getDemoWeather,
-  setDemoWeather,
-} from './demo-config.js'
-import { clearWeatherCache } from '../routing/weather.service.js'
-import { clearTanCache } from '../transport/tan.service.js'
+import { Router } from 'express'
 import { authGuard } from '../../middleware/auth-guard.js'
 import { validate } from '../../middleware/validate.js'
 import { demoPatchSchema } from './demo.schema.js'
+import * as demoController from './demo.controller.js'
 
 const router = Router()
 
@@ -26,13 +17,7 @@ router.use(authGuard)
  *     security:
  *       - bearerAuth: []
  */
-router.get('/mode', (_req: Request, res: Response) => {
-  res.json({
-    demoMode: isWeatherDemoMode(),
-    providersDemo: isDemoMode(),
-    weather: getDemoWeather(),
-  })
-})
+router.get('/mode', demoController.getMode)
 
 /**
  * @swagger
@@ -55,39 +40,6 @@ router.get('/mode', (_req: Request, res: Response) => {
  *                 type: string
  *                 enum: [sunny, rainy]
  */
-router.patch('/mode', validate(demoPatchSchema), (req: Request, res: Response) => {
-  const { enabled, providersDemo, weather } = req.body as {
-    enabled?: boolean
-    providersDemo?: boolean
-    weather?: 'sunny' | 'rainy'
-  }
-
-  if (typeof enabled === 'boolean') {
-    setWeatherDemoMode(enabled)
-    if (!enabled) setProvidersDemo(false)
-    clearWeatherCache()
-    clearTanCache()
-    console.log(`[demo] météo démo → ${enabled ? 'activée' : 'désactivée'}`)
-  }
-
-  if (enabled !== false && typeof providersDemo === 'boolean') {
-    setProvidersDemo(providersDemo)
-    clearWeatherCache()
-    clearTanCache()
-    console.log(`[demo] providers démo → ${providersDemo ? 'activés' : 'désactivés'}`)
-  }
-
-  if (weather) {
-    setDemoWeather(weather)
-    clearWeatherCache()
-    console.log(`[demo] météo simulée → ${weather}`)
-  }
-
-  res.json({
-    demoMode: isWeatherDemoMode(),
-    providersDemo: isDemoMode(),
-    weather: getDemoWeather(),
-  })
-})
+router.patch('/mode', validate(demoPatchSchema), demoController.patchMode)
 
 export default router

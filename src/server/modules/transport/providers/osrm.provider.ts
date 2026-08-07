@@ -8,7 +8,7 @@ import type {
   TransportMode,
 } from '@shared/types/index.js'
 import { CO2_FACTORS } from '@shared/constants/co2-factors.js'
-import { computeScore } from '../../routing/scoring.service.js'
+import { ACTIVE_TRANSPORT_MODES } from '@shared/constants/transport-modes.js'
 import { getBiclooStations } from '../bicloo.service.js'
 import type { TransportProvider } from '../transport-provider.interface.js'
 import { fetchWithTimeout } from '../../../utils/fetch-external.js'
@@ -112,9 +112,10 @@ function makeSegment(
   }
 }
 
-// computeScore importé depuis scoring.service.ts
-
 // ─── Journeys ─────────────────────────────────────────────────────────────────
+// score est un placeholder — routing.service.ts recalcule le score final (avec
+// météo) une fois tous les itinéraires fusionnés ; les providers ne dépendent
+// jamais de routing/scoring.service.ts (pas de dépendance circulaire).
 
 async function buildBiclooJourney(
   from: Coordinates,
@@ -169,7 +170,6 @@ async function buildBiclooJourney(
   const totalDistanceKm = Math.round(segments.reduce((s, seg) => s + seg.distanceKm, 0) * 100) / 100
   const totalCo2g = 0 // vélo + marche = 0 g CO2
   const co2SavingG = Math.max(0, Math.round(totalDistanceKm * CO2_FACTORS.car))
-  const score = computeScore(segments, totalDurationMin, totalDistanceKm, totalCo2g, options)
 
   console.log(
     `[routing] OsrmProvider Bicloo: ${depStation.name} (${depStation.availableBikes} vélos) → ` +
@@ -184,7 +184,7 @@ async function buildBiclooJourney(
     totalDistanceKm,
     totalCo2g,
     co2SavingG,
-    score,
+    score: 0,
   }
 }
 
@@ -206,7 +206,6 @@ async function buildScooterJourney(
   const totalDurationMin = segment.durationMin
   const totalDistanceKm = segment.distanceKm
   const co2SavingG = Math.max(0, Math.round(totalDistanceKm * CO2_FACTORS.car) - co2g)
-  const score = computeScore([segment], totalDurationMin, totalDistanceKm, co2g, options)
 
   return {
     id: `osrm-scooter-${randomUUID()}`,
@@ -216,15 +215,11 @@ async function buildScooterJourney(
     totalDistanceKm,
     totalCo2g: co2g,
     co2SavingG,
-    score,
+    score: 0,
   }
 }
 
-async function buildWalkJourney(
-  from: Coordinates,
-  to: Coordinates,
-  options: JourneyOptions
-): Promise<Journey> {
+async function buildWalkJourney(from: Coordinates, to: Coordinates): Promise<Journey> {
   const { distKm, shape } = await fetchOsrmRoute(from, to, 'foot')
   const segment = makeSegment('walk', from, to, distKm, {
     shape: shape.length >= 2 ? shape : undefined,
@@ -233,7 +228,6 @@ async function buildWalkJourney(
   const totalDurationMin = segment.durationMin
   const totalDistanceKm = segment.distanceKm
   const co2SavingG = Math.max(0, Math.round(totalDistanceKm * CO2_FACTORS.car))
-  const score = computeScore([segment], totalDurationMin, totalDistanceKm, 0, options)
 
   return {
     id: `osrm-walk-${randomUUID()}`,
@@ -243,14 +237,14 @@ async function buildWalkJourney(
     totalDistanceKm,
     totalCo2g: 0,
     co2SavingG,
-    score,
+    score: 0,
   }
 }
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
 export class OsrmProvider implements TransportProvider {
-  readonly supportedModes: TransportMode[] = ['bike', 'walk', 'scooter']
+  readonly supportedModes: TransportMode[] = ACTIVE_TRANSPORT_MODES
 
   async getJourneys(
     from: Coordinates,
@@ -267,13 +261,16 @@ export class OsrmProvider implements TransportProvider {
     const tasks: Promise<Journey>[] = []
     if (modes.includes('bike')) tasks.push(buildBiclooJourney(from, to, options))
     if (modes.includes('scooter')) tasks.push(buildScooterJourney(from, to, options))
-    if (modes.includes('walk')) tasks.push(buildWalkJourney(from, to, options))
+    if (modes.includes('walk')) tasks.push(buildWalkJourney(from, to))
 
     const results = await Promise.allSettled(tasks)
     const journeys: Journey[] = []
     for (const r of results) {
+      // Rejections ici sont des refus métier attendus (station Bicloo trop
+      // loin/vide, PMR incompatible) — pas des pannes système, donc pas de
+      // console.error qui déclencherait une alerte de monitoring.
       if (r.status === 'fulfilled') journeys.push(r.value)
-      else console.error('[routing] OsrmProvider error:', r.reason)
+      else console.warn('[routing] OsrmProvider — trajet non proposé :', r.reason)
     }
     return journeys
   }

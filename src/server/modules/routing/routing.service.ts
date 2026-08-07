@@ -1,63 +1,14 @@
-import type { Coordinates, Journey, JourneyOptions, TransportMode } from '@shared/types/index.js'
-import type { TransportProvider } from '../transport/transport-provider.interface.js'
-import { DemoProvider } from '../transport/providers/demo.provider.js'
-import { OsrmProvider } from '../transport/providers/osrm.provider.js'
-import { TransitousProvider } from '../transport/providers/transitous.provider.js'
+import type { Coordinates, Journey, JourneyOptions } from '@shared/types/index.js'
+import { selectProviders, getDemoProvider } from '../transport/provider-registry.js'
 import { getCurrentWeather } from './weather.service.js'
-import { computeScore, computeEstimatedCost, computeComfortScore } from './scoring.service.js'
-import { isDemoMode } from '../demo/demo-config.js'
+import {
+  computeScore,
+  computeEstimatedCost,
+  computeComfortScore,
+  effectiveMaxWalkMinutes,
+} from './scoring.service.js'
 import { haversineKm } from '../../utils/geo.js'
 import { CO2_FACTORS } from '@shared/constants/co2-factors.js'
-
-// ─── Registre des providers ───────────────────────────────────────────────────
-// Catégories :
-//   'tc'     — transports en commun (bus, tramway, train, ferry…)
-//   'active' — mobilité active et douce (vélo, marche, trottinette)
-//   'shared' — mobilités partagées futures (covoiturage, VTC…) — toujours activés
-
-type ProviderCategory = 'tc' | 'active' | 'shared'
-
-interface RegisteredProvider {
-  provider: TransportProvider
-  category: ProviderCategory
-}
-
-const PROVIDER_REGISTRY: RegisteredProvider[] = [
-  { provider: new TransitousProvider(), category: 'tc' },
-  { provider: new OsrmProvider(), category: 'active' },
-  // Pour ajouter un provider : { provider: new MyProvider(), category: 'tc' | 'active' | 'shared' }
-]
-
-const DEMO_PROVIDER = new DemoProvider()
-
-const TC_MODES = new Set<TransportMode>(['bus', 'tramway', 'navibus', 'train'])
-const ACTIVE_MODES = new Set<TransportMode>(['bike', 'walk', 'scooter'])
-
-function selectProviders(options: JourneyOptions): TransportProvider[] {
-  if (isDemoMode()) return [DEMO_PROVIDER]
-
-  const requestedModes: TransportMode[] = options.modes ?? []
-
-  // Aucun mode sélectionné → providers TC par défaut
-  if (requestedModes.length === 0) {
-    return PROVIDER_REGISTRY.filter((r) => r.category === 'tc').map((r) => r.provider)
-  }
-
-  const wantsTC = requestedModes.some((m) => TC_MODES.has(m))
-  const wantsActive = requestedModes.some((m) => ACTIVE_MODES.has(m))
-
-  const selected = PROVIDER_REGISTRY.filter(
-    (r) =>
-      (r.category === 'tc' && wantsTC) ||
-      (r.category === 'active' && wantsActive) ||
-      r.category === 'shared'
-  ).map((r) => r.provider)
-
-  // Fallback TC si aucun provider sélectionné (mode inconnu)
-  return selected.length > 0
-    ? selected
-    : PROVIDER_REGISTRY.filter((r) => r.category === 'tc').map((r) => r.provider)
-}
 
 export async function planJourney(
   from: Coordinates,
@@ -92,7 +43,7 @@ export async function planJourney(
 
   if (needsDemoFallback) {
     try {
-      const demoJourneys = await DEMO_PROVIDER.getJourneys(from, to, options)
+      const demoJourneys = await getDemoProvider().getJourneys(from, to, options)
       journeys.push(...demoJourneys)
     } catch (err) {
       console.error('[routing] DemoProvider indisponible :', err)
@@ -118,9 +69,7 @@ export async function planJourney(
 
   // Filtre dur maxWalkMinutes : éliminer tout itinéraire dont un segment marche
   // dépasse le seuil de l'utilisateur (PMR réduit ce seuil à 5 min).
-  const maxWalk = options.pmrAccessibility
-    ? Math.min(options.maxWalkMinutes ?? 30, 5)
-    : (options.maxWalkMinutes ?? 30)
+  const maxWalk = effectiveMaxWalkMinutes(options)
 
   const withWalkFilter = filtered.filter((j) =>
     j.segments.filter((s) => s.mode === 'walk').every((s) => s.durationMin <= maxWalk)
@@ -207,25 +156,26 @@ export async function planJourney(
     journey.co2SavingG = Math.max(0, carRefCo2g - journey.totalCo2g)
   }
 
-  // Re-score with weather now that all journeys are merged and filtered.
-  // Providers computed a preliminary score without weather context.
-  if (weather) {
-    for (const journey of deduped) {
-      journey.score = computeScore(
-        journey.segments,
-        journey.totalDurationMin,
-        journey.totalDistanceKm,
-        journey.totalCo2g,
-        options,
-        weather
-      )
-    }
-    console.log(`[routing] Re-scoring avec météo : ${weather.condition} ${weather.temperature}°C`)
+  // Score calculé une seule fois ici, une fois tous les itinéraires fusionnés et
+  // filtrés — les providers ne connaissent pas scoring.service.ts (pas de
+  // dépendance circulaire transport → routing, pas de calcul en double).
+  for (const journey of deduped) {
+    journey.score = computeScore(
+      journey.segments,
+      journey.totalDurationMin,
+      journey.totalDistanceKm,
+      journey.totalCo2g,
+      options,
+      weather
+    )
+    journey.comfortScore = computeComfortScore(journey.segments, options, weather)
+    journey.estimatedCostEur = computeEstimatedCost(journey.segments)
   }
 
-  for (const journey of deduped) {
-    journey.comfortScore = computeComfortScore(journey.segments, options, weather ?? undefined)
-    journey.estimatedCostEur = computeEstimatedCost(journey.segments)
+  if (weather) {
+    console.log(
+      `[routing] Score calculé avec météo : ${weather.condition} ${weather.temperature}°C`
+    )
   }
 
   return deduped.sort((a, b) => b.score - a.score)
