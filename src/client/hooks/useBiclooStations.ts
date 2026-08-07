@@ -1,5 +1,6 @@
 import type { BiclooStation } from '@shared/types/index'
 import { getBiclooStations } from '../services/transport.service'
+import { CACHE_KEYS, CACHE_TTL_MS } from '../constants/cache-keys'
 import { useFetchResource } from './useFetchResource'
 
 interface BiclooState {
@@ -8,14 +9,11 @@ interface BiclooState {
   error: string | null
 }
 
-// Stations Bicloo — quasi temps réel (remplissage), TTL court.
-const TTL_MS = 60 * 1000
-
 export function useBiclooStations(): BiclooState {
   const { data, loading, error } = useFetchResource(
-    'bicloo-stations',
-    () => getBiclooStations(),
-    TTL_MS
+    CACHE_KEYS.biclooStations,
+    getBiclooStations,
+    CACHE_TTL_MS.biclooStations
   )
   return { stations: data ?? [], loading, error }
 }

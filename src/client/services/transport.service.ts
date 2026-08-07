@@ -1,7 +1,7 @@
 import type { BiclooStation, TanLine, TanStop } from '@shared/types/index'
 
-export async function getBiclooStations(signal?: AbortSignal): Promise<BiclooStation[]> {
-  const res = await fetch('/api/transport/bicloo-stations', { signal })
+export async function getBiclooStations(): Promise<BiclooStation[]> {
+  const res = await fetch('/api/transport/bicloo-stations')
   const data: unknown = await res.json()
 
   if (!res.ok) {
@@ -12,8 +12,8 @@ export async function getBiclooStations(signal?: AbortSignal): Promise<BiclooSta
   return (data as { stations: BiclooStation[] }).stations
 }
 
-export async function getTanLines(signal?: AbortSignal): Promise<TanLine[]> {
-  const res = await fetch('/api/transport/tan-lines', { signal })
+export async function getTanLines(): Promise<TanLine[]> {
+  const res = await fetch('/api/transport/tan-lines')
   const data: unknown = await res.json()
 
   if (!res.ok) {
@@ -24,8 +24,8 @@ export async function getTanLines(signal?: AbortSignal): Promise<TanLine[]> {
   return (data as { lines: TanLine[] }).lines
 }
 
-export async function getTanStops(signal?: AbortSignal): Promise<TanStop[]> {
-  const res = await fetch('/api/transport/tan-stops', { signal })
+export async function getTanStops(): Promise<TanStop[]> {
+  const res = await fetch('/api/transport/tan-stops')
   const data: unknown = await res.json()
 
   if (!res.ok) {

@@ -52,8 +52,8 @@ export async function planJourney(
   return (data as { journeys: Journey[] }).journeys
 }
 
-export async function getWeather(signal?: AbortSignal): Promise<WeatherCondition> {
-  const res = await apiFetch('/api/routing/weather', { signal })
+export async function getWeather(): Promise<WeatherCondition> {
+  const res = await apiFetch('/api/routing/weather')
   const data: unknown = await res.json()
   if (!res.ok) throw new Error('Météo indisponible')
   return data as WeatherCondition

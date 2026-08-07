@@ -1,15 +1,12 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getDashboardStats, getUserBadges } from '../services/gamification.service'
-import type { BadgeWithStatus, DashboardStats } from '../services/gamification.service'
-import { fetchCached } from '../stores/resource-cache.store'
-
-const STATS_TTL_MS = 5 * 60 * 1000
-const BADGES_TTL_MS = 5 * 60 * 1000
 import { BadgeGrid } from '../components/BadgeGrid'
 import { Co2FactorsNote } from '../components/Co2FactorsNote'
 import { PageWithSidebar } from '../components/PageWithSidebar'
 import { useGamificationStore } from '../stores/gamification.store'
+import { useFetchResource } from '../hooks/useFetchResource'
+import { CACHE_KEYS, CACHE_TTL_MS } from '../constants/cache-keys'
 
 const WeeklyCo2Chart = lazy(() => import('../components/WeeklyCo2Chart'))
 const ModeBreakdownTable = lazy(() => import('../components/ModeBreakdownTable'))
@@ -56,28 +53,27 @@ function KpiTile({
 }
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState<DashboardStats | null>(null)
-  const [badges, setBadges] = useState<BadgeWithStatus[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const {
+    data: stats,
+    loading: statsLoading,
+    error: statsError,
+  } = useFetchResource(
+    CACHE_KEYS.gamificationDashboardStats,
+    getDashboardStats,
+    CACHE_TTL_MS.gamificationDashboardStats
+  )
+  const {
+    data: badgesData,
+    loading: badgesLoading,
+    error: badgesError,
+  } = useFetchResource(CACHE_KEYS.gamificationBadges, getUserBadges, CACHE_TTL_MS.gamificationBadges)
+
+  const badges = badgesData ?? []
+  const loading = statsLoading || badgesLoading
+  const error = statsError ?? badgesError
 
   const newlyUnlocked = useGamificationStore((s) => s.newlyUnlockedBadges)
   const clearNewlyUnlocked = useGamificationStore((s) => s.clearNewlyUnlockedBadges)
-
-  useEffect(() => {
-    Promise.all([
-      fetchCached('gamification-dashboard-stats', getDashboardStats, STATS_TTL_MS),
-      fetchCached('gamification-badges', getUserBadges, BADGES_TTL_MS),
-    ])
-      .then(([s, b]) => {
-        setStats(s)
-        setBadges(b)
-      })
-      .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : 'Erreur de chargement')
-      })
-      .finally(() => setLoading(false))
-  }, [])
 
   useEffect(() => {
     if (newlyUnlocked.length === 0 || loading) return

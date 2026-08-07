@@ -1,5 +1,6 @@
 import type { TanStop } from '@shared/types/index'
 import { getTanStops } from '../services/transport.service'
+import { CACHE_KEYS, CACHE_TTL_MS } from '../constants/cache-keys'
 import { useFetchResource } from './useFetchResource'
 
 interface TanStopsState {
@@ -8,10 +9,11 @@ interface TanStopsState {
   error: string | null
 }
 
-// Arrêts Naolib — référence quasi statique en session, TTL long.
-const TTL_MS = 10 * 60 * 1000
-
 export function useTanStops(): TanStopsState {
-  const { data, loading, error } = useFetchResource('tan-stops', () => getTanStops(), TTL_MS)
+  const { data, loading, error } = useFetchResource(
+    CACHE_KEYS.tanStops,
+    getTanStops,
+    CACHE_TTL_MS.tanStops
+  )
   return { stops: data ?? [], loading, error }
 }

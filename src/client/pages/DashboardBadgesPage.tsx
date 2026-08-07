@@ -1,30 +1,23 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { getUserBadges } from '../services/gamification.service'
-import type { BadgeWithStatus } from '../services/gamification.service'
 import { BadgeGrid } from '../components/BadgeGrid'
 import { PageWithSidebar } from '../components/PageWithSidebar'
 import { useGamificationStore } from '../stores/gamification.store'
-import { fetchCached } from '../stores/resource-cache.store'
-
-const BADGES_TTL_MS = 5 * 60 * 1000
+import { useFetchResource } from '../hooks/useFetchResource'
+import { CACHE_KEYS, CACHE_TTL_MS } from '../constants/cache-keys'
 
 /** Écran badges — drill-down depuis « Mes progrès » (MAQUETTE.md §5.4, 3.2 · Badges). */
 export default function DashboardBadgesPage() {
-  const [badges, setBadges] = useState<BadgeWithStatus[]>([])
-  const [loading, setLoading] = useState(true)
+  const { data: badgesData, loading } = useFetchResource(
+    CACHE_KEYS.gamificationBadges,
+    getUserBadges,
+    CACHE_TTL_MS.gamificationBadges
+  )
+  const badges = badgesData ?? []
 
   const newlyUnlocked = useGamificationStore((s) => s.newlyUnlockedBadges)
   const clearNewlyUnlocked = useGamificationStore((s) => s.clearNewlyUnlockedBadges)
-
-  useEffect(() => {
-    fetchCached('gamification-badges', getUserBadges, BADGES_TTL_MS)
-      .then(setBadges)
-      .catch(() => {
-        /* silencieux — badges non critiques */
-      })
-      .finally(() => setLoading(false))
-  }, [])
 
   useEffect(() => {
     if (newlyUnlocked.length === 0 || loading) return

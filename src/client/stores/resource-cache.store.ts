@@ -44,6 +44,9 @@ export async function fetchCached<T>(
 ): Promise<T> {
   const cached = useResourceCacheStore.getState().entries[key]
   if (!force && cached && Date.now() - cached.fetchedAt < ttlMs) {
+    // Cast non vérifiable au runtime, cf. le commentaire équivalent dans
+    // useFetchResource.ts — sûr en pratique car les clés sont centralisées
+    // dans cache-keys.ts (une clé → un seul T possible dans tout le code).
     return cached.data as T
   }
 
