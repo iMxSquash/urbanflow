@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { BadgeUnlockIcon } from './BadgeUnlockIcon'
 
 interface TripToastProps {
   co2SavedGrams: number
@@ -70,8 +71,8 @@ export function TripToast({
               Total cumulé : <span className="font-medium text-text-muted">{totalPoints} pts</span>
             </p>
             {newlyUnlockedBadges.length > 0 && (
-              <p className="text-caption text-warning font-medium mt-1">
-                🏅{' '}
+              <p className="flex items-center gap-1.5 text-caption text-warning font-medium mt-1">
+                <BadgeUnlockIcon size={12} />
                 {newlyUnlockedBadges.length === 1
                   ? '1 badge débloqué !'
                   : `${newlyUnlockedBadges.length} badges débloqués !`}

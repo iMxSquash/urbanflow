@@ -1,12 +1,5 @@
 import type { WeatherCondition } from '@shared/types/index'
-
-const CONDITION_ICON: Record<WeatherCondition['condition'], string> = {
-  clear: '☀️',
-  clouds: '☁️',
-  rain: '🌧️',
-  snow: '❄️',
-  thunderstorm: '⛈️',
-}
+import { WEATHER_ICON_PATH_BASE } from '../constants/weather-icons'
 
 const CONDITION_LABEL: Record<WeatherCondition['condition'], string> = {
   clear: 'Dégagé',
@@ -16,6 +9,31 @@ const CONDITION_LABEL: Record<WeatherCondition['condition'], string> = {
   thunderstorm: 'Orage',
 }
 
+function WeatherIcon({
+  condition,
+  size = 16,
+}: {
+  condition: WeatherCondition['condition']
+  size?: number
+}) {
+  return (
+    <svg
+      aria-hidden="true"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="shrink-0"
+    >
+      {WEATHER_ICON_PATH_BASE[condition]}
+    </svg>
+  )
+}
+
 interface WeatherBadgeProps {
   weather: WeatherCondition
   /** "map" = pill flottant sur la carte ; "panel" = ligne inline dans le panneau trajet */
@@ -23,14 +41,13 @@ interface WeatherBadgeProps {
 }
 
 export function WeatherBadge({ weather, variant = 'map' }: WeatherBadgeProps) {
-  const icon = CONDITION_ICON[weather.condition]
   const label = CONDITION_LABEL[weather.condition]
   const ariaLabel = `Météo Nantes : ${label}, ${weather.temperature}°C, vent ${weather.windSpeed} km/h`
 
   if (variant === 'panel') {
     return (
       <div className="flex items-center gap-2 text-caption text-text-subtle" aria-label={ariaLabel}>
-        <span aria-hidden="true">{icon}</span>
+        <WeatherIcon condition={weather.condition} size={14} />
         <span>
           {weather.temperature}°C · {weather.description}
           {weather.windSpeed > 40 && (
@@ -49,9 +66,7 @@ export function WeatherBadge({ weather, variant = 'map' }: WeatherBadgeProps) {
       aria-label={ariaLabel}
       role="status"
     >
-      <span aria-hidden="true" className="text-base leading-none">
-        {icon}
-      </span>
+      <WeatherIcon condition={weather.condition} />
       <span className="font-medium">{weather.temperature}°C</span>
       <span className="text-text-subtle hidden sm:inline">· {label}</span>
     </div>

@@ -1,5 +1,51 @@
 import type { TransportMode } from '@shared/types/index'
 
+/** Libellés FR des modes de transport — source unique, ne pas redéclarer par
+ * composant (`ModeChip`, `ModeBreakdownTable`, `JourneyPanel` partageaient trois
+ * copies quasi identiques). */
+export const MODE_LABELS: Record<TransportMode, string> = {
+  walk: 'Marche',
+  bike: 'Vélo',
+  tramway: 'Tramway',
+  bus: 'Bus',
+  scooter: 'Trottinette',
+  navibus: 'Navibus',
+  train: 'Train',
+}
+
+/** Nom du token `--color-mode-*` pour ce mode — "tramway" correspond au token
+ * historique `--color-mode-tram` (index.css), pas de token `-tramway`. */
+export function modeColorToken(mode: TransportMode): string {
+  return mode === 'tramway' ? 'tram' : mode
+}
+
+/** `var(--color-mode-*)` — à utiliser dans un contexte CSS réel (prop `style`
+ * React, règle de feuille de style). Ne pas passer à un attribut de
+ * présentation SVG posé via `setAttribute` (ex. `pathOptions.color` Leaflet) :
+ * la substitution `var()` n'y est pas fiable — pour ces cas, voir
+ * `modeRouteClassName()` ci-dessous. */
+export function modeColorVar(mode: TransportMode): string {
+  return `var(--color-mode-${modeColorToken(mode)})`
+}
+
+/** `modeColorVar()` atténuée à `percent` % d'opacité via `color-mix()` — le
+ * halo derrière l'icône de segment actif/inactif. `color-mix()` s'applique à
+ * n'importe quelle couleur y compris une `var()`, contrairement à
+ * l'ancienne astuce "concaténer un suffixe hex d'alpha" qui exigeait une
+ * valeur hex fixe. */
+export function modeColorVarAlpha(mode: TransportMode, percent: number): string {
+  return `color-mix(in srgb, ${modeColorVar(mode)} ${percent}%, transparent)`
+}
+
+/** Classe CSS `.route-*` (définie dans index.css, § Leaflet) posant `stroke:
+ * var(--color-mode-*)` — pour les tracés Leaflet (`Polyline`/`CircleMarker`,
+ * `pathOptions.className`) : contrairement à `pathOptions.color`, une classe
+ * CSS réelle passe par la cascade et résout `var()` correctement, donc suit
+ * le thème clair/sombre sans détection JS. */
+export function modeRouteClassName(mode: TransportMode): string {
+  return `route-${modeColorToken(mode)}`
+}
+
 /** Icônes du set Estuaire (viewBox 0 0 24 24, stroke-width 1.9) — source de vérité :
  * `1a Estuaire - Palette.dc.html` (tableau "Couleurs par mode de transport"), tous
  * modes confondus y compris scooter et train. */

@@ -1,5 +1,6 @@
 import type { Journey } from '@shared/types/index'
 import type { RecordTripResult } from '../services/gamification.service'
+import { BadgeUnlockIcon } from './BadgeUnlockIcon'
 import { Modal } from './Modal'
 
 interface JourneySummaryModalProps {
@@ -58,7 +59,7 @@ export function JourneySummaryModal({
       </p>
 
       <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="bg-surface-sunken rounded-card p-3 text-center">
+        <div className="bg-surface-sunken rounded-xl p-3 text-center">
           <p className="text-caption text-text-subtle mb-1">Durée réelle</p>
           <p className="text-h3 font-bold text-text leading-none mt-1">
             {formatDuration(realDurationMin)}
@@ -72,7 +73,7 @@ export function JourneySummaryModal({
             </p>
           )}
         </div>
-        <div className="bg-primary-surface rounded-card p-3 text-center">
+        <div className="bg-primary-surface rounded-xl p-3 text-center">
           <p className="text-caption text-text-subtle mb-1">CO₂ économisé</p>
           <p className="text-h3 font-bold text-primary leading-none mt-1">
             {formatCo2(tripResult.co2SavedGrams)}
@@ -81,7 +82,7 @@ export function JourneySummaryModal({
         </div>
       </div>
 
-      <div className="flex items-center justify-between bg-surface-sunken rounded-card px-4 py-3 mb-2">
+      <div className="flex items-center justify-between bg-surface-sunken rounded-xl px-4 py-3 mb-2">
         <span className="text-body-sm text-text-muted font-medium">Points gagnés</span>
         <span className="text-h3 font-bold text-primary">+{tripResult.pointsEarned} pts</span>
       </div>
@@ -93,9 +94,9 @@ export function JourneySummaryModal({
       </div>
 
       {tripResult.newlyUnlockedBadges.length > 0 && (
-        <div className="bg-warning-surface-soft border border-warning-border rounded-card px-4 py-3 mb-5">
-          <p className="text-body-sm font-semibold text-warning">
-            🏅{' '}
+        <div className="bg-warning-surface-soft border border-warning-border rounded-xl px-4 py-3 mb-5">
+          <p className="flex items-center gap-1.5 text-body-sm font-semibold text-warning">
+            <BadgeUnlockIcon />
             {tripResult.newlyUnlockedBadges.length === 1
               ? '1 badge débloqué !'
               : `${tripResult.newlyUnlockedBadges.length} badges débloqués !`}

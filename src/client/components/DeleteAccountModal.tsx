@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Modal } from './Modal'
+import { CACHE_KEYS, CACHE_TTL_MS } from '../constants/cache-keys'
+import { useFetchResource } from '../hooks/useFetchResource'
 import { deleteAccount, exportUserData } from '../services/auth.service'
 import { getDashboardStats, getUserBadges } from '../services/gamification.service'
 import { getMyRedemptions } from '../services/rewards.service'
@@ -25,26 +27,39 @@ export function DeleteAccountModal({ onClose }: DeleteAccountModalProps) {
   const clearAuth = useAuthStore((s) => s.clearAuth)
   const clearProfile = useProfileStore((s) => s.clearProfile)
 
-  const [inventory, setInventory] = useState<Inventory | null>(null)
+  // Réutilise le cache déjà chaud si l'utilisateur vient du Dashboard/Récompenses —
+  // inventaire non bloquant : une erreur sur l'un des trois laisse `inventory` à
+  // `null` (affiche "Chargement…"), la suppression reste possible sans lui.
+  const stats = useFetchResource(
+    CACHE_KEYS.gamificationDashboardStats,
+    getDashboardStats,
+    CACHE_TTL_MS.gamificationDashboardStats
+  )
+  const badges = useFetchResource(
+    CACHE_KEYS.gamificationBadges,
+    getUserBadges,
+    CACHE_TTL_MS.gamificationBadges
+  )
+  const redemptions = useFetchResource(
+    CACHE_KEYS.rewardsRedemptions,
+    getMyRedemptions,
+    CACHE_TTL_MS.rewardsRedemptions
+  )
+
+  const inventory: Inventory | null =
+    stats.data && badges.data && redemptions.data
+      ? {
+          tripCount: stats.data.summary.tripCount,
+          totalPoints: stats.data.summary.totalPoints,
+          badgeCount: badges.data.filter((b) => b.unlocked).length,
+          redemptionCount: redemptions.data.length,
+        }
+      : null
+
   const [confirmText, setConfirmText] = useState('')
   const [isDeleting, setIsDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isExporting, setIsExporting] = useState(false)
-
-  useEffect(() => {
-    Promise.all([getDashboardStats(), getUserBadges(), getMyRedemptions()])
-      .then(([stats, badges, redemptions]) => {
-        setInventory({
-          tripCount: stats.summary.tripCount,
-          totalPoints: stats.summary.totalPoints,
-          badgeCount: badges.filter((b) => b.unlocked).length,
-          redemptionCount: redemptions.length,
-        })
-      })
-      .catch(() => {
-        /* inventaire non bloquant — la suppression reste possible sans lui */
-      })
-  }, [])
 
   async function handleDelete() {
     setIsDeleting(true)

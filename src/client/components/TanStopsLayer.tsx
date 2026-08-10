@@ -43,8 +43,7 @@ export default function TanStopsLayer() {
           center={[stop.coordinates.lat, stop.coordinates.lng]}
           radius={4}
           pathOptions={{
-            color: '#6366f1',
-            fillColor: '#ffffff',
+            className: 'tan-stop-marker',
             fillOpacity: 1,
             weight: 2,
           }}

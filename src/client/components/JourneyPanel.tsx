@@ -1,52 +1,18 @@
-import { CO2_FACTORS } from '@shared/constants/co2-factors'
 import type { Journey, JourneySegment, TransportMode, WeatherCondition } from '@shared/types/index'
-import { MODE_ICON_PATH_BASE } from '../constants/mode-icons'
+import { MODE_ICON_PATH_BASE, MODE_LABELS, modeColorVar, modeColorVarAlpha } from '../constants/mode-icons'
+import {
+  avgSpeedKmh,
+  caloriesBurned,
+  co2SavedVsCarG,
+  estimatedNextDepartures,
+} from '../utils/journey-segment-info'
 import { WeatherBadge } from './WeatherBadge'
 
 // ── Constantes ─────────────────────────────────────────────────────────────────
 
-// Couleurs par mode — alignées sur les tokens --color-mode-* (DESIGN-SYSTEM.md §1.1),
-// pas les teintes par défaut Tailwind : identiques dans les deux thèmes puisque
-// posées ici en valeurs fixes plutôt qu'en variables (le halo de segment sur la
-// carte utilise déjà ces mêmes teintes, cf. trace-segment).
-const MODE_COLORS: Record<TransportMode, string> = {
-  walk: '#5B6B63',
-  bike: '#0B5C43',
-  tramway: '#1D5E7A',
-  bus: '#6B3F8F',
-  scooter: '#5C6E1A',
-  navibus: '#0F6B6B',
-  train: '#33449E',
-}
-
-const MODE_LABELS: Record<TransportMode, string> = {
-  walk: 'Marche',
-  bike: 'Vélo',
-  tramway: 'Tramway',
-  bus: 'Bus',
-  scooter: 'Trottinette',
-  navibus: 'Navibus',
-  train: 'Train',
-}
-
 const TC_MODES = new Set<TransportMode>(['bus', 'tramway', 'navibus', 'train'])
 
-// Intervalles typiques entre passages (minutes) — estimation sans SIRI-Lite
-const TC_HEADWAY: Partial<Record<TransportMode, number>> = {
-  tramway: 7,
-  bus: 12,
-  navibus: 20,
-  train: 30,
-}
-
-// Calories estimées par minute selon le mode
-const CALORIES_PER_MIN: Partial<Record<TransportMode, number>> = {
-  walk: 5,
-  bike: 8,
-  scooter: 1,
-}
-
-// ── Helpers ────────────────────────────────────────────────────────────────────
+// ── Helpers d'affichage ──────────────────────────────────────────────────────
 
 function formatDuration(min: number): string {
   if (min < 60) return `${min} min`
@@ -63,34 +29,16 @@ function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 }
 
-function avgSpeedKmh(distKm: number, durationMin: number): number {
-  if (durationMin === 0 || distKm === 0) return 0
-  return Math.round((distKm / (durationMin / 60)) * 10) / 10
-}
-
-function estimatedNextDepartures(mode: TransportMode, scheduled: string): string[] {
-  const headway = TC_HEADWAY[mode] ?? 12
-  const base = new Date(scheduled).getTime()
-  return [1, 2].map((i) => new Date(base + i * headway * 60_000).toISOString())
-}
-
 // ── SegmentDetail ──────────────────────────────────────────────────────────────
 
 function SegmentDetail({ segment }: { segment: JourneySegment }) {
   const isTc = TC_MODES.has(segment.mode)
   const speed = avgSpeedKmh(segment.distanceKm, segment.durationMin)
-  const calories = CALORIES_PER_MIN[segment.mode]
-    ? Math.round((CALORIES_PER_MIN[segment.mode] as number) * segment.durationMin)
-    : undefined
+  const calories = caloriesBurned(segment.mode, segment.durationMin)
   const nextDeps = segment.scheduledDeparture
     ? estimatedNextDepartures(segment.mode, segment.scheduledDeparture)
     : []
-
-  // CO2 économisé vs voiture pour ce segment
-  const co2SavedG =
-    segment.distanceKm > 0
-      ? Math.max(0, Math.round(segment.distanceKm * CO2_FACTORS.car) - segment.co2g)
-      : 0
+  const co2SavedG = co2SavedVsCarG(segment.distanceKm, segment.co2g)
 
   return (
     <div
@@ -340,7 +288,7 @@ export function JourneyPanel({
                 style={
                   isActive
                     ? {
-                        borderLeft: `3px solid ${MODE_COLORS[segment.mode]}`,
+                        borderLeft: `3px solid ${modeColorVar(segment.mode)}`,
                         paddingLeft: '0.375rem',
                       }
                     : {}
@@ -353,7 +301,7 @@ export function JourneyPanel({
                     className="absolute top-9 bottom-0 w-0.5 opacity-25 transition-opacity duration-150"
                     style={{
                       left: isActive ? '1.125rem' : '0.875rem',
-                      background: MODE_COLORS[segment.mode],
+                      background: modeColorVar(segment.mode),
                     }}
                   />
                 )}
@@ -363,9 +311,9 @@ export function JourneyPanel({
                   aria-hidden="true"
                   className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center z-10 mt-0.5 transition-transform duration-150"
                   style={{
-                    background: MODE_COLORS[segment.mode] + (isActive ? '30' : '20'),
-                    border: `2px solid ${MODE_COLORS[segment.mode]}`,
-                    color: MODE_COLORS[segment.mode],
+                    background: modeColorVarAlpha(segment.mode, isActive ? 19 : 13),
+                    border: `2px solid ${modeColorVar(segment.mode)}`,
+                    color: modeColorVar(segment.mode),
                     transform: isActive ? 'scale(1.1)' : 'scale(1)',
                   }}
                 >

@@ -300,9 +300,14 @@ divergeaient avant correction — cf. historique Git si besoin de contexte).
 | `Co2FactorsNote` | Citation ADEME partagée (Dashboard + panneau desktop carte). |
 | `EmptyResultsPanel` | État "aucun résultat" avec assouplissements réels en un tap. |
 | `OfflinePanel` / `useOnlineStatus` | Mode hors ligne, focus trap, masqué pendant un suivi actif. |
-| `constants/mode-icons.tsx` (`MODE_ICON_PATH_BASE`) | Le seul jeu d'icônes de mode — jamais d'emoji fonctionnel. Partagé par `ModeChip`, `JourneyPanel`, `JourneyLayer`. |
+| `constants/mode-icons.tsx` (`MODE_ICON_PATH_BASE`, `MODE_LABELS`, `modeColorVar`/`modeColorVarAlpha`/`modeColorToken`/`modeRouteClassName`) | Seule source pour icônes, libellés et couleurs de mode — jamais d'emoji fonctionnel, jamais de copie locale de ces tables. Partagé par `ModeChip`, `ModeBreakdownTable`, `JourneyPanel`, `JourneyLayer`. |
+| `constants/weather-icons.tsx` (`WEATHER_ICON_PATH_BASE`) | Icônes météo (`WeatherBadge`) — jamais d'emoji (☀️☁️🌧️❄️⛈️). |
+| `BadgeUnlockIcon` | Icône badge/médaille — remplace l'emoji 🏅, partagée par `JourneySummaryModal` et `TripToast`. |
+| `Spinner` | Indicateur de chargement inline (`.skeleton` façonné en cercle) — jamais `animate-spin`, interdit ci-dessous. |
 | `utils/recent-searches.ts` / `utils/last-journey-cache.ts` | `localStorage`, mêmes conventions (dédup, plafond) — réutiliser plutôt que réinventer un cache local. |
+| `utils/journey-segment-info.ts` | Dérivés d'un segment (vitesse, calories, CO2 économisé vs voiture, horaires estimés) — logique métier hors des composants d'affichage (`JourneyPanel`). |
 | `useMediaQuery('(min-width: 1024px)')` | Bascule JS mobile/desktop quand le CSS seul ne suffit pas (ex. rendu conditionnel du panneau desktop dans `MapSheet`). |
+| `EcoMapLayer` | Scope creep assumé (absent de MAQUETTE.md/DESIGN-SYSTEM.md, cf. `01-PERIMETRE-MVP.md`) — heatmap CO2 sur la carte, dégradé `--color-eco-600` → `--color-warning` → `--color-danger` (pas de couleurs Tailwind arbitraires). Conservé et documenté ici plutôt que retiré, branché à `MapPage`. |
 
 Il n'existe **pas** de bibliothèque d'icônes externe (pas de Lucide/Heroicons en
 dépendance) : le set Estuaire est dessiné à la main dans `mode-icons.tsx` et inline dans
