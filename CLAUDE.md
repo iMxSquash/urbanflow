@@ -70,7 +70,6 @@ src/
 │   ├── stores/              # Stores Zustand
 │   ├── hooks/
 │   ├── services/            # Appels API
-│   ├── types/
 │   └── utils/
 ├── server/                  # Backend Express
 │   ├── modules/
