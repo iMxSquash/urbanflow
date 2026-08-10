@@ -1,6 +1,6 @@
 import { Polyline } from 'react-leaflet'
 import type { Journey } from '@shared/types/index'
-import { useIsDarkMode } from '../hooks/useIsDarkMode'
+import { useIsDarkMode } from '../hooks/use-is-dark-mode'
 
 function hexToRgb(hex: string): [number, number, number] {
   const n = parseInt(hex.slice(1), 16)

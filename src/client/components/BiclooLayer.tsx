@@ -1,7 +1,7 @@
 import L from 'leaflet'
 import { Marker, Popup } from 'react-leaflet'
 import type { BiclooStation } from '@shared/types/index'
-import { useBiclooStations } from '../hooks/useBiclooStations'
+import { useBiclooStations } from '../hooks/use-bicloo-stations'
 
 // Un <div> Leaflet (`divIcon`) est du HTML réel, pas un attribut de présentation
 // SVG : `style="background:var(...)"` inline y résout `var()` normalement, donc

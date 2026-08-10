@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { getLastJourney } from '../utils/last-journey-cache'
-import { useFocusTrap } from '../hooks/useFocusTrap'
+import { useFocusTrap } from '../hooks/use-focus-trap'
 
 function formatCo2(grams: number): string {
   return grams >= 1000

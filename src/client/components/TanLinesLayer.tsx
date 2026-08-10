@@ -1,5 +1,5 @@
 import { Polyline } from 'react-leaflet'
-import { useTanLines } from '../hooks/useTanLines'
+import { useTanLines } from '../hooks/use-tan-lines'
 
 function hexToLeaflet(hex: string): string {
   return `#${hex.replace(/^#/, '')}`

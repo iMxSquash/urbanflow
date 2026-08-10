@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import type { Coordinates } from '@shared/types/index'
-import type { NominatimResult } from '../hooks/useAddressAutocomplete'
+import type { NominatimResult } from '../hooks/use-address-autocomplete'
 import { formatRecentTimestamp } from '../utils/recent-searches'
 import type { RecentSearch } from '../utils/recent-searches'
 

@@ -1,8 +1,8 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import ProtectedRoute from './components/ProtectedRoute'
-import { useAuthInit } from './hooks/useAuthInit'
-import { useThemeSync } from './hooks/useThemeSync'
+import { useAuthInit } from './hooks/use-auth-init'
+import { useThemeSync } from './hooks/use-theme-sync'
 
 const LoginPage = lazy(() => import('./pages/LoginPage'))
 const RegisterPage = lazy(() => import('./pages/RegisterPage'))

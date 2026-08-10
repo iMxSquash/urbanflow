@@ -1,7 +1,7 @@
 import type { BiclooStation } from '@shared/types/index'
 import { getBiclooStations } from '../services/transport.service'
 import { CACHE_KEYS, CACHE_TTL_MS } from '../constants/cache-keys'
-import { useFetchResource } from './useFetchResource'
+import { useFetchResource } from './use-fetch-resource'
 
 interface BiclooState {
   stations: BiclooStation[]

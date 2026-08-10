@@ -8,7 +8,7 @@ import type {
 } from '../services/rewards.service'
 import { PageHeader } from '../components/PageHeader'
 import { PageWithSidebar } from '../components/PageWithSidebar'
-import { useFetchResource } from '../hooks/useFetchResource'
+import { useFetchResource } from '../hooks/use-fetch-resource'
 import { useResourceCacheStore } from '../stores/resource-cache.store'
 import { CACHE_KEYS, CACHE_TTL_MS } from '../constants/cache-keys'
 

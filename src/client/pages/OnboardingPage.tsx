@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useProfileStore } from '../stores/profile.store'
-import { useInstallPrompt } from '../hooks/useInstallPrompt'
+import { useInstallPrompt } from '../hooks/use-install-prompt'
 import { BackButton } from '../components/BackButton'
 import { ModeChip } from '../components/ModeChip'
 import { PROFILE_PRESETS } from '../constants/profile-presets'

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { CircleMarker, Popup, useMap } from 'react-leaflet'
-import { useTanStops } from '../hooks/useTanStops'
+import { useTanStops } from '../hooks/use-tan-stops'
 
 const MIN_ZOOM = 14
 

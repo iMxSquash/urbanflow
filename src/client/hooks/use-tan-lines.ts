@@ -1,7 +1,7 @@
 import type { TanLine } from '@shared/types/index'
 import { getTanLines } from '../services/transport.service'
 import { CACHE_KEYS, CACHE_TTL_MS } from '../constants/cache-keys'
-import { useFetchResource } from './useFetchResource'
+import { useFetchResource } from './use-fetch-resource'
 
 interface TanLinesState {
   lines: TanLine[]

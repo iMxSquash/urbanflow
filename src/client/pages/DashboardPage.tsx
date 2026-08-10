@@ -5,7 +5,7 @@ import { BadgeGrid } from '../components/BadgeGrid'
 import { Co2FactorsNote } from '../components/Co2FactorsNote'
 import { PageWithSidebar } from '../components/PageWithSidebar'
 import { useGamificationStore } from '../stores/gamification.store'
-import { useFetchResource } from '../hooks/useFetchResource'
+import { useFetchResource } from '../hooks/use-fetch-resource'
 import { CACHE_KEYS, CACHE_TTL_MS } from '../constants/cache-keys'
 
 const WeeklyCo2Chart = lazy(() => import('../components/WeeklyCo2Chart'))
