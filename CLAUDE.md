@@ -371,7 +371,9 @@ Toutes les pénalités/bonus ci-dessus sont plafonnés à `[0, 100]` sur le scor
 
 - Branche principale : `main`
 - Feature branches : `feat/nom-feature`
-- Fix branches : `fix/nom-bug`
+- Fix branches : `fix/nom-bug` — bug relevé en développement, avant mise en prod
+- Hotfix branches : `hotfix/nom-bug` — correctif urgent sur un incident déjà en
+  production (ex : déploiement cassé, régression live), toujours branché depuis `main`
 - Commits conventionnels : `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`
 - PR obligatoire vers main (même en solo, pour l'historique)
 - **Pas de `Co-Authored-By` dans les messages de commit** — ne jamais ajouter de trailer Claude/AI
