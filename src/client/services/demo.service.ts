@@ -1,6 +1,7 @@
 import { apiFetch } from '../utils/api-client'
 
 export interface DemoStatus {
+  available: boolean
   demoMode: boolean
   providersDemo: boolean
   weather: 'sunny' | 'rainy'

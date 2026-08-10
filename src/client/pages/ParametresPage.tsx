@@ -5,9 +5,11 @@ import { useDemoStore } from '../stores/demo.store'
 import { useThemeStore } from '../stores/theme.store'
 import type { ThemePreference } from '../stores/theme.store'
 import { useInstallPrompt } from '../hooks/useInstallPrompt'
+import { BackButton } from '../components/BackButton'
 import { DeleteAccountModal } from '../components/DeleteAccountModal'
 import { exportUserData } from '../services/auth.service'
 import LogoutButton from '../components/LogoutButton'
+import { PageHeader } from '../components/PageHeader'
 import { PageWithSidebar } from '../components/PageWithSidebar'
 import type { Coordinates } from '@shared/types/index'
 
@@ -89,6 +91,7 @@ export default function ParametresPage() {
   const { geolocationConsent, denyGeolocation, resetGeolocation } = useConsentStore()
   const navigate = useNavigate()
   const {
+    available: demoAvailable,
     demoMode,
     providersDemo,
     weather,
@@ -137,30 +140,20 @@ export default function ParametresPage() {
   return (
     <PageWithSidebar>
       <div className="min-h-screen bg-bg">
-        <header className="bg-surface border-b border-border sticky top-0 z-navbar">
+        <PageHeader>
           <div className="max-w-2xl mx-auto flex items-center gap-3 px-4 h-16 lg:max-w-260">
-            <Link to="/profile" aria-label="Retour au profil" className="btn-icon">
-              <svg
-                aria-hidden="true"
-                width="17"
-                height="17"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M15 18l-6-6 6-6" />
-              </svg>
-            </Link>
+            <BackButton to="/profile" aria-label="Retour au profil" />
             <h1 className="text-h3 font-bold">Paramètres</h1>
           </div>
-        </header>
+        </PageHeader>
 
         <main className="max-w-2xl mx-auto px-4 pt-4 pb-28 flex flex-col gap-4 lg:max-w-260 lg:px-10 lg:py-8">
           {/* ── Mode démo ────────────────────────────────────────────────── */}
-          {demoMode !== null && (
+          {/* `demoAvailable` (DEMO_MODE env, immuable) gate l'affichage du panneau ;
+           * `demoMode !== null` n'est qu'un garde-fou anti-null (chargement initial,
+           * toujours vrai en même temps que `demoAvailable` une fois le fetch résolu) —
+           * pas une deuxième condition d'affichage concurrente. */}
+          {demoAvailable && demoMode !== null && (
             <section
               className={
                 demoMode
@@ -169,7 +162,7 @@ export default function ParametresPage() {
               }
               aria-labelledby="demo-heading"
             >
-              <div className="flex items-center gap-2.5">
+              <label className="flex items-center gap-2.5 cursor-pointer">
                 <svg
                   aria-hidden="true"
                   width="20"
@@ -192,7 +185,16 @@ export default function ParametresPage() {
                     Mode démo {demoMode ? 'actif' : ''}
                   </span>
                   <span className={`text-caption ${demoMode ? 'text-warning' : 'text-text-muted'}`}>
-                    {demoMode ? 'Données statiques · horaires et CO₂ fictifs' : 'APIs réelles'}
+                    {/* Ce switch ne pilote que la météo simulée (isWeatherDemoMode,
+                     * demo-config.ts) — Bicloo/TAN/trajets restent réels tant que
+                     * "Simuler les trajets" ci-dessous n'est pas aussi activé. Le
+                     * texte doit refléter les deux cas pour ne pas laisser croire
+                     * que tout est simulé dès ce seul switch. */}
+                    {providersDemo
+                      ? 'Données statiques · horaires et CO₂ fictifs'
+                      : demoMode
+                        ? 'Météo simulée · trajets et stations réels'
+                        : 'APIs réelles'}
                   </span>
                 </span>
                 {/* input réel + span visuel (pas un <button>) : la règle globale
@@ -217,7 +219,7 @@ export default function ParametresPage() {
                 >
                   <span className="w-[22px] h-[22px] rounded-full bg-surface" />
                 </span>
-              </div>
+              </label>
 
               {demoMode && (
                 <div className="flex flex-col gap-4 pt-3 border-t border-warning-border">
@@ -255,7 +257,7 @@ export default function ParametresPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-3 cursor-pointer">
                     <span className="flex-1 flex flex-col gap-0.5">
                       <span className="text-body-sm font-semibold">Simuler les trajets</span>
                       <span className="text-caption text-warning">
@@ -284,7 +286,7 @@ export default function ParametresPage() {
                     >
                       <span className="w-[22px] h-[22px] rounded-full bg-surface" />
                     </span>
-                  </div>
+                  </label>
 
                   {providersDemo && (
                     <div>
