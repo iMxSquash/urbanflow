@@ -6,6 +6,8 @@ import type {
 } from '@shared/types/index.js'
 import { CO2_FACTORS } from '@shared/constants/co2-factors.js'
 import { TC_TRANSPORT_MODES } from '@shared/constants/transport-modes.js'
+import { SCORING_WEIGHTS } from '@shared/constants/scoring-weights.js'
+import type { ScoringWeights } from '@shared/constants/scoring-weights.js'
 
 const TC_MODES = TC_TRANSPORT_MODES
 
@@ -19,21 +21,8 @@ export function computeEstimatedCost(segments: JourneySegment[]): number {
 
 // ─── Pondérations ─────────────────────────────────────────────────────────────
 
-interface Weights {
-  duration: number
-  co2: number
-  comfort: number
-}
-
-export function scoringWeights(preference: UserPreference): Weights {
-  switch (preference) {
-    case 'eco':
-      return { duration: 0.2, co2: 0.7, comfort: 0.1 }
-    case 'fast':
-      return { duration: 0.7, co2: 0.2, comfort: 0.1 }
-    default:
-      return { duration: 0.4, co2: 0.5, comfort: 0.1 }
-  }
+export function scoringWeights(preference: UserPreference): ScoringWeights {
+  return SCORING_WEIGHTS[preference]
 }
 
 // ─── Seuil marche effectif ────────────────────────────────────────────────────

@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useProfileStore } from '../stores/profile.store'
 import { useInstallPrompt } from '../hooks/useInstallPrompt'
+import { BackButton } from '../components/BackButton'
 import { ModeChip } from '../components/ModeChip'
 import { PROFILE_PRESETS } from '../constants/profile-presets'
 import type { TransportMode, UserPreference } from '@shared/types/index'
@@ -73,26 +74,7 @@ export default function OnboardingPage() {
     <main className="min-h-screen bg-bg flex items-center justify-center px-4 py-6">
       <div className="w-full max-w-sm bg-surface rounded-2xl shadow-modal flex flex-col p-5 gap-4">
         <div className="flex items-center gap-2.5">
-          <button
-            type="button"
-            aria-label="Étape précédente"
-            onClick={() => navigate(-1)}
-            className="btn-icon"
-          >
-            <svg
-              aria-hidden="true"
-              width="17"
-              height="17"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-          </button>
+          <BackButton aria-label="Étape précédente" onClick={() => navigate(-1)} />
           <div
             className="flex-1 flex gap-1.5"
             role="progressbar"

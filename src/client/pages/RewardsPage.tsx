@@ -6,6 +6,7 @@ import type {
   RewardType,
   UserRedemption,
 } from '../services/rewards.service'
+import { PageHeader } from '../components/PageHeader'
 import { PageWithSidebar } from '../components/PageWithSidebar'
 import { useFetchResource } from '../hooks/useFetchResource'
 import { useResourceCacheStore } from '../stores/resource-cache.store'
@@ -411,7 +412,7 @@ export default function RewardsPage() {
   return (
     <PageWithSidebar>
       <div className="min-h-screen bg-bg pb-[calc(var(--height-bottomnav)+1rem)] lg:pb-6">
-        <header className="bg-surface border-b border-border sticky top-0 z-navbar">
+        <PageHeader>
           <div className="max-w-2xl mx-auto flex flex-col gap-3 px-4 py-3.5 lg:max-w-260 lg:px-10 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
             <div className="flex items-center justify-between lg:justify-start lg:gap-4">
               <h1 className="text-h3 font-bold">Récompenses</h1>
@@ -469,7 +470,7 @@ export default function RewardsPage() {
               </button>
             </div>
           </div>
-        </header>
+        </PageHeader>
 
         <main className="max-w-2xl mx-auto px-4 py-4 flex flex-col gap-3 lg:max-w-260 lg:px-10 lg:py-8">
           {error && (

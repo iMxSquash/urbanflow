@@ -5,9 +5,11 @@ import { useDemoStore } from '../stores/demo.store'
 import { useThemeStore } from '../stores/theme.store'
 import type { ThemePreference } from '../stores/theme.store'
 import { useInstallPrompt } from '../hooks/useInstallPrompt'
+import { BackButton } from '../components/BackButton'
 import { DeleteAccountModal } from '../components/DeleteAccountModal'
 import { exportUserData } from '../services/auth.service'
 import LogoutButton from '../components/LogoutButton'
+import { PageHeader } from '../components/PageHeader'
 import { PageWithSidebar } from '../components/PageWithSidebar'
 import type { Coordinates } from '@shared/types/index'
 
@@ -137,26 +139,12 @@ export default function ParametresPage() {
   return (
     <PageWithSidebar>
       <div className="min-h-screen bg-bg">
-        <header className="bg-surface border-b border-border sticky top-0 z-navbar">
+        <PageHeader>
           <div className="max-w-2xl mx-auto flex items-center gap-3 px-4 h-16 lg:max-w-260">
-            <Link to="/profile" aria-label="Retour au profil" className="btn-icon">
-              <svg
-                aria-hidden="true"
-                width="17"
-                height="17"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M15 18l-6-6 6-6" />
-              </svg>
-            </Link>
+            <BackButton to="/profile" aria-label="Retour au profil" />
             <h1 className="text-h3 font-bold">Paramètres</h1>
           </div>
-        </header>
+        </PageHeader>
 
         <main className="max-w-2xl mx-auto px-4 pt-4 pb-28 flex flex-col gap-4 lg:max-w-260 lg:px-10 lg:py-8">
           {/* ── Mode démo ────────────────────────────────────────────────── */}

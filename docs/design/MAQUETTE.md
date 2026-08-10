@@ -335,7 +335,7 @@ Historique en colonne, cohabitation sans tabs.
 
 | Écran | Contenu |
 |-------|---------|
-| **Paramètres** | Bandeau ambré permanent "Mode démo actif · Données statiques" si `DEMO_MODE=true`. Groupe Application (Installer, Thème Clair/Sombre/Auto, Rappels). Groupe Confidentialité (Géoloc, conservation 12 mois, politique, export). "Se déconnecter". Bloc rouge isolé "Supprimer mon compte". |
+| **Paramètres** | Bandeau ambré permanent "Mode démo actif · Données statiques" si `DEMO_MODE=true` — **en pratique un panneau interactif** (toggle météo simulée, toggle simulation complète des trajets, sélecteur météo, lanceur de scénario prédéfini ; cf. CLAUDE.md § Mode démo), assumé plus riche que ce bandeau passif pour piloter la soutenance à chaud. Groupe Application (Installer, Thème Clair/Sombre/Auto, Rappels). Groupe Confidentialité (Géoloc, conservation 12 mois, politique, export). "Se déconnecter". Bloc rouge isolé "Supprimer mon compte". |
 | **Modale suppression** | Inventaire chiffré ("52 trajets", "840 points et 4 badges", "1 récompense non utilisée"), champ de confirmation exigeant la saisie de "SUPPRIMER", boutons à poids égal, lien "exporter vos données" en sortie de secours. |
 
 **Desktop** : 2 colonnes (Application+Compte / Confidentialité+Zone irréversible), ajout

@@ -19,14 +19,11 @@ import { UserLocationMarker } from '../components/UserLocationMarker'
 import { OfflinePanel } from '../components/OfflinePanel'
 import { useOnlineStatus } from '../hooks/useOnlineStatus'
 import { saveLastJourney } from '../utils/last-journey-cache'
-import { recordTrip } from '../services/gamification.service'
-import type { RecordTripResult } from '../services/gamification.service'
 import { recordGeolocationConsent } from '../services/auth.service'
-import { useGamificationStore } from '../stores/gamification.store'
-import { useActiveTracking } from '../hooks/useActiveTracking'
 import { useGeolocation } from '../hooks/useGeolocation'
 import { useIsDarkMode } from '../hooks/useIsDarkMode'
 import { useJourney } from '../hooks/useJourney'
+import { useTripTracking } from '../hooks/useTripTracking'
 import { useWeather } from '../hooks/useWeather'
 import { useConsentStore } from '../stores/consent.store'
 import { useMapLayersStore } from '../stores/map-layers.store'
@@ -48,20 +45,11 @@ const CARTO_ATTRIBUTION =
 
 const DEFAULT_MODES: TransportMode[] = ['walk', 'tramway', 'bus']
 
-// Phase du parcours de suivi — distincte de l'état du sheet (SheetState) : ce
-// state pilote les modales portées hors du sheet (consentement, résumé).
-type TrackingModalPhase = 'idle' | 'consent' | 'active' | 'done'
-
 interface DemoScenarioState {
   from: Coordinates
   to: Coordinates
   fromLabel: string
   toLabel: string
-}
-
-interface ActiveTrackingState {
-  startTime: number
-  destination: Coordinates
 }
 
 export default function MapPage() {
@@ -98,7 +86,6 @@ export default function MapPage() {
   const { weather, error: weatherError, loading: weatherLoading } = useWeather()
   const [activeSegmentIdx, setActiveSegmentIdx] = useState<number | null>(null)
   const [ecoMapActive, setEcoMapActive] = useState(false)
-  const [tripResult, setTripResult] = useState<RecordTripResult | null>(null)
 
   const [options, setOptions] = useState<SearchOptions>(() => ({
     preference: 'balanced',
@@ -111,29 +98,14 @@ export default function MapPage() {
   }))
   const profileSyncedRef = useRef(false)
 
-  // Tracking (modale hors sheet)
-  const [trackingPhase, setTrackingPhase] = useState<TrackingModalPhase>('idle')
-  const [activeTracking, setActiveTracking] = useState<ActiveTrackingState | null>(null)
-  const [summaryResult, setSummaryResult] = useState<RecordTripResult | null>(null)
-  const [summaryDurationMin, setSummaryDurationMin] = useState(0)
-  const [showEndTripConfirm, setShowEndTripConfirm] = useState(false)
-  const arrivalHandledRef = useRef(false)
+  const tracking = useTripTracking({
+    selectedJourney,
+    fallbackDestination: NANTES_FALLBACK_COORDS,
+  })
 
   const location = useLocation()
   const locatedOnMount = useRef(false)
   const scenarioApplied = useRef(false)
-
-  // Destination for tracking — stable fallback when no journey selected (hook must be unconditional)
-  const trackingDestination = activeTracking?.destination ?? NANTES_FALLBACK_COORDS
-
-  const {
-    position: trackingPosition,
-    arrived,
-    stop: stopTracking,
-  } = useActiveTracking({
-    destination: trackingDestination,
-    active: trackingPhase === 'active',
-  })
 
   useEffect(() => {
     void fetchProfile()
@@ -177,7 +149,7 @@ export default function MapPage() {
   // Position affichée : pendant le suivi on suit la position GPS temps réel
   const userPosition = geoOverridden ? addressPosition : (geoPosition ?? addressPosition)
   const displayPosition =
-    trackingPhase === 'active' ? (trackingPosition ?? userPosition) : userPosition
+    tracking.trackingPhase === 'active' ? (tracking.trackingPosition ?? userPosition) : userPosition
 
   // Calcul automatique dès que départ + arrivée sont connus, et à chaque
   // changement de réglages (modes, PMR, marche max, dénivelé, horaire).
@@ -213,13 +185,6 @@ export default function MapPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [journeys, toLabel])
 
-  // Détection d'arrivée
-  useEffect(() => {
-    if (!arrived || trackingPhase !== 'active' || arrivalHandledRef.current) return
-    arrivalHandledRef.current = true
-    void handleArrival()
-  }, [arrived, trackingPhase]) // eslint-disable-line react-hooks/exhaustive-deps
-
   function handleGrant() {
     locatedOnMount.current = true
     grantGeolocation()
@@ -227,63 +192,11 @@ export default function MapPage() {
     locate()
   }
 
-  // "Partir maintenant" → ouvre la modale de consentement suivi
-  function handleDepartClick() {
-    setTrackingPhase('consent')
-  }
-
-  // L'utilisateur accepte le suivi GPS continu
+  // L'utilisateur accepte le suivi GPS continu — la machine à états du suivi
+  // vit dans useTripTracking, seul le sheet reste piloté depuis MapPage.
   function handleStartTracking() {
-    if (!selectedJourney) return
-    const destination = selectedJourney.segments.at(-1)!.to
-    arrivalHandledRef.current = false
-    setActiveTracking({ startTime: Date.now(), destination })
-    setTrackingPhase('active')
+    tracking.start()
     setSheetState('tracking')
-  }
-
-  // L'utilisateur refuse le suivi → enregistrement immédiat sans points
-  async function handleSkipTracking() {
-    setTrackingPhase('idle')
-    if (!selectedJourney) return
-    const { segments } = selectedJourney
-    try {
-      const result = await recordTrip(segments, false)
-      setTripResult(result)
-      useGamificationStore.getState().setTripResult(result.totalPoints, result.newlyUnlockedBadges)
-    } catch {
-      // Le toast ne s'affiche pas en cas d'erreur réseau — pas de crash UI
-    }
-  }
-
-  // Fin de trajet : arrivée auto ou clic "Terminer"
-  async function handleArrival() {
-    if (!selectedJourney || !activeTracking) return
-    stopTracking()
-    const realDurationMin = Math.round((Date.now() - activeTracking.startTime) / 60_000)
-    const { segments } = selectedJourney
-    try {
-      const result = await recordTrip(segments)
-      useGamificationStore.getState().setTripResult(result.totalPoints, result.newlyUnlockedBadges)
-      setSummaryResult(result)
-      setSummaryDurationMin(Math.max(1, realDurationMin))
-    } catch {
-      // Échec silencieux : le résumé ne s'affiche pas mais le tracking est bien arrêté
-    }
-    setTrackingPhase('done')
-    setActiveTracking(null)
-  }
-
-  // Fin manuelle via "Terminer le trajet" — passe par une confirmation
-  // (EndTripConfirmModal) avant d'arrêter le suivi, contrairement à l'arrivée
-  // GPS automatique (`handleArrival` ci-dessus) qui n'en a pas besoin.
-  function handleEndTrip() {
-    setShowEndTripConfirm(true)
-  }
-
-  function handleConfirmEndTrip() {
-    setShowEndTripConfirm(false)
-    void handleArrival()
   }
 
   // Inverse départ et arrivée. L'ancien départ (GPS ou adresse) devient une
@@ -320,7 +233,7 @@ export default function MapPage() {
 
   // Fermeture du résumé de fin de trajet — retour à un état replié propre
   function handleSummaryClose() {
-    setSummaryResult(null)
+    tracking.closeSummary()
     resetSearch()
   }
 
@@ -337,10 +250,8 @@ export default function MapPage() {
   // sinon retour aux résultats (l'itinéraire reste calculé, on revient à la
   // comparaison éco puisqu'il n'y a plus de trajet unique affiché).
   function handleClosePanel() {
-    if (trackingPhase === 'active') {
-      stopTracking()
-      setActiveTracking(null)
-      setTrackingPhase('idle')
+    if (tracking.trackingPhase === 'active') {
+      tracking.abort()
       clearJourney()
       setAddressPosition(null)
       setFromLabel(null)
@@ -422,16 +333,16 @@ export default function MapPage() {
         onClosePanel={handleClosePanel}
         activeSegmentIdx={activeSegmentIdx}
         onSegmentSelect={setActiveSegmentIdx}
-        trackingPhase={trackingPhase === 'active' ? 'active' : 'idle'}
+        trackingPhase={tracking.trackingPhase === 'active' ? 'active' : 'idle'}
         weather={weather}
-        onDepartClick={handleDepartClick}
-        onEndTrip={handleEndTrip}
+        onDepartClick={tracking.openConsent}
+        onEndTrip={tracking.requestEndTrip}
       />
 
       <div className="h-screen lg:h-auto lg:flex-1 lg:min-w-0">
         {/* Ne recouvre pas un suivi de trajet déjà en cours — le GPS et le
          * segment affiché ne dépendent pas du réseau une fois le trajet chargé. */}
-        {!isOnline && trackingPhase !== 'active' && <OfflinePanel />}
+        {!isOnline && tracking.trackingPhase !== 'active' && <OfflinePanel />}
 
         <main
           className="h-full relative overflow-hidden isolate group"
@@ -512,7 +423,7 @@ export default function MapPage() {
             {displayPosition && (
               <UserLocationMarker
                 position={displayPosition}
-                isTracking={trackingPhase === 'active'}
+                isTracking={tracking.trackingPhase === 'active'}
               />
             )}
             {ecoMapActive && journeys.length > 0 && (
@@ -550,13 +461,13 @@ export default function MapPage() {
           />
 
           {/* Toast confirmation départ sans suivi */}
-          {tripResult && (
+          {tracking.tripResult && (
             <TripToast
-              co2SavedGrams={tripResult.co2SavedGrams}
-              pointsEarned={tripResult.pointsEarned}
-              totalPoints={tripResult.totalPoints}
-              newlyUnlockedBadges={tripResult.newlyUnlockedBadges}
-              onClose={() => setTripResult(null)}
+              co2SavedGrams={tracking.tripResult.co2SavedGrams}
+              pointsEarned={tracking.tripResult.pointsEarned}
+              totalPoints={tracking.tripResult.totalPoints}
+              newlyUnlockedBadges={tracking.tripResult.newlyUnlockedBadges}
+              onClose={tracking.dismissTripToast}
             />
           )}
         </main>
@@ -570,35 +481,35 @@ export default function MapPage() {
         )}
 
       {/* Modale consentement suivi continu */}
-      {trackingPhase === 'consent' &&
+      {tracking.trackingPhase === 'consent' &&
         createPortal(
           <TrackingConsentModal
             onAccept={handleStartTracking}
-            onSkip={() => void handleSkipTracking()}
+            onSkip={() => void tracking.skip()}
           />,
           document.body
         )}
 
       {/* Résumé final après arrivée (état 8 — modale centrée) */}
-      {trackingPhase === 'done' &&
-        summaryResult &&
+      {tracking.trackingPhase === 'done' &&
+        tracking.summaryResult &&
         selectedJourney &&
         createPortal(
           <JourneySummaryModal
             journey={selectedJourney}
-            realDurationMin={summaryDurationMin}
-            tripResult={summaryResult}
+            realDurationMin={tracking.summaryDurationMin}
+            tripResult={tracking.summaryResult}
             onClose={handleSummaryClose}
           />,
           document.body
         )}
 
       {/* Confirmation avant d'arrêter le suivi actif ("Terminer le trajet") */}
-      {showEndTripConfirm &&
+      {tracking.showEndTripConfirm &&
         createPortal(
           <EndTripConfirmModal
-            onCancel={() => setShowEndTripConfirm(false)}
-            onConfirm={handleConfirmEndTrip}
+            onCancel={tracking.cancelEndTripConfirm}
+            onConfirm={tracking.confirmEndTrip}
           />,
           document.body
         )}

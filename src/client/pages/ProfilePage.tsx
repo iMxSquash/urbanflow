@@ -3,16 +3,16 @@ import { Link } from 'react-router-dom'
 import { useProfileStore } from '../stores/profile.store'
 import { useAuthStore } from '../stores/auth.store'
 import { ModeChip } from '../components/ModeChip'
+import { PageHeader } from '../components/PageHeader'
 import { PageWithSidebar } from '../components/PageWithSidebar'
 import { Slider } from '../components/Slider'
 import { PROFILE_PRESETS } from '../constants/profile-presets'
 import { TRANSPORT_MODES } from '@shared/types/index'
 import type { MobilityProfile, TransportMode, UserPreference } from '@shared/types/index'
+import { SCORING_WEIGHTS } from '@shared/constants/scoring-weights'
 
-const SCORING_WEIGHTS: Record<UserPreference, { duree: string; co2: string; confort: string }> = {
-  eco: { duree: '0,2', co2: '0,7', confort: '0,1' },
-  fast: { duree: '0,7', co2: '0,2', confort: '0,1' },
-  balanced: { duree: '0,4', co2: '0,5', confort: '0,1' },
+function formatWeight(value: number): string {
+  return value.toLocaleString('fr-FR')
 }
 
 // ─── Squelette ────────────────────────────────────────────────────────────────
@@ -150,7 +150,8 @@ function ProfileForm({ profile }: { profile: MobilityProfile }) {
           })}
         </div>
         <span className="text-caption text-text-muted">
-          Poids appliqué : CO₂ {weights.co2} · durée {weights.duree} · confort {weights.confort}
+          Poids appliqué : CO₂ {formatWeight(weights.co2)} · durée{' '}
+          {formatWeight(weights.duration)} · confort {formatWeight(weights.comfort)}
         </span>
       </div>
 
@@ -306,7 +307,7 @@ export default function ProfilePage() {
   return (
     <PageWithSidebar>
       <div className="min-h-screen bg-bg pb-[calc(var(--height-bottomnav)+1rem)] lg:pb-6">
-        <header className="bg-surface border-b border-border sticky top-0 z-navbar">
+        <PageHeader>
           <div className="max-w-2xl mx-auto flex items-center gap-3 px-4 h-16 lg:max-w-260">
             <span
               aria-hidden="true"
@@ -335,7 +336,7 @@ export default function ProfilePage() {
               </svg>
             </Link>
           </div>
-        </header>
+        </PageHeader>
 
         <main className="max-w-2xl mx-auto px-4 py-5 lg:px-6 lg:max-w-260">
           {fetchError && !profile && (

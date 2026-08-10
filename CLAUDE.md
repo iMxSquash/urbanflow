@@ -134,6 +134,14 @@ Le serveur public OSRM ne dispose que du profil `driving` — les durées sont c
 
 Variable d'env `DEMO_MODE=true` fait basculer TOUS les appels API externes vers des fichiers JSON dans `demo-data/`. Cela inclut Transitous, OpenWeather, GBFS Bicloo. Le mode démo doit toujours fonctionner, même sans connexion réseau côté backend. C'est le filet de sécurité pour la soutenance.
 
+**Panneau de contrôle à chaud** (`ParametresPage.tsx`, `GET`/`PATCH /api/demo/mode`, `demo.service.ts`/`demo-config.ts`) — écart assumé avec la maquette (`MAQUETTE.md` §5.6 ne décrit qu'un bandeau ambré passif) : au-delà de la variable d'env `DEMO_MODE` figée au démarrage, tout utilisateur authentifié peut à chaud, sans redémarrage serveur :
+- activer/désactiver la météo simulée seule (`enabled` — invalide le cache météo/TAN) ;
+- activer/désactiver la simulation complète des trajets + Bicloo + TAN (`providersDemo`, implique `enabled`) ;
+- forcer la météo simulée à `sunny`/`rainy` (`weather`) ;
+- lancer un scénario prédéfini (trajet Nantes réel préconfiguré) qui applique directement une recherche sur `MapPage`.
+
+Conservé et documenté ici plutôt que réduit au bandeau passif de la maquette : nécessaire pour piloter la démo de soutenance sans redéployer, et déjà testé/branché. Pas de garde admin sur `PATCH /api/demo/mode` (`authGuard` seul) — acceptable pour un prototype académique, à durcir si le projet devait sortir de ce cadre.
+
 ## APIs externes
 
 | API | Variable d'env | Usage |
