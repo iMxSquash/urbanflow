@@ -49,6 +49,18 @@ export async function runMigrations(): Promise<void> {
         console.log(`[migrate] ✓ ${filename}`)
       } catch (err) {
         await client.query('ROLLBACK')
+
+        // 42501 = insufficient_privilege : certaines migrations touchent des objets
+        // système (ex. spatial_ref_sys de PostGIS) dont l'ownership dépend de l'hébergeur
+        // (Supabase) et n'est jamais accordé au rôle applicatif — non bloquant, la
+        // migration reste non appliquée et sera retentée au prochain démarrage.
+        if ((err as pg.DatabaseError).code === '42501') {
+          console.warn(
+            `[migrate] ⚠ ${filename} ignorée (permission insuffisante, hors de portée du rôle applicatif) : ${(err as Error).message}`
+          )
+          continue
+        }
+
         throw new Error(`[migrate] Échec sur ${filename}: ${(err as Error).message}`, {
           cause: err,
         })
