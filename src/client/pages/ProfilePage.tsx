@@ -150,8 +150,8 @@ function ProfileForm({ profile }: { profile: MobilityProfile }) {
           })}
         </div>
         <span className="text-caption text-text-muted">
-          Poids appliqué : CO₂ {formatWeight(weights.co2)} · durée{' '}
-          {formatWeight(weights.duration)} · confort {formatWeight(weights.comfort)}
+          Poids appliqué : CO₂ {formatWeight(weights.co2)} · durée {formatWeight(weights.duration)}{' '}
+          · confort {formatWeight(weights.comfort)}
         </span>
       </div>
 

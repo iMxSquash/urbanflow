@@ -1,5 +1,10 @@
 import type { Journey, JourneySegment, TransportMode, WeatherCondition } from '@shared/types/index'
-import { MODE_ICON_PATH_BASE, MODE_LABELS, modeColorVar, modeColorVarAlpha } from '../constants/mode-icons'
+import {
+  MODE_ICON_PATH_BASE,
+  MODE_LABELS,
+  modeColorVar,
+  modeColorVarAlpha,
+} from '../constants/mode-icons'
 import {
   avgSpeedKmh,
   caloriesBurned,

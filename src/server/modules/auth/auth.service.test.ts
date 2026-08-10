@@ -21,7 +21,13 @@ beforeAll(() => {
 // Imports après les mocks
 import { pool } from '../../db/pool.js'
 import bcrypt from 'bcrypt'
-import { registerUser, loginUser, refreshTokens, logoutUser, recordRgpdConsent } from './auth.service.js'
+import {
+  registerUser,
+  loginUser,
+  refreshTokens,
+  logoutUser,
+  recordRgpdConsent,
+} from './auth.service.js'
 
 const mockQuery = pool.query as ReturnType<typeof vi.fn>
 const mockHash = bcrypt.hash as ReturnType<typeof vi.fn>
@@ -100,7 +106,7 @@ describe('loginUser', () => {
     expect(mockCompare).toHaveBeenCalledWith(PASSWORD, HASHED)
   })
 
-  it('propage rememberMe=false jusqu\'à la ligne stockée en base', async () => {
+  it("propage rememberMe=false jusqu'à la ligne stockée en base", async () => {
     mockQuery
       .mockResolvedValueOnce({ rows: [{ id: USER_ID, email: USER_EMAIL, password_hash: HASHED }] })
       .mockResolvedValueOnce({ rows: [] }) // INSERT refresh_token
@@ -126,9 +132,9 @@ describe('loginUser', () => {
     })
     mockCompare.mockResolvedValue(false)
 
-    await expect(
-      loginUser(USER_EMAIL, 'MauvaisMotDePasse1', true)
-    ).rejects.toThrow('INVALID_CREDENTIALS')
+    await expect(loginUser(USER_EMAIL, 'MauvaisMotDePasse1', true)).rejects.toThrow(
+      'INVALID_CREDENTIALS'
+    )
   })
 })
 
@@ -195,7 +201,7 @@ describe('refreshTokens', () => {
     expect(mockQuery).toHaveBeenCalledTimes(1)
   })
 
-  it('insère la nouvelle ligne avant de tourner l\'ancienne (contrainte FK replaced_by)', async () => {
+  it("insère la nouvelle ligne avant de tourner l'ancienne (contrainte FK replaced_by)", async () => {
     const jti = 'bbbbbbbd-0000-0000-0000-00000000000b'
     const token = makeRefreshToken(jti)
 
@@ -218,7 +224,12 @@ describe('refreshTokens', () => {
     const jti = 'eeeeeeee-0000-0000-0000-000000000005'
     const leafJti = 'ffffffff-0000-0000-0000-000000000006'
     const token = makeRefreshToken(jti)
-    const rotatedRow = { id: jti, rotated_at: new Date().toISOString(), replaced_by: leafJti, remember_me: true }
+    const rotatedRow = {
+      id: jti,
+      rotated_at: new Date().toISOString(),
+      replaced_by: leafJti,
+      remember_me: true,
+    }
 
     mockQuery
       .mockResolvedValueOnce({ rows: [rotatedRow] }) // getTokenRow : déjà tourné il y a <10s
@@ -242,7 +253,12 @@ describe('refreshTokens', () => {
     const jti = 'aaaaaaab-0000-0000-0000-000000000007'
     const token = makeRefreshToken(jti)
     const rotatedAt = new Date(Date.now() - 15_000).toISOString()
-    const rotatedRow = { id: jti, rotated_at: rotatedAt, replaced_by: 'whatever', remember_me: true }
+    const rotatedRow = {
+      id: jti,
+      rotated_at: rotatedAt,
+      replaced_by: 'whatever',
+      remember_me: true,
+    }
 
     mockQuery
       .mockResolvedValueOnce({ rows: [rotatedRow] }) // getTokenRow : déjà tourné il y a >10s
@@ -309,8 +325,9 @@ describe('recordRgpdConsent', () => {
 
     await recordRgpdConsent(USER_ID)
 
-    expect(mockQuery).toHaveBeenCalledWith('UPDATE users SET rgpd_consent_at = now() WHERE id = $1', [
-      USER_ID,
-    ])
+    expect(mockQuery).toHaveBeenCalledWith(
+      'UPDATE users SET rgpd_consent_at = now() WHERE id = $1',
+      [USER_ID]
+    )
   })
 })

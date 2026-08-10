@@ -42,7 +42,10 @@ export async function getRewardCatalog(): Promise<RewardCatalog> {
 
 export async function getMyRedemptions(): Promise<UserRedemption[]> {
   const res = await apiFetch('/api/rewards/my-redemptions')
-  return parseJsonResponse<UserRedemption[]>(res, "Impossible de charger l'historique des récompenses")
+  return parseJsonResponse<UserRedemption[]>(
+    res,
+    "Impossible de charger l'historique des récompenses"
+  )
 }
 
 export async function purchaseReward(rewardId: string): Promise<PurchaseResult> {

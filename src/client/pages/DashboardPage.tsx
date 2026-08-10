@@ -66,7 +66,11 @@ export default function DashboardPage() {
     data: badgesData,
     loading: badgesLoading,
     error: badgesError,
-  } = useFetchResource(CACHE_KEYS.gamificationBadges, getUserBadges, CACHE_TTL_MS.gamificationBadges)
+  } = useFetchResource(
+    CACHE_KEYS.gamificationBadges,
+    getUserBadges,
+    CACHE_TTL_MS.gamificationBadges
+  )
 
   const badges = badgesData ?? []
   const loading = statsLoading || badgesLoading

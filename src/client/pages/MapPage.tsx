@@ -402,7 +402,9 @@ export default function MapPage() {
               key={isDarkMode ? 'dark' : 'light'}
               url={isDarkMode ? CARTO_POSITRON_DARK : CARTO_POSITRON_LIGHT}
               attribution={CARTO_ATTRIBUTION}
-              className={isDarkMode ? 'saturate-[.5] brightness-[.92]' : 'saturate-[.55] contrast-[1.02]'}
+              className={
+                isDarkMode ? 'saturate-[.5] brightness-[.92]' : 'saturate-[.55] contrast-[1.02]'
+              }
             />
             <MapResizeSync />
             {layers.tanLines && (

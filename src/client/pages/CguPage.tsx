@@ -6,9 +6,9 @@ export default function CguPage() {
       <LegalSection heading="Objet">
         <p>
           Les présentes CGU régissent l'utilisation d'UrbanFlow SmartRoute, plateforme de mobilité
-          urbaine multimodale pour Nantes Métropole : calcul d'itinéraires (bus, tramway,
-          navibus, train, vélo, marche, trottinette), gamification (points, badges) et
-          récompenses auprès de partenaires.
+          urbaine multimodale pour Nantes Métropole : calcul d'itinéraires (bus, tramway, navibus,
+          train, vélo, marche, trottinette), gamification (points, badges) et récompenses auprès de
+          partenaires.
         </p>
       </LegalSection>
 
