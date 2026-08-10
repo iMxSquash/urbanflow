@@ -1,6 +1,7 @@
 import {
   isWeatherDemoMode,
   isDemoMode,
+  isDemoModeEnvEnabled,
   setWeatherDemoMode,
   setProvidersDemo,
   getDemoWeather,
@@ -11,6 +12,8 @@ import { clearWeatherCache } from '../routing/weather.service.js'
 import { clearTanCache } from '../transport/tan.service.js'
 
 export interface DemoModeState {
+  /** `DEMO_MODE` env brut — gate d'affichage du panneau côté client, jamais modifié à chaud. */
+  available: boolean
   demoMode: boolean
   providersDemo: boolean
   weather: DemoWeather
@@ -24,6 +27,7 @@ export interface UpdateDemoModeInput {
 
 export function getDemoModeState(): DemoModeState {
   return {
+    available: isDemoModeEnvEnabled(),
     demoMode: isWeatherDemoMode(),
     providersDemo: isDemoMode(),
     weather: getDemoWeather(),

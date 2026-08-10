@@ -6,6 +6,13 @@ let _weatherDemo: boolean | null = null // météo simulée seulement
 let _providersDemo: boolean | null = null // trajets + bicloo + tan simulés
 let _weatherOverride: DemoWeather | null = null
 
+/** Variable d'env brute, indépendante des overrides runtime — sert uniquement à
+ * décider si le panneau de contrôle du mode démo doit être visible dans
+ * `ParametresPage.tsx` (déploiement de soutenance vs production normale). */
+export function isDemoModeEnvEnabled(): boolean {
+  return process.env.DEMO_MODE === 'true'
+}
+
 /** Météo simulée : actif si weather demo OU providers demo est activé */
 export function isWeatherDemoMode(): boolean {
   if (_providersDemo) return true

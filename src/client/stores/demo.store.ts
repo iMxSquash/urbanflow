@@ -9,6 +9,9 @@ import { fetchCached, useResourceCacheStore } from './resource-cache.store'
 import { CACHE_KEYS, CACHE_TTL_MS } from '../constants/cache-keys'
 
 interface DemoState {
+  /** `DEMO_MODE` env côté serveur — gate d'affichage du panneau, indépendant du
+   * toggle runtime `demoMode` ci-dessous (cf. CLAUDE.md § Mode démo). */
+  available: boolean | null
   demoMode: boolean | null
   providersDemo: boolean | null
   weather: 'sunny' | 'rainy' | null
@@ -19,7 +22,24 @@ interface DemoState {
   setWeather: (weather: 'sunny' | 'rainy') => Promise<void>
 }
 
+// Ressources affichées sur la carte ("/") dont la source (réelle vs fixtures
+// démo) dépend directement des réglages ci-dessous — invalidées ensemble à
+// chaque mutation pour que MapPage ne reste pas sur des données de l'autre
+// source jusqu'à expiration naturelle du TTL.
+const MAP_CACHE_KEYS = [
+  CACHE_KEYS.weather,
+  CACHE_KEYS.biclooStations,
+  CACHE_KEYS.tanStops,
+  CACHE_KEYS.tanLines,
+] as const
+
+function invalidateMapCaches(): void {
+  const { invalidate } = useResourceCacheStore.getState()
+  for (const key of MAP_CACHE_KEYS) invalidate(key)
+}
+
 export const useDemoStore = create<DemoState>((set) => ({
+  available: null,
   demoMode: null,
   providersDemo: null,
   weather: null,
@@ -29,12 +49,13 @@ export const useDemoStore = create<DemoState>((set) => ({
     try {
       const status = await fetchCached(CACHE_KEYS.demoStatus, getDemoStatus, CACHE_TTL_MS.demoStatus)
       set({
+        available: status.available,
         demoMode: status.demoMode,
         providersDemo: status.providersDemo,
         weather: status.weather,
       })
     } catch {
-      set({ demoMode: null, providersDemo: null, weather: null })
+      set({ available: null, demoMode: null, providersDemo: null, weather: null })
     }
   },
 
@@ -44,6 +65,7 @@ export const useDemoStore = create<DemoState>((set) => ({
       const status = await patchDemoMode(enabled)
       set({ demoMode: status.demoMode, providersDemo: status.providersDemo })
       useResourceCacheStore.getState().invalidate(CACHE_KEYS.demoStatus)
+      invalidateMapCaches()
     } finally {
       set({ loading: false })
     }
@@ -55,6 +77,7 @@ export const useDemoStore = create<DemoState>((set) => ({
       const status = await patchProvidersDemo(enabled)
       set({ providersDemo: status.providersDemo })
       useResourceCacheStore.getState().invalidate(CACHE_KEYS.demoStatus)
+      invalidateMapCaches()
     } finally {
       set({ loading: false })
     }
@@ -66,6 +89,7 @@ export const useDemoStore = create<DemoState>((set) => ({
       await patchDemoWeather(weather)
       set({ weather })
       useResourceCacheStore.getState().invalidate(CACHE_KEYS.demoStatus)
+      invalidateMapCaches()
     } finally {
       set({ loading: false })
     }
