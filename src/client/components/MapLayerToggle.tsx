@@ -243,7 +243,7 @@ export function MapLayerToggle({
           'hidden lg:flex absolute left-4 z-1000',
           // Le bottom sheet est désormais toujours affiché (état "replié" 212px
           // minimum) — ce bouton doit toujours passer au-dessus, jamais bottom-4.
-          hasJourney ? 'bottom-[calc(58vh+12px)] lg:bottom-4' : 'bottom-[232px] lg:bottom-4',
+          hasJourney ? 'bottom-[calc(58vh+12px)] lg:bottom-4' : 'bottom-58 lg:bottom-4',
         ].join(' ')}
         role="group"
         aria-label="Calques de la carte"
@@ -258,7 +258,7 @@ export function MapLayerToggle({
       </div>
 
       {/* Mobile — masqué derrière un bouton déclencheur, sous le badge météo */}
-      <div ref={mobileContainerRef} className="lg:hidden absolute top-[58px] right-3 z-1100">
+      <div ref={mobileContainerRef} className="lg:hidden absolute top-14.5 right-3 z-sheet">
         <button
           type="button"
           onClick={() => setIsOpen((open) => !open)}

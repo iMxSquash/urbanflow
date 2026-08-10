@@ -21,9 +21,9 @@ export default function PolitiqueConfidentialitePage() {
             (éco/rapide/équilibré), besoin d'accessibilité PMR.
           </li>
           <li>
-            Position GPS : utilisée uniquement le temps du calcul d'un itinéraire ou du suivi
-            d'un trajet en cours, avec consentement préalable — jamais stockée en base au-delà de
-            cette requête.
+            Position GPS : utilisée uniquement le temps du calcul d'un itinéraire ou du suivi d'un
+            trajet en cours, avec consentement préalable — jamais stockée en base au-delà de cette
+            requête.
           </li>
           <li>
             Historique de trajets : modes utilisés, CO2 économisé, points gagnés et date —{' '}
@@ -51,28 +51,27 @@ export default function PolitiqueConfidentialitePage() {
 
       <LegalSection heading="Destinataires et sous-traitants">
         <p>
-          Aucune donnée n'est partagée à des fins commerciales ou publicitaires. Des
-          sous-traitants techniques interviennent pour le fonctionnement du service : Transitous
-          et OSRM (calcul d'itinéraire — coordonnées transmises arrondies à 4 décimales, environ
-          10 mètres de précision), OpenWeatherMap (météo), CartoDB (fond de carte), Vercel, Render
-          et Supabase (hébergement, région eu-west-3).
+          Aucune donnée n'est partagée à des fins commerciales ou publicitaires. Des sous-traitants
+          techniques interviennent pour le fonctionnement du service : Transitous et OSRM (calcul
+          d'itinéraire — coordonnées transmises arrondies à 4 décimales, environ 10 mètres de
+          précision), OpenWeatherMap (météo), CartoDB (fond de carte), Vercel, Render et Supabase
+          (hébergement, région eu-west-3).
         </p>
       </LegalSection>
 
       <LegalSection heading="Durée de conservation">
         <p>
-          Le compte est conservé tant qu'il reste actif. L'historique de trajets et les
-          récompenses échangées sont conservés 12 mois, puis supprimés automatiquement par un job
-          de purge planifié quotidien. La suppression du compte entraîne l'effacement immédiat et
-          définitif de l'ensemble des données associées.
+          Le compte est conservé tant qu'il reste actif. L'historique de trajets et les récompenses
+          échangées sont conservés 12 mois, puis supprimés automatiquement par un job de purge
+          planifié quotidien. La suppression du compte entraîne l'effacement immédiat et définitif
+          de l'ensemble des données associées.
         </p>
       </LegalSection>
 
       <LegalSection heading="Sécurité">
         <p>
           Mots de passe hachés (bcrypt), jetons d'authentification de courte durée (15 minutes),
-          jeton de rafraîchissement en cookie HttpOnly/Secure/SameSite=Strict, connexions
-          chiffrées.
+          jeton de rafraîchissement en cookie HttpOnly/Secure/SameSite=Strict, connexions chiffrées.
         </p>
       </LegalSection>
 
@@ -84,22 +83,22 @@ export default function PolitiqueConfidentialitePage() {
             disponible depuis Paramètres.
           </li>
           <li>
-            Droit à l'effacement : suppression définitive et immédiate du compte, disponible
-            depuis Paramètres.
+            Droit à l'effacement : suppression définitive et immédiate du compte, disponible depuis
+            Paramètres.
           </li>
           <li>
-            Droit d'opposition : désactivation de la géolocalisation à tout moment, saisie
-            manuelle du point de départ toujours possible.
+            Droit d'opposition : désactivation de la géolocalisation à tout moment, saisie manuelle
+            du point de départ toujours possible.
           </li>
         </ul>
       </LegalSection>
 
       <LegalSection heading="Cookies">
         <p>
-          Seul un cookie technique HttpOnly (jeton de rafraîchissement de session) est utilisé.
-          Les préférences de thème et de consentement géolocalisation sont stockées localement
-          dans le navigateur (localStorage), jamais transmises à un tiers. Aucun cookie publicitaire
-          ou de suivi tiers n'est déposé.
+          Seul un cookie technique HttpOnly (jeton de rafraîchissement de session) est utilisé. Les
+          préférences de thème et de consentement géolocalisation sont stockées localement dans le
+          navigateur (localStorage), jamais transmises à un tiers. Aucun cookie publicitaire ou de
+          suivi tiers n'est déposé.
         </p>
       </LegalSection>
     </LegalPageLayout>

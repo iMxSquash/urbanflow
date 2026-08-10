@@ -47,7 +47,11 @@ export const useDemoStore = create<DemoState>((set) => ({
 
   fetch: async () => {
     try {
-      const status = await fetchCached(CACHE_KEYS.demoStatus, getDemoStatus, CACHE_TTL_MS.demoStatus)
+      const status = await fetchCached(
+        CACHE_KEYS.demoStatus,
+        getDemoStatus,
+        CACHE_TTL_MS.demoStatus
+      )
       set({
         available: status.available,
         demoMode: status.demoMode,

@@ -150,8 +150,8 @@ function ProfileForm({ profile }: { profile: MobilityProfile }) {
           })}
         </div>
         <span className="text-caption text-text-muted">
-          Poids appliqué : CO₂ {formatWeight(weights.co2)} · durée{' '}
-          {formatWeight(weights.duration)} · confort {formatWeight(weights.comfort)}
+          Poids appliqué : CO₂ {formatWeight(weights.co2)} · durée {formatWeight(weights.duration)}{' '}
+          · confort {formatWeight(weights.comfort)}
         </span>
       </div>
 
@@ -196,11 +196,11 @@ function ProfileForm({ profile }: { profile: MobilityProfile }) {
           <span
             aria-hidden="true"
             className={[
-              'shrink-0 w-[46px] h-7 rounded-full flex items-center p-[3px] transition-colors duration-fast',
+              'shrink-0 w-11.5 h-7 rounded-full flex items-center p-0.75 transition-colors duration-fast',
               form.pmrAccessibility ? 'bg-primary justify-end' : 'bg-border justify-start',
             ].join(' ')}
           >
-            <span className="w-[22px] h-[22px] rounded-full bg-surface" />
+            <span className="size-5.5 rounded-full bg-surface" />
           </span>
         </label>
       </div>
@@ -311,7 +311,7 @@ export default function ProfilePage() {
           <div className="max-w-2xl mx-auto flex items-center gap-3 px-4 h-16 lg:max-w-260">
             <span
               aria-hidden="true"
-              className="shrink-0 size-[46px] rounded-full bg-primary-surface text-primary flex items-center justify-center text-body-sm font-bold"
+              className="shrink-0 size-11.5 rounded-full bg-primary-surface text-primary flex items-center justify-center text-body-sm font-bold"
             >
               {initials}
             </span>

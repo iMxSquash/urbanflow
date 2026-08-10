@@ -212,12 +212,12 @@ export default function ParametresPage() {
                 <span
                   aria-hidden="true"
                   className={[
-                    'shrink-0 w-[46px] h-7 rounded-full flex items-center p-[3px] transition-colors duration-fast',
+                    'shrink-0 w-11.5 h-7 rounded-full flex items-center p-0.75 transition-colors duration-fast',
                     'peer-disabled:opacity-50 peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2',
                     demoMode ? 'bg-warning justify-end' : 'bg-border justify-start',
                   ].join(' ')}
                 >
-                  <span className="w-[22px] h-[22px] rounded-full bg-surface" />
+                  <span className="size-5.5 rounded-full bg-surface" />
                 </span>
               </label>
 
@@ -279,12 +279,12 @@ export default function ParametresPage() {
                     <span
                       aria-hidden="true"
                       className={[
-                        'shrink-0 w-[46px] h-7 rounded-full flex items-center p-[3px] transition-colors duration-fast',
+                        'shrink-0 w-11.5 h-7 rounded-full flex items-center p-0.75 transition-colors duration-fast',
                         'peer-disabled:opacity-50 peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2',
                         providersDemo ? 'bg-warning justify-end' : 'bg-border justify-start',
                       ].join(' ')}
                     >
-                      <span className="w-[22px] h-[22px] rounded-full bg-surface" />
+                      <span className="size-5.5 rounded-full bg-surface" />
                     </span>
                   </label>
 
@@ -395,7 +395,7 @@ export default function ParametresPage() {
                         ref={themeGroupRef}
                         role="radiogroup"
                         aria-label="Thème de l'application"
-                        className="flex gap-1 p-[3px] bg-surface-sunken rounded-full shrink-0"
+                        className="flex gap-1 p-0.75 bg-surface-sunken rounded-full shrink-0"
                         onKeyDown={(e) => {
                           if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return
                           e.preventDefault()

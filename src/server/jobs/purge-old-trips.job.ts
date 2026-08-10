@@ -24,7 +24,9 @@ export function schedulePurgeJob(): void {
       purgeOldTrips()
         .then(({ trips, redemptions }) => {
           if (trips > 0 || redemptions > 0) {
-            console.log(`[purge] ${trips} trajet(s), ${redemptions} récompense(s) supprimés (> 12 mois)`)
+            console.log(
+              `[purge] ${trips} trajet(s), ${redemptions} récompense(s) supprimés (> 12 mois)`
+            )
           }
         })
         .catch((err: unknown) => {

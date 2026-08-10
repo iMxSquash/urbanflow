@@ -26,7 +26,9 @@ function co2Color(value: number, min: number, max: number, isDark: boolean): str
   const stops = CO2_GRADIENT_STOPS[isDark ? 'dark' : 'light']
   const t = max === min ? 0 : (value - min) / (max - min)
   const [rgbA, rgbB, localT] =
-    t <= 0.5 ? [hexToRgb(stops.low), hexToRgb(stops.mid), t * 2] : [hexToRgb(stops.mid), hexToRgb(stops.high), (t - 0.5) * 2]
+    t <= 0.5
+      ? [hexToRgb(stops.low), hexToRgb(stops.mid), t * 2]
+      : [hexToRgb(stops.mid), hexToRgb(stops.high), (t - 0.5) * 2]
   const [r, g, b] = [
     lerp(rgbA[0], rgbB[0], localT),
     lerp(rgbA[1], rgbB[1], localT),

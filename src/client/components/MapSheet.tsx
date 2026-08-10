@@ -531,7 +531,7 @@ function ModeChipsFieldset({
   }
 
   return (
-    <fieldset className="m-0 p-0 border-0 min-w-0 w-full flex flex-nowrap gap-2 overflow-x-auto overscroll-x-contain touch-pan-x scrollbar-none [&>*]:shrink-0">
+    <fieldset className="m-0 p-0 border-0 min-w-0 w-full flex flex-nowrap gap-2 overflow-x-auto overscroll-x-contain touch-pan-x scrollbar-none *:shrink-0">
       <legend className="sr-only">Modes de transport autorisés pour ce trajet</legend>
       {TRANSPORT_MODES.map((mode) => (
         <ModeChip

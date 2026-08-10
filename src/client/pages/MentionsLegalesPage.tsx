@@ -5,9 +5,9 @@ export default function MentionsLegalesPage() {
     <LegalPageLayout title="Mentions légales">
       <LegalSection heading="Éditeur">
         <p>
-          UrbanFlow SmartRoute est un projet académique réalisé dans le cadre du Titre 6
-          Concepteur Développeur Solutions Digitales (RNCP 36146), session de septembre 2026, par
-          Elwen COUSSOT, développeur solo.
+          UrbanFlow SmartRoute est un projet académique réalisé dans le cadre du Titre 6 Concepteur
+          Développeur Solutions Digitales (RNCP 36146), session de septembre 2026, par Elwen
+          COUSSOT, développeur solo.
         </p>
         <p>
           Contact :{' '}
@@ -19,16 +19,16 @@ export default function MentionsLegalesPage() {
 
       <LegalSection heading="Nature du projet">
         <p>
-          Ce site est un prototype de démonstration sans vocation commerciale, développé à des
-          fins pédagogiques. Il n'est pas destiné à un usage grand public en production et peut
-          être interrompu ou modifié à tout moment.
+          Ce site est un prototype de démonstration sans vocation commerciale, développé à des fins
+          pédagogiques. Il n'est pas destiné à un usage grand public en production et peut être
+          interrompu ou modifié à tout moment.
         </p>
       </LegalSection>
 
       <LegalSection heading="Hébergement">
         <p>
-          Frontend : Vercel Inc. — Backend : Render — Base de données : Supabase (PostgreSQL,
-          région eu-west-3, Paris).
+          Frontend : Vercel Inc. — Backend : Render — Base de données : Supabase (PostgreSQL, région
+          eu-west-3, Paris).
         </p>
       </LegalSection>
 
