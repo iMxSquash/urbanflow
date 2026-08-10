@@ -1,14 +1,6 @@
+import type { TransportMode } from '@shared/types/index'
+import { MODE_LABELS, modeColorToken } from '../constants/mode-icons'
 import type { ModeCount } from '../services/gamification.service'
-
-const MODE_LABELS: Record<string, string> = {
-  walk: 'Marche',
-  bike: 'Vélo',
-  tramway: 'Tramway',
-  bus: 'Bus',
-  scooter: 'Trottinette',
-  navibus: 'Navibus',
-  train: 'Train',
-}
 
 interface ModeBreakdownTableProps {
   data: ModeCount[]
@@ -30,7 +22,7 @@ export default function ModeBreakdownTable({ data }: ModeBreakdownTableProps) {
     .sort((a, b) => b.count - a.count)
     .map((d) => ({
       ...d,
-      label: MODE_LABELS[d.mode] ?? d.mode,
+      label: MODE_LABELS[d.mode as TransportMode] ?? d.mode,
       pct: Math.round((d.count / total) * 100),
     }))
 
@@ -65,7 +57,7 @@ export default function ModeBreakdownTable({ data }: ModeBreakdownTableProps) {
                     className="block h-2.5 rounded-full"
                     style={{
                       width: `${row.pct}%`,
-                      backgroundColor: `var(--color-mode-${row.mode === 'tramway' ? 'tram' : row.mode})`,
+                      backgroundColor: `var(--color-mode-${modeColorToken(row.mode as TransportMode)})`,
                     }}
                   />
                 </span>

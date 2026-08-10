@@ -1049,3 +1049,88 @@
   background-color: var(--color-surface-muted) !important;
   color: var(--color-text) !important;
 }
+
+/* Tracés par mode (JourneyLayer) — classe plutôt que `pathOptions.color` : un
+ * attribut de présentation SVG posé via `setAttribute` ne résout pas `var()`
+ * de façon fiable, une règle de feuille de style si (cascade normale), donc
+ * ces couleurs suivent le thème clair/sombre sans détection JS. Voir
+ * `modeRouteClassName()` dans constants/mode-icons.tsx. */
+.route-walk {
+  stroke: var(--color-mode-walk);
+}
+.route-bike {
+  stroke: var(--color-mode-bike);
+}
+.route-tram {
+  stroke: var(--color-mode-tram);
+}
+.route-bus {
+  stroke: var(--color-mode-bus);
+}
+.route-scooter {
+  stroke: var(--color-mode-scooter);
+}
+.route-navibus {
+  stroke: var(--color-mode-navibus);
+}
+.route-train {
+  stroke: var(--color-mode-train);
+}
+
+/* Arrêts TAN (TanStopsLayer) — même raisonnement que .route-* ci-dessus :
+ * classe CSS plutôt que pathOptions.color/fillColor pour résoudre var().
+ * Teinte tram (pas de token "arrêt" dédié) au lieu de l'indigo Tailwind par
+ * défaut, hors palette Estuaire. */
+.tan-stop-marker {
+  stroke: var(--color-mode-tram);
+  fill: var(--color-surface);
+}
+
+/* Position utilisateur (UserLocationMarker) — pastille + halo de suivi GPS,
+ * teinte `--color-transit-*` (même famille que le badge "Suivi GPS actif"
+ * dans JourneyPanel/MapSheet). Classes réelles plutôt qu'un <style> injecté
+ * au premier montage : évite une mutation directe de document.head côté React
+ * et suit le thème clair/sombre via var(). */
+.uf-location-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background: var(--color-transit-500);
+  border: 3px solid var(--color-surface);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--color-transit-500) 20%, transparent);
+}
+.uf-pulse-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--color-transit-500) 30%, transparent);
+  /* Pulsation UNIQUE au changement d'état (démarrage du suivi), jamais en
+     boucle continue — règle Estuaire (pas d'animation décorative en boucle). */
+  animation: uf-pulse 2s ease-out 1;
+}
+.uf-pulse-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: var(--color-transit-500);
+  border: 3px solid var(--color-surface);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--color-transit-500) 55%, transparent);
+}
+@keyframes uf-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  70% {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}

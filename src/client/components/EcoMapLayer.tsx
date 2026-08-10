@@ -1,17 +1,37 @@
 import { Polyline } from 'react-leaflet'
 import type { Journey } from '@shared/types/index'
+import { useIsDarkMode } from '../hooks/useIsDarkMode'
+
+function hexToRgb(hex: string): [number, number, number] {
+  const n = parseInt(hex.slice(1), 16)
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255]
+}
 
 function lerp(a: number, b: number, t: number) {
   return Math.round(a + (b - a) * t)
 }
 
-// green(22,163,74) → amber(245,158,11) → red(239,68,68)
-function co2Color(value: number, min: number, max: number): string {
+// Dégradé faible → fort CO2, aligné sur les tokens --color-eco-600 (faible) →
+// --color-warning (moyen) → --color-danger (fort) de index.css — pas de valeurs
+// Tailwind arbitraires. Dupliqué en JS (comme MODE_COLORS_LIGHT ailleurs) car
+// c'est un attribut de présentation SVG Leaflet, hors cascade CSS (var() non
+// fiable) ; interpolation continue donc pas de classe CSS statique possible
+// (contrairement aux tracés à couleur fixe de JourneyLayer/TanStopsLayer).
+const CO2_GRADIENT_STOPS = {
+  light: { low: '#0b5c43', mid: '#7a4a08', high: '#b3261e' },
+  dark: { low: '#4fcb9b', mid: '#e9a93c', high: '#f0736b' },
+}
+
+function co2Color(value: number, min: number, max: number, isDark: boolean): string {
+  const stops = CO2_GRADIENT_STOPS[isDark ? 'dark' : 'light']
   const t = max === min ? 0 : (value - min) / (max - min)
-  const [r, g, b] =
-    t <= 0.5
-      ? [lerp(22, 245, t * 2), lerp(163, 158, t * 2), lerp(74, 11, t * 2)]
-      : [lerp(245, 239, (t - 0.5) * 2), lerp(158, 68, (t - 0.5) * 2), lerp(11, 68, (t - 0.5) * 2)]
+  const [rgbA, rgbB, localT] =
+    t <= 0.5 ? [hexToRgb(stops.low), hexToRgb(stops.mid), t * 2] : [hexToRgb(stops.mid), hexToRgb(stops.high), (t - 0.5) * 2]
+  const [r, g, b] = [
+    lerp(rgbA[0], rgbB[0], localT),
+    lerp(rgbA[1], rgbB[1], localT),
+    lerp(rgbA[2], rgbB[2], localT),
+  ]
   return `rgb(${r},${g},${b})`
 }
 
@@ -22,6 +42,7 @@ interface EcoMapLayerProps {
 }
 
 export function EcoMapLayer({ journeys, selectedJourneyId, onSelect }: EcoMapLayerProps) {
+  const isDark = useIsDarkMode()
   if (journeys.length === 0) return null
   const co2Values = journeys.map((j) => j.totalCo2g)
   const min = Math.min(...co2Values)
@@ -46,7 +67,7 @@ export function EcoMapLayer({ journeys, selectedJourneyId, onSelect }: EcoMapLay
             positions={positions}
             eventHandlers={{ click: () => onSelect(journey) }}
             pathOptions={{
-              color: co2Color(journey.totalCo2g, min, max),
+              color: co2Color(journey.totalCo2g, min, max, isDark),
               weight: isSelected ? 9 : 7,
               opacity: hasSelection && !isSelected ? 0.2 : 0.9,
               lineCap: 'round',

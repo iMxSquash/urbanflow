@@ -19,6 +19,7 @@ import { JourneyPanel, type JourneyTrackingPhase } from './JourneyPanel'
 import { JourneyResults } from './JourneyResults'
 import { ModeChip } from './ModeChip'
 import { Slider } from './Slider'
+import { Spinner } from './Spinner'
 import { Toggle } from './Toggle'
 
 // ── État du sheet — MAQUETTE.md §5.2 (8 états, le 8e — fin de trajet — est une
@@ -271,7 +272,7 @@ function SearchField({
       />
       {auto.loading && (
         <span className="absolute right-3 pointer-events-none" aria-label="Recherche en cours">
-          <div className="w-4 h-4 border-2 border-border border-t-eco-600 rounded-full animate-spin" />
+          <Spinner />
         </span>
       )}
     </div>

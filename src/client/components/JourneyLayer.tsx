@@ -1,21 +1,8 @@
 import L from 'leaflet'
 import { useEffect } from 'react'
 import { Polyline, useMap } from 'react-leaflet'
-import type { Journey, TransportMode } from '@shared/types/index'
-
-// Alignées sur les tokens --color-mode-* (DESIGN-SYSTEM.md §1.1) — mêmes valeurs
-// que la légende de segments dans JourneyPanel, pour qu'un même trajet affiche
-// la même couleur sur la carte et dans le panneau (WCAG 1.4.1, pas de sens porté
-// par une couleur qui change selon la vue).
-const MODE_COLORS: Record<TransportMode, string> = {
-  walk: '#5B6B63',
-  bike: '#0B5C43',
-  tramway: '#1D5E7A',
-  bus: '#6B3F8F',
-  scooter: '#5C6E1A',
-  navibus: '#0F6B6B',
-  train: '#33449E',
-}
+import type { Journey } from '@shared/types/index'
+import { modeRouteClassName } from '../constants/mode-icons'
 
 interface JourneyLayerProps {
   journey: Journey
@@ -68,7 +55,7 @@ export function JourneyLayer({ journey, activeSegmentIdx }: JourneyLayerProps) {
             key={idx}
             positions={positions}
             pathOptions={{
-              color: MODE_COLORS[segment.mode],
+              className: modeRouteClassName(segment.mode),
               weight: activeSegmentIdx === idx ? 7 : segment.mode === 'walk' ? 3 : 5,
               opacity: isActive ? 0.9 : 0.2,
               dashArray: segment.mode === 'walk' ? '5 9' : undefined,

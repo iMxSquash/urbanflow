@@ -2,6 +2,7 @@ import { useId, useRef, useState } from 'react'
 import type { Coordinates } from '@shared/types/index'
 import { useAddressAutocomplete } from '../hooks/useAddressAutocomplete'
 import { AddressSuggestionsList } from './AddressSuggestionsList'
+import { Spinner } from './Spinner'
 
 interface AddressSearchProps {
   onSelect: (coords: Coordinates, label: string) => void
@@ -85,7 +86,7 @@ export function AddressSearch({
         />
         {loading && (
           <span className="absolute right-3 pointer-events-none" aria-label="Recherche en cours">
-            <div className="w-4 h-4 border-2 border-border border-t-eco-600 rounded-full animate-spin" />
+            <Spinner />
           </span>
         )}
       </div>

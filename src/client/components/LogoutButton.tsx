@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Spinner } from './Spinner'
 import { logout } from '../services/auth.service'
 import { useAuthStore } from '../stores/auth.store'
 import { useProfileStore } from '../stores/profile.store'
@@ -32,10 +33,7 @@ export default function LogoutButton() {
     >
       {isLoading ? (
         <>
-          <span
-            aria-hidden="true"
-            className="inline-block w-4 h-4 border-2 border-text-muted border-t-transparent rounded-full animate-spin"
-          />
+          <Spinner />
           <span>Déconnexion…</span>
         </>
       ) : (

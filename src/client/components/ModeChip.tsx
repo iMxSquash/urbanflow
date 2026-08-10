@@ -1,16 +1,6 @@
 import type { CSSProperties } from 'react'
 import type { TransportMode } from '@shared/types/index'
-import { MODE_ICON_PATH_BASE } from '../constants/mode-icons'
-
-const MODE_LABEL: Record<TransportMode, string> = {
-  walk: 'Marche',
-  bike: 'Vélo',
-  scooter: 'Trottinette',
-  tramway: 'Tram',
-  bus: 'Bus',
-  navibus: 'Navibus',
-  train: 'Train',
-}
+import { MODE_ICON_PATH_BASE, MODE_LABELS, modeColorToken } from '../constants/mode-icons'
 
 interface ModeChipProps {
   mode: TransportMode
@@ -22,7 +12,7 @@ interface ModeChipProps {
 /** Chip de mode de transport — `.chip-mode`, couleur + surface dédiées par mode (Estuaire). */
 export function ModeChip({ mode, selected = false, size = 'md', onClick }: ModeChipProps) {
   const icon = MODE_ICON_PATH_BASE[mode]
-  const tokenName = mode === 'tramway' ? 'tram' : mode
+  const tokenName = modeColorToken(mode)
   // --mode-color / --mode-surface sont consommées par .chip-mode dans index.css
   const style = {
     '--mode-color': `var(--color-mode-${tokenName})`,
@@ -44,7 +34,7 @@ export function ModeChip({ mode, selected = false, size = 'md', onClick }: ModeC
       >
         {icon}
       </svg>
-      {MODE_LABEL[mode]}
+      {MODE_LABELS[mode]}
     </>
   )
 
