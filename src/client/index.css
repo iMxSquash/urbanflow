@@ -664,7 +664,7 @@
     }
 
     &[data-size='sm'] {
-      @apply h-9 px-[11px];
+      @apply h-9 px-2.75;
     }
   }
 
@@ -774,7 +774,7 @@
     /* rounded-r uniquement : l'arête gauche du panneau touche la sidebar,
      * elle ne doit jamais porter d'arrondi (seule l'arête carte, à droite,
      * en a un). */
-    @apply lg:static lg:w-100 lg:min-w-[380px] lg:border-t-0 lg:rounded-r-2xl lg:shadow-card;
+    @apply lg:static lg:w-100 lg:min-w-95 lg:border-t-0 lg:rounded-r-2xl lg:shadow-card;
     /* Panneaux Leaflet internes (tuiles/marqueurs) déclarés à z-index élevé et
      * échappant à .leaflet-container (position:relative + z-index:auto ne crée
      * pas de contexte d'empilement) : sans z-index explicite ici, ils peignent
@@ -798,7 +798,7 @@
        * incluaient une marge basse qui ne se voyait pas tant que le sheet
        * recouvrait la nav — une fois décalé au-dessus d'elle, cette même
        * marge devenait un vide visible entre les chips et la nav. */
-      @apply max-lg:h-auto max-lg:bottom-[var(--height-bottomnav)];
+      @apply max-lg:h-auto max-lg:bottom-(--height-bottomnav);
     }
     /* Espacement conservé en haut d'écran (au lieu d'un `top-0` plein écran)
      * pour que la poignée reste visible et actionnable même en pleine saisie
@@ -807,27 +807,27 @@
      * décalage `bottom` que `collapsed`/`mid` : la nav est réaffichée en
      * `search` (MapPage.tsx), sans quoi le sheet la recouvrirait. */
     &[data-sheet-state='search'] {
-      @apply max-lg:top-16 max-lg:bottom-[var(--height-bottomnav)] max-lg:overflow-y-auto;
+      @apply max-lg:top-16 max-lg:bottom-(--height-bottomnav) max-lg:overflow-y-auto;
     }
     /* La nav mobile réapparaît en `mid` (comme en `collapsed`) — MAQUETTE.md
      * §5.2 état 3 "Mi-hauteur" l'inclut explicitement dans la maquette. Même
      * décalage de `bottom` que `collapsed` pour lui laisser la place. */
     &[data-sheet-state='mid'] {
-      @apply max-lg:max-h-[52vh] max-lg:bottom-[var(--height-bottomnav)] max-lg:overflow-y-auto;
+      @apply max-lg:max-h-[52vh] max-lg:bottom-(--height-bottomnav) max-lg:overflow-y-auto;
     }
     &[data-sheet-state='settings'] {
-      @apply max-lg:top-[140px] max-lg:overflow-y-auto;
+      @apply max-lg:top-35 max-lg:overflow-y-auto;
     }
     /* Même décalage `bottom` que `collapsed`/`mid` : la nav est réaffichée en
      * `results` (MapPage.tsx), le sheet ne doit pas la recouvrir. */
     &[data-sheet-state='results'] {
-      @apply max-lg:top-[132px] max-lg:bottom-[var(--height-bottomnav)] max-lg:overflow-y-auto;
+      @apply max-lg:top-33 max-lg:bottom-(--height-bottomnav) max-lg:overflow-y-auto;
     }
     &[data-sheet-state='detail'] {
-      @apply max-lg:top-[152px] max-lg:overflow-y-auto;
+      @apply max-lg:top-38 max-lg:overflow-y-auto;
     }
     &[data-sheet-state='tracking'] {
-      @apply max-lg:top-[172px] max-lg:overflow-y-auto;
+      @apply max-lg:top-43 max-lg:overflow-y-auto;
     }
 
     /* Rétrécissement manuel (swipe bas sur la poignée, MapSheet.tsx) —
@@ -905,10 +905,10 @@
   }
 
   .bottom-nav-item {
-    @apply flex flex-col items-center gap-[3px] px-0.5 py-[7px] rounded-lg no-underline;
+    @apply flex flex-col items-center gap-0.75 px-0.5 py-1.75 rounded-lg no-underline;
     @apply text-text-muted text-caption font-medium;
     @apply transition-colors duration-fast ease-ui;
-    @apply lg:flex-row lg:justify-start lg:gap-[11px] lg:px-3 lg:py-2.5 lg:text-body-sm;
+    @apply lg:flex-row lg:justify-start lg:gap-2.75 lg:px-3 lg:py-2.5 lg:text-body-sm;
 
     &[aria-current='page'] {
       @apply bg-primary-surface text-primary font-bold;

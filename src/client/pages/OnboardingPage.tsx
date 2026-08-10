@@ -83,8 +83,8 @@ export default function OnboardingPage() {
             aria-valuemax={2}
             aria-label="Étape 2 sur 2"
           >
-            <span className="flex-1 h-[5px] rounded-full bg-primary" />
-            <span className="flex-1 h-[5px] rounded-full bg-primary" />
+            <span className="flex-1 h-1.25 rounded-full bg-primary" />
+            <span className="flex-1 h-1.25 rounded-full bg-primary" />
           </div>
           <span className="text-body-sm font-semibold text-text-muted tabular-nums">2/2</span>
         </div>

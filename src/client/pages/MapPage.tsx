@@ -350,7 +350,7 @@ export default function MapPage() {
           aria-label="Carte de mobilité de Nantes"
         >
           {weather && (
-            <div className="absolute top-3 right-3 z-1100">
+            <div className="absolute top-3 right-3 z-sheet">
               <WeatherBadge weather={weather} variant="map" />
             </div>
           )}
@@ -359,7 +359,7 @@ export default function MapPage() {
             <div
               role="status"
               aria-label="Localisation en cours"
-              className="absolute top-3 left-1/2 -translate-x-1/2 z-1100 bg-surface rounded-full px-4 py-2 shadow-card flex items-center gap-2 text-body-sm text-text-muted whitespace-nowrap"
+              className="absolute top-3 left-1/2 -translate-x-1/2 z-sheet bg-surface rounded-full px-4 py-2 shadow-card flex items-center gap-2 text-body-sm text-text-muted whitespace-nowrap"
             >
               <div
                 className="w-4 h-4 border-2 border-border border-t-eco-600 rounded-full animate-spin"
@@ -370,7 +370,7 @@ export default function MapPage() {
           )}
 
           {showGeoError && geoError && (
-            <div className="absolute top-3 left-3 right-3 z-1100 flex items-start gap-2">
+            <div className="absolute top-3 left-3 right-3 z-sheet flex items-start gap-2">
               <div className="flex-1">
                 <ErrorBanner message={geoError} onRetry={locate} />
               </div>
@@ -386,7 +386,7 @@ export default function MapPage() {
           )}
 
           {weatherError && !weatherLoading && !weather && (
-            <div className="absolute top-3 right-3 z-1100 w-72">
+            <div className="absolute top-3 right-3 z-sheet w-72">
               <ErrorBanner message="Météo indisponible" />
             </div>
           )}
