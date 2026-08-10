@@ -1,7 +1,7 @@
 import type { WeatherCondition } from '@shared/types/index'
 import { getWeather } from '../services/routing.service'
 import { CACHE_KEYS, CACHE_TTL_MS } from '../constants/cache-keys'
-import { useFetchResource } from './useFetchResource'
+import { useFetchResource } from './use-fetch-resource'
 
 interface WeatherState {
   weather: WeatherCondition | null

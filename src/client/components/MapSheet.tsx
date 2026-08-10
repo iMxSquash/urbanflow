@@ -7,8 +7,8 @@ import type {
   WeatherCondition,
 } from '@shared/types/index'
 import { TRANSPORT_MODES, USER_PREFERENCES } from '@shared/types/index'
-import { useAddressAutocomplete } from '../hooks/useAddressAutocomplete'
-import { useMediaQuery } from '../hooks/useMediaQuery'
+import { useAddressAutocomplete } from '../hooks/use-address-autocomplete'
+import { useMediaQuery } from '../hooks/use-media-query'
 import { AddressSearch } from './AddressSearch'
 import { AddressSuggestionsList } from './AddressSuggestionsList'
 import { Co2FactorsNote } from './Co2FactorsNote'

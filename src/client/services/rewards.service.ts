@@ -1,4 +1,4 @@
-import { apiFetch } from '../utils/api-client'
+import { apiFetch, parseJsonResponse } from '../utils/api-client'
 
 export type RewardType = 'discount_code' | 'museum_ticket'
 
@@ -37,16 +37,12 @@ export interface PurchaseResult {
 
 export async function getRewardCatalog(): Promise<RewardCatalog> {
   const res = await apiFetch('/api/rewards/catalog')
-  const data: unknown = await res.json()
-  if (!res.ok) throw new Error('Impossible de charger le catalogue de récompenses')
-  return data as RewardCatalog
+  return parseJsonResponse<RewardCatalog>(res, 'Impossible de charger le catalogue de récompenses')
 }
 
 export async function getMyRedemptions(): Promise<UserRedemption[]> {
   const res = await apiFetch('/api/rewards/my-redemptions')
-  const data: unknown = await res.json()
-  if (!res.ok) throw new Error("Impossible de charger l'historique des récompenses")
-  return data as UserRedemption[]
+  return parseJsonResponse<UserRedemption[]>(res, "Impossible de charger l'historique des récompenses")
 }
 
 export async function purchaseReward(rewardId: string): Promise<PurchaseResult> {
@@ -55,10 +51,5 @@ export async function purchaseReward(rewardId: string): Promise<PurchaseResult> 
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ rewardId }),
   })
-  const data: unknown = await res.json()
-  if (!res.ok) {
-    const err = data as { error?: string }
-    throw new Error(err.error ?? "Impossible d'échanger cette récompense")
-  }
-  return data as PurchaseResult
+  return parseJsonResponse<PurchaseResult>(res, "Impossible d'échanger cette récompense")
 }

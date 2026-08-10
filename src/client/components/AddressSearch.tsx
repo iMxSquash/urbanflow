@@ -1,6 +1,6 @@
 import { useId, useRef, useState } from 'react'
 import type { Coordinates } from '@shared/types/index'
-import { useAddressAutocomplete } from '../hooks/useAddressAutocomplete'
+import { useAddressAutocomplete } from '../hooks/use-address-autocomplete'
 import { AddressSuggestionsList } from './AddressSuggestionsList'
 import { Spinner } from './Spinner'
 

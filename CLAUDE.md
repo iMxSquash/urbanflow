@@ -70,7 +70,6 @@ src/
 │   ├── stores/              # Stores Zustand
 │   ├── hooks/
 │   ├── services/            # Appels API
-│   ├── types/
 │   └── utils/
 ├── server/                  # Backend Express
 │   ├── modules/
@@ -153,6 +152,7 @@ Variable d'env `DEMO_MODE=true` fait basculer TOUS les appels API externes vers 
 | TAN circuits & arrêts | `NANTES_API_URL` (défaut : API Explore v2.1 de data.nantesmetropole.fr) | Lignes et arrêts pour affichage carte |
 | SIRI-Lite Naolib | `RequestorRef: opendata` | Prochains passages temps réel (non encore intégré) |
 | CartoDB Positron | URL fixe basemaps.cartocdn.com | Tuiles cartographiques |
+| Nominatim | URL fixe nominatim.openstreetmap.org | Autocomplétion d'adresse — seule intégration appelée directement du navigateur, pas proxyée par le backend (cf. `docs/06-APIS-DONNEES.md` §8) |
 
 > **Écart avec le flux GBFS documenté historiquement** : `bicloo.service.ts` et
 > `tan.service.ts` interrogent en réalité l'API Explore (Opendatasoft) de

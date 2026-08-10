@@ -1,4 +1,4 @@
-import { apiFetch } from '../utils/api-client'
+import { apiFetch, parseJsonResponse } from '../utils/api-client'
 import type {
   Coordinates,
   Journey,
@@ -42,19 +42,14 @@ export async function planJourney(
     }),
   })
 
-  const data: unknown = await res.json()
-
-  if (!res.ok) {
-    const err = data as { error?: string }
-    throw new Error(err.error ?? "Impossible de calculer l'itinéraire")
-  }
-
-  return (data as { journeys: Journey[] }).journeys
+  const data = await parseJsonResponse<{ journeys: Journey[] }>(
+    res,
+    "Impossible de calculer l'itinéraire"
+  )
+  return data.journeys
 }
 
 export async function getWeather(): Promise<WeatherCondition> {
   const res = await apiFetch('/api/routing/weather')
-  const data: unknown = await res.json()
-  if (!res.ok) throw new Error('Météo indisponible')
-  return data as WeatherCondition
+  return parseJsonResponse<WeatherCondition>(res, 'Météo indisponible')
 }

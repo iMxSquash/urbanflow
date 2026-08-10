@@ -1,7 +1,7 @@
 import type { TanStop } from '@shared/types/index'
 import { getTanStops } from '../services/transport.service'
 import { CACHE_KEYS, CACHE_TTL_MS } from '../constants/cache-keys'
-import { useFetchResource } from './useFetchResource'
+import { useFetchResource } from './use-fetch-resource'
 
 interface TanStopsState {
   stops: TanStop[]

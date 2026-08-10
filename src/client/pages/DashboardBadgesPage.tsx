@@ -5,7 +5,7 @@ import { BadgeGrid } from '../components/BadgeGrid'
 import { PageHeader } from '../components/PageHeader'
 import { PageWithSidebar } from '../components/PageWithSidebar'
 import { useGamificationStore } from '../stores/gamification.store'
-import { useFetchResource } from '../hooks/useFetchResource'
+import { useFetchResource } from '../hooks/use-fetch-resource'
 import { CACHE_KEYS, CACHE_TTL_MS } from '../constants/cache-keys'
 
 /** Écran badges — drill-down depuis « Mes progrès » (MAQUETTE.md §5.4, 3.2 · Badges). */

@@ -12,6 +12,7 @@
 | TAN circuits & arrêts (API Explore Nantes Métropole) | Lignes et arrêts TAN | JSON | Aucune | Affichage lignes/arrêts sur carte |
 | OpenWeatherMap | Météo | JSON | API key (free tier) | Pondération scoring (non intégré) |
 | CartoDB Positron | Tuiles carte | PNG tiles | Aucune | Fond de carte Leaflet |
+| Nominatim (OpenStreetMap) | Géocodage / autocomplétion d'adresse | JSON | Aucune (`Accept-Language` requis) | Recherche d'adresse départ/arrivée dans `useAddressAutocomplete` |
 
 ---
 
@@ -281,3 +282,49 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
 ```
 
 Pas de clé API. Gratuit. Fond épuré professionnel.
+
+---
+
+## 8. Nominatim (OpenStreetMap) — Autocomplétion d'adresse
+
+> **Seule intégration appelée directement depuis le navigateur**, sans passer par le
+> backend (toutes les autres sources de ce document sont proxyées par `src/server`).
+> Choix assumé : c'est une recherche "au fil de la frappe" (debounce 300ms), donc à
+> faible latence tolérée — ajouter un aller-retour backend n'apporterait ni cache ni
+> masquage de clé (Nominatim n'en requiert pas) pour ce endpoint public en lecture
+> seule. Écarte de fait Nominatim du filtre CORS applicatif (`CORS_ORIGIN`) et du rate
+> limiting global de `index.ts`, qui ne couvrent que `/api/*`.
+
+### Endpoint
+
+```
+https://nominatim.openstreetmap.org/search
+```
+
+Implémenté dans `src/client/hooks/useAddressAutocomplete.ts`.
+
+### Paramètres utilisés
+
+```
+format=json&limit=5&countrycodes=fr&addressdetails=1&q={saisie}&viewbox=-2.1,47.0,-1.0,47.5
+```
+
+`viewbox` biaise (sans borner strictement) les résultats vers Nantes Métropole. Header
+`Accept-Language: fr` pour des libellés en français.
+
+### Conditions d'utilisation
+
+Politique d'usage de l'instance publique OSM ([usage policy](https://operations.osmfoundation.org/policies/nominatim/)) :
+1 req/s max, `User-Agent`/`Referer` identifiable (fourni implicitement par le navigateur),
+pas d'usage commercial à fort volume. Le debounce 300ms côté client reste largement
+sous la limite pour un usage interactif mono-utilisateur ; pas adapté à un volume de
+production plus large sans passer par une instance self-hébergée ou un fournisseur
+commercial (ex. Photon, Mapbox Geocoding).
+
+### RGPD
+
+Les coordonnées renvoyées sont celles du lieu recherché (adresse publique), pas une
+donnée personnelle de l'utilisateur. Une fois sélectionnées, elles suivent le même
+chemin que toute origine/destination saisie manuellement : arrondies à 4 décimales
+avant transmission à Transitous/OSRM (cf. CLAUDE.md § RGPD), jamais stockées en base
+au-delà du calcul d'itinéraire.

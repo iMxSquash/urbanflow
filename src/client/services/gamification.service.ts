@@ -1,4 +1,4 @@
-import { apiFetch } from '../utils/api-client'
+import { apiFetch, parseJsonResponse } from '../utils/api-client'
 import type { JourneySegment } from '@shared/types/index'
 
 export interface RecordTripResult {
@@ -32,19 +32,12 @@ export async function recordTrip(
       gpsVerified,
     }),
   })
-  const data: unknown = await res.json()
-  if (!res.ok) {
-    const err = data as { error?: string }
-    throw new Error(err.error ?? "Impossible d'enregistrer le trajet")
-  }
-  return data as RecordTripResult
+  return parseJsonResponse<RecordTripResult>(res, "Impossible d'enregistrer le trajet")
 }
 
 export async function getUserBadges(): Promise<BadgeWithStatus[]> {
   const res = await apiFetch('/api/gamification/badges')
-  const data: unknown = await res.json()
-  if (!res.ok) throw new Error('Impossible de charger les badges')
-  return data as BadgeWithStatus[]
+  return parseJsonResponse<BadgeWithStatus[]>(res, 'Impossible de charger les badges')
 }
 
 export interface WeeklyBar {
@@ -70,7 +63,5 @@ export interface DashboardStats {
 
 export async function getDashboardStats(): Promise<DashboardStats> {
   const res = await apiFetch('/api/gamification/stats?period=month')
-  const data: unknown = await res.json()
-  if (!res.ok) throw new Error('Impossible de charger les statistiques')
-  return data as DashboardStats
+  return parseJsonResponse<DashboardStats>(res, 'Impossible de charger les statistiques')
 }

@@ -1,5 +1,5 @@
 import { useRef, type ReactNode } from 'react'
-import { useFocusTrap } from '../hooks/useFocusTrap'
+import { useFocusTrap } from '../hooks/use-focus-trap'
 
 interface ModalProps {
   titleId: string

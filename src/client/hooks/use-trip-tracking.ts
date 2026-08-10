@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { recordTrip } from '../services/gamification.service'
 import type { RecordTripResult } from '../services/gamification.service'
 import { useGamificationStore } from '../stores/gamification.store'
-import { useActiveTracking } from './useActiveTracking'
+import { useActiveTracking } from './use-active-tracking'
 import type { Coordinates, Journey } from '@shared/types/index'
 
 type TrackingPhase = 'idle' | 'consent' | 'active' | 'done'
