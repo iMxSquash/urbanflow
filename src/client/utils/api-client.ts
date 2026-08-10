@@ -38,3 +38,23 @@ export async function apiFetch(input: RequestInfo | URL, init?: RequestInit): Pr
 
   return fetch(input, { ...init, headers: retryHeaders, credentials: 'include' })
 }
+
+/**
+ * Parse la réponse JSON d'un appel API et lève une erreur lisible sur échec.
+ * `res.json()` est protégé par un `catch` : un corps d'erreur non-JSON (ex.
+ * page HTML par défaut) tombe sur `fallbackMessage` au lieu de faire échouer
+ * le parsing lui-même.
+ */
+export async function parseJsonResponse<T = unknown>(
+  res: Response,
+  fallbackMessage: string
+): Promise<T> {
+  const data: unknown = await res.json().catch(() => null)
+
+  if (!res.ok) {
+    const err = data as { error?: string } | null
+    throw new Error(err?.error ?? fallbackMessage)
+  }
+
+  return data as T
+}

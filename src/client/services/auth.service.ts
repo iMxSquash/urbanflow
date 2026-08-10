@@ -1,4 +1,4 @@
-import { apiFetch } from '../utils/api-client'
+import { apiFetch, parseJsonResponse } from '../utils/api-client'
 
 interface RegisterPayload {
   email: string
@@ -24,14 +24,7 @@ export async function register(payload: RegisterPayload): Promise<AuthTokenRespo
     credentials: 'include',
   })
 
-  const data: unknown = await res.json()
-
-  if (!res.ok) {
-    const err = data as { error?: string }
-    throw new Error(err.error ?? "Erreur lors de l'inscription")
-  }
-
-  return data as AuthTokenResponse
+  return parseJsonResponse<AuthTokenResponse>(res, "Erreur lors de l'inscription")
 }
 
 export async function refreshToken(signal?: AbortSignal): Promise<AuthTokenResponse | null> {
@@ -55,11 +48,7 @@ export async function logout(): Promise<void> {
 // fichier, qui ne s'appuient que sur le cookie de refresh) — passe par apiFetch.
 export async function deleteAccount(): Promise<void> {
   const res = await apiFetch('/api/auth/me', { method: 'DELETE' })
-  if (!res.ok) {
-    const data: unknown = await res.json().catch(() => null)
-    const err = data as { error?: string } | null
-    throw new Error(err?.error ?? 'Impossible de supprimer le compte')
-  }
+  await parseJsonResponse(res, 'Impossible de supprimer le compte')
 }
 
 // Trace serveur du consentement géolocalisation (accountabilité RGPD) — échec
@@ -94,12 +83,5 @@ export async function login(payload: LoginPayload): Promise<AuthTokenResponse> {
     credentials: 'include',
   })
 
-  const data: unknown = await res.json()
-
-  if (!res.ok) {
-    const err = data as { error?: string }
-    throw new Error(err.error ?? 'Identifiants incorrects')
-  }
-
-  return data as AuthTokenResponse
+  return parseJsonResponse<AuthTokenResponse>(res, 'Identifiants incorrects')
 }
