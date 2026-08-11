@@ -230,7 +230,7 @@ export default function RegisterPage() {
               aria-invalid={!!fieldErrors.terms}
               aria-describedby="register-terms-error"
               disabled={isLoading}
-              className="size-[22px] rounded-xs accent-primary shrink-0 mt-0.5"
+              className="size-5.5 rounded-xs accent-primary shrink-0 mt-0.5"
             />
             <span>
               J'accepte les{' '}
