@@ -19,7 +19,7 @@ const PolitiqueConfidentialitePage = lazy(() => import('./pages/PolitiqueConfide
 
 function PageSpinner() {
   return (
-    <div className="min-h-screen bg-bg flex items-center justify-center">
+    <div className="min-h-dvh bg-bg flex items-center justify-center">
       <div
         role="status"
         aria-label="Chargement de la page"

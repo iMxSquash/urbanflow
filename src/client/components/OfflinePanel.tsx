@@ -23,7 +23,7 @@ export function OfflinePanel() {
   useFocusTrap(dialogRef, () => {})
 
   return (
-    <div className="fixed inset-0 z-[1200] flex flex-col">
+    <div className="fixed inset-0 z-modal flex flex-col">
       <div
         aria-hidden="true"
         className="flex-1"

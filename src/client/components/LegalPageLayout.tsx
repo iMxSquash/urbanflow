@@ -14,7 +14,7 @@ export function LegalPageLayout({ title, children }: LegalPageLayoutProps) {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-dvh bg-bg">
       <header className="bg-surface border-b border-border sticky top-0 z-navbar">
         <div className="max-w-2xl mx-auto flex items-center gap-3 px-4 h-16">
           <button

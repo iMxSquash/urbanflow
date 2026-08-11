@@ -1086,7 +1086,7 @@ const BODY_SWIPE_THRESHOLD_PX = 80
 // arrête la remontée au conteneur du sheet pour ne pas sortir de celui-ci.
 function findScrollableAncestorScrollTop(
   target: EventTarget | null,
-  boundary: HTMLElement | null,
+  boundary: HTMLElement | null
 ): number | null {
   let el = target instanceof HTMLElement ? target : null
   while (el && el !== boundary) {

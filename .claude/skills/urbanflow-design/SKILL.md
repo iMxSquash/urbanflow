@@ -35,6 +35,7 @@ responsive plus bas.
 > reste le sujet, l'UI se retire. »
 
 Remplace l'ancienne direction "Urban Night". Différences structurantes :
+
 - **Le mode clair est le défaut** (sable et vert profond), le sombre est une surcharge
   `[data-theme="dark"]` sur `<html>` (posée par `useThemeSync`, store `theme.store.ts`).
 - **Police Instrument Sans** (400/500/600/700), remplace Inter.
@@ -43,6 +44,7 @@ Remplace l'ancienne direction "Urban Night". Différences structurantes :
   "Urban Night", c'est interdit sous Estuaire (ex. `WeatherBadge` corrigé en ce sens).
 
 Cinq principes directeurs, non négociables :
+
 1. **La carte reste le sujet** — tout le flux carte/recherche/itinéraire tient dans un
    bottom sheet unique à 8 états (`MapSheet`, voir plus bas) ; aucun réglage n'ouvre un
    écran séparé. Pas de top app-bar dupliquant la nav (supprimée à l'étape 3).
@@ -70,17 +72,17 @@ sont **déjà disponibles nativement**, pas besoin d'`@utility` custom pour elle
 
 ### Surfaces & texte
 
-| Usage | Classe |
-|-------|--------|
-| Fond de page | `bg-bg` |
-| Surface (cartes, panels, inputs) | `bg-surface` |
-| Surface secondaire | `bg-surface-muted` |
-| Zone creusée / skeleton | `bg-surface-sunken` |
-| Bordure standard / active | `border-border` / `border-border-strong` |
-| Texte principal | `text-text` (14,9:1 clair / 16,6:1 sombre) |
-| Texte atténué | `text-text-muted` |
-| Texte discret (captions, placeholders) | `text-text-subtle` |
-| Texte désactivé | `text-text-disabled` |
+| Usage                                  | Classe                                     |
+| -------------------------------------- | ------------------------------------------ |
+| Fond de page                           | `bg-bg`                                    |
+| Surface (cartes, panels, inputs)       | `bg-surface`                               |
+| Surface secondaire                     | `bg-surface-muted`                         |
+| Zone creusée / skeleton                | `bg-surface-sunken`                        |
+| Bordure standard / active              | `border-border` / `border-border-strong`   |
+| Texte principal                        | `text-text` (14,9:1 clair / 16,6:1 sombre) |
+| Texte atténué                          | `text-text-muted`                          |
+| Texte discret (captions, placeholders) | `text-text-subtle`                         |
+| Texte désactivé                        | `text-text-disabled`                       |
 
 ### Vert primaire — action + gain écologique, **jamais utilisé ailleurs**
 
@@ -110,16 +112,16 @@ c'est le mode que le produit pousse.
 Variable CSS directe (posée en style inline via `--mode-color`/`--mode-surface`, jamais
 une classe statique — voir `ModeChip` plus bas) :
 
-| Mode | Variable couleur | Variable surface |
-|------|------------------|-------------------|
-| Marche | `--color-mode-walk` | `--color-mode-walk-surface` |
-| Vélo/Bicloo | `--color-mode-bike` (= `--color-primary`) | `--color-mode-bike-surface` |
-| Trottinette | `--color-mode-scooter` | `--color-mode-scooter-surface` |
-| Tramway | `--color-mode-tram` (= `--color-transit`) | `--color-mode-tram-surface` |
-| Bus | `--color-mode-bus` | `--color-mode-bus-surface` |
-| Navibus | `--color-mode-navibus` | `--color-mode-navibus-surface` |
-| Train | `--color-mode-train` | `--color-mode-train-surface` |
-| Voiture (référence, jamais sélectionnable) | `--color-mode-car` (hachures) | — |
+| Mode                                       | Variable couleur                          | Variable surface               |
+| ------------------------------------------ | ----------------------------------------- | ------------------------------ |
+| Marche                                     | `--color-mode-walk`                       | `--color-mode-walk-surface`    |
+| Vélo/Bicloo                                | `--color-mode-bike` (= `--color-primary`) | `--color-mode-bike-surface`    |
+| Trottinette                                | `--color-mode-scooter`                    | `--color-mode-scooter-surface` |
+| Tramway                                    | `--color-mode-tram` (= `--color-transit`) | `--color-mode-tram-surface`    |
+| Bus                                        | `--color-mode-bus`                        | `--color-mode-bus-surface`     |
+| Navibus                                    | `--color-mode-navibus`                    | `--color-mode-navibus-surface` |
+| Train                                      | `--color-mode-train`                      | `--color-mode-train-surface`   |
+| Voiture (référence, jamais sélectionnable) | `--color-mode-car` (hachures)             | —                              |
 
 Les 7 teintes sont vérifiées distinguables en deutéranopie/protanopie, mais l'icône
 (`constants/mode-icons.tsx`) reste toujours le vecteur d'information principal — jamais
@@ -151,7 +153,7 @@ Ces classes vivent dans `index.css`. Les utiliser directement, ne pas recréer l
 ```tsx
 import { IconButton } from '../components/IconButton'
 
-<IconButton icon={<XMarkIcon className="w-5 h-5" />} aria-label="Fermer le panneau" />
+;<IconButton icon={<XMarkIcon className="w-5 h-5" />} aria-label="Fermer le panneau" />
 ```
 
 `aria-label` est un prop **requis** par le type (`ButtonHTMLAttributes` étendu) — un
@@ -184,7 +186,9 @@ Sans `onClick`, `ModeChip` rend un `<span>` non interactif (résumé de trajet).
 
 ```tsx
 <div>
-  <label htmlFor="origin" className="label">Point de départ</label>
+  <label htmlFor="origin" className="label">
+    Point de départ
+  </label>
   <input id="origin" type="text" className="input w-full" placeholder="Adresse ou lieu…" />
 </div>
 ```
@@ -196,7 +200,12 @@ JAMAIS un input sans `<label>` associé (ou `aria-label`) — violation WCAG dir
 ```tsx
 import { Toggle } from '../components/Toggle'
 
-<Toggle checked={pmr} onChange={setPmr} label="Trajet accessible (PMR)" description="Marche ≤ 5 min" />
+;<Toggle
+  checked={pmr}
+  onChange={setPmr}
+  label="Trajet accessible (PMR)"
+  description="Marche ≤ 5 min"
+/>
 ```
 
 Un `<button role="switch">` maison se ferait écraser par les tailles de contrôle globales
@@ -245,8 +254,10 @@ divulgation progressive).
 ```tsx
 import { Modal } from '../components/Modal'
 
-<Modal titleId="delete-account-title" onClose={close}>
-  <h2 id="delete-account-title" className="text-h2 font-semibold text-text">Titre</h2>
+;<Modal titleId="delete-account-title" onClose={close}>
+  <h2 id="delete-account-title" className="text-h2 font-semibold text-text">
+    Titre
+  </h2>
 </Modal>
 ```
 
@@ -284,30 +295,30 @@ divergeaient avant correction — cf. historique Git si besoin de contexte).
 
 ## Composants React réutilisables — ne pas dupliquer
 
-| Composant | Rôle |
-|-----------|------|
-| `IconButton` | Bouton icône `.btn-icon`, `aria-label` obligatoire (typé). |
-| `ModeChip` | Chip de mode de transport, couleur/surface par mode. |
-| `Toggle` | Switch accessible 46×28px (checkbox natif). |
-| `Slider` | Range input stylé `.slider`. |
-| `Modal` | Dialogue modal générique + focus trap. |
-| `useFocusTrap(ref, onClose)` | Hook partagé par `Modal` et tout panneau non modal ayant besoin d'un piège de focus (ex. `OfflinePanel`). |
-| `BottomNav` | Nav mobile → sidebar desktop, avec bloc identité. |
-| `PageWithSidebar` | Enveloppe standard des pages hors carte (`lg:flex lg:h-screen`, sidebar figée + colonne contenu qui scrolle seule). |
-| `MapSheet` | Bottom sheet 8 états / panneau latéral desktop — toute la logique carte/recherche/itinéraire. |
-| `AuthShell` | Gabarit partagé Login/Register — plein-bord + header vert sur mobile, 2 colonnes (panneau de marque / formulaire) dès `lg:`. |
-| `AddressSearch` / `SearchField` + `AddressSuggestionsList` + `useAddressAutocomplete` | Autocomplete d'adresse : `AddressSearch` (popover flottant, desktop) et `SearchField` (en flux, sheet mobile) partagent le même hook et la même liste — ne pas dupliquer la logique combobox. |
-| `Co2FactorsNote` | Citation ADEME partagée (Dashboard + panneau desktop carte). |
-| `EmptyResultsPanel` | État "aucun résultat" avec assouplissements réels en un tap. |
-| `OfflinePanel` / `useOnlineStatus` | Mode hors ligne, focus trap, masqué pendant un suivi actif. |
-| `constants/mode-icons.tsx` (`MODE_ICON_PATH_BASE`, `MODE_LABELS`, `modeColorVar`/`modeColorVarAlpha`/`modeColorToken`/`modeRouteClassName`) | Seule source pour icônes, libellés et couleurs de mode — jamais d'emoji fonctionnel, jamais de copie locale de ces tables. Partagé par `ModeChip`, `ModeBreakdownTable`, `JourneyPanel`, `JourneyLayer`. |
-| `constants/weather-icons.tsx` (`WEATHER_ICON_PATH_BASE`) | Icônes météo (`WeatherBadge`) — jamais d'emoji (☀️☁️🌧️❄️⛈️). |
-| `BadgeUnlockIcon` | Icône badge/médaille — remplace l'emoji 🏅, partagée par `JourneySummaryModal` et `TripToast`. |
-| `Spinner` | Indicateur de chargement inline (`.skeleton` façonné en cercle) — jamais `animate-spin`, interdit ci-dessous. |
-| `utils/recent-searches.ts` / `utils/last-journey-cache.ts` | `localStorage`, mêmes conventions (dédup, plafond) — réutiliser plutôt que réinventer un cache local. |
-| `utils/journey-segment-info.ts` | Dérivés d'un segment (vitesse, calories, CO2 économisé vs voiture, horaires estimés) — logique métier hors des composants d'affichage (`JourneyPanel`). |
-| `useMediaQuery('(min-width: 1024px)')` | Bascule JS mobile/desktop quand le CSS seul ne suffit pas (ex. rendu conditionnel du panneau desktop dans `MapSheet`). |
-| `EcoMapLayer` | Scope creep assumé (absent de MAQUETTE.md/DESIGN-SYSTEM.md, cf. `01-PERIMETRE-MVP.md`) — heatmap CO2 sur la carte, dégradé `--color-eco-600` → `--color-warning` → `--color-danger` (pas de couleurs Tailwind arbitraires). Conservé et documenté ici plutôt que retiré, branché à `MapPage`. |
+| Composant                                                                                                                                   | Rôle                                                                                                                                                                                                                                                                                          |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `IconButton`                                                                                                                                | Bouton icône `.btn-icon`, `aria-label` obligatoire (typé).                                                                                                                                                                                                                                    |
+| `ModeChip`                                                                                                                                  | Chip de mode de transport, couleur/surface par mode.                                                                                                                                                                                                                                          |
+| `Toggle`                                                                                                                                    | Switch accessible 46×28px (checkbox natif).                                                                                                                                                                                                                                                   |
+| `Slider`                                                                                                                                    | Range input stylé `.slider`.                                                                                                                                                                                                                                                                  |
+| `Modal`                                                                                                                                     | Dialogue modal générique + focus trap.                                                                                                                                                                                                                                                        |
+| `useFocusTrap(ref, onClose)`                                                                                                                | Hook partagé par `Modal` et tout panneau non modal ayant besoin d'un piège de focus (ex. `OfflinePanel`).                                                                                                                                                                                     |
+| `BottomNav`                                                                                                                                 | Nav mobile → sidebar desktop, avec bloc identité.                                                                                                                                                                                                                                             |
+| `PageWithSidebar`                                                                                                                           | Enveloppe standard des pages hors carte (`lg:flex lg:h-screen`, sidebar figée + colonne contenu qui scrolle seule).                                                                                                                                                                           |
+| `MapSheet`                                                                                                                                  | Bottom sheet 8 états / panneau latéral desktop — toute la logique carte/recherche/itinéraire.                                                                                                                                                                                                 |
+| `AuthShell`                                                                                                                                 | Gabarit partagé Login/Register — plein-bord + header vert sur mobile, 2 colonnes (panneau de marque / formulaire) dès `lg:`.                                                                                                                                                                  |
+| `AddressSearch` / `SearchField` + `AddressSuggestionsList` + `useAddressAutocomplete`                                                       | Autocomplete d'adresse : `AddressSearch` (popover flottant, desktop) et `SearchField` (en flux, sheet mobile) partagent le même hook et la même liste — ne pas dupliquer la logique combobox.                                                                                                 |
+| `Co2FactorsNote`                                                                                                                            | Citation ADEME partagée (Dashboard + panneau desktop carte).                                                                                                                                                                                                                                  |
+| `EmptyResultsPanel`                                                                                                                         | État "aucun résultat" avec assouplissements réels en un tap.                                                                                                                                                                                                                                  |
+| `OfflinePanel` / `useOnlineStatus`                                                                                                          | Mode hors ligne, focus trap, masqué pendant un suivi actif.                                                                                                                                                                                                                                   |
+| `constants/mode-icons.tsx` (`MODE_ICON_PATH_BASE`, `MODE_LABELS`, `modeColorVar`/`modeColorVarAlpha`/`modeColorToken`/`modeRouteClassName`) | Seule source pour icônes, libellés et couleurs de mode — jamais d'emoji fonctionnel, jamais de copie locale de ces tables. Partagé par `ModeChip`, `ModeBreakdownTable`, `JourneyPanel`, `JourneyLayer`.                                                                                      |
+| `constants/weather-icons.tsx` (`WEATHER_ICON_PATH_BASE`)                                                                                    | Icônes météo (`WeatherBadge`) — jamais d'emoji (☀️☁️🌧️❄️⛈️).                                                                                                                                                                                                                                  |
+| `BadgeUnlockIcon`                                                                                                                           | Icône badge/médaille — remplace l'emoji 🏅, partagée par `JourneySummaryModal` et `TripToast`.                                                                                                                                                                                                |
+| `Spinner`                                                                                                                                   | Indicateur de chargement inline (`.skeleton` façonné en cercle) — jamais `animate-spin`, interdit ci-dessous.                                                                                                                                                                                 |
+| `utils/recent-searches.ts` / `utils/last-journey-cache.ts`                                                                                  | `localStorage`, mêmes conventions (dédup, plafond) — réutiliser plutôt que réinventer un cache local.                                                                                                                                                                                         |
+| `utils/journey-segment-info.ts`                                                                                                             | Dérivés d'un segment (vitesse, calories, CO2 économisé vs voiture, horaires estimés) — logique métier hors des composants d'affichage (`JourneyPanel`).                                                                                                                                       |
+| `useMediaQuery('(min-width: 1024px)')`                                                                                                      | Bascule JS mobile/desktop quand le CSS seul ne suffit pas (ex. rendu conditionnel du panneau desktop dans `MapSheet`).                                                                                                                                                                        |
+| `EcoMapLayer`                                                                                                                               | Scope creep assumé (absent de MAQUETTE.md/DESIGN-SYSTEM.md, cf. `01-PERIMETRE-MVP.md`) — heatmap CO2 sur la carte, dégradé `--color-eco-600` → `--color-warning` → `--color-danger` (pas de couleurs Tailwind arbitraires). Conservé et documenté ici plutôt que retiré, branché à `MapPage`. |
 
 Il n'existe **pas** de bibliothèque d'icônes externe (pas de Lucide/Heroicons en
 dépendance) : le set Estuaire est dessiné à la main dans `mode-icons.tsx` et inline dans
@@ -322,17 +333,17 @@ linecap/linejoin), épaisseur 1,75px (icônes 20-26px), 1,9-2px (15-18px), 2,2-2
 
 Police : **Instrument Sans uniquement** (`--font-sans`, via `@fontsource/instrument-sans`).
 
-| Classe | Taille | Usage |
-|--------|--------|-------|
-| `text-display` | 36px | Chiffres clés dashboard (points, kg CO₂) |
-| `text-h1` | 30px | Titres de page |
-| `text-h2` | 24px | Titres de section |
-| `text-h3` | 20px | Sous-titres, titres de carte |
-| `text-body-lg` | 18px | Corps mis en avant |
-| `text-body` | 16px | Corps standard, inputs (évite le zoom iOS) |
-| `text-body-sm` | 14px | Méta, descriptions |
-| `text-label` | 13px | Labels de champ, chips |
-| `text-caption` | 12px | Jamais en dessous de cette taille |
+| Classe         | Taille | Usage                                      |
+| -------------- | ------ | ------------------------------------------ |
+| `text-display` | 36px   | Chiffres clés dashboard (points, kg CO₂)   |
+| `text-h1`      | 30px   | Titres de page                             |
+| `text-h2`      | 24px   | Titres de section                          |
+| `text-h3`      | 20px   | Sous-titres, titres de carte               |
+| `text-body-lg` | 18px   | Corps mis en avant                         |
+| `text-body`    | 16px   | Corps standard, inputs (évite le zoom iOS) |
+| `text-body-sm` | 14px   | Méta, descriptions                         |
+| `text-label`   | 13px   | Labels de champ, chips                     |
+| `text-caption` | 12px   | Jamais en dessous de cette taille          |
 
 Chiffres en `tabular-nums` (`tabular` utility) partout où une valeur peut changer
 (compteurs, distances, stats).
@@ -356,29 +367,29 @@ Chiffres en `tabular-nums` (`tabular` utility) partout où une valeur peut chang
 
 **Rayons** — namespace natif `--radius-*` (génère `rounded-xs/sm/md/lg/xl/2xl/full`) :
 
-| Classe | Valeur | Usage |
-|--------|--------|-------|
-| `rounded-xs` | 6px | Checkboxes, mini pastilles de mode |
-| `rounded-sm` | 8px | Badges de segment, pastilles numérotées |
-| `rounded-md` | 12px | Inputs, boutons secondaires, boutons icône |
-| `rounded-lg` | 14px | Boutons primaires, nav actif, bandeaux d'alerte |
-| `rounded-xl` | 16px | Cartes de résultat/contenu |
-| `rounded-2xl` | 24px | Bottom sheet (coins hauts), modales |
-| `rounded-full` | — | Chips, toggles, avatars, poignée de sheet |
+| Classe         | Valeur | Usage                                           |
+| -------------- | ------ | ----------------------------------------------- |
+| `rounded-xs`   | 6px    | Checkboxes, mini pastilles de mode              |
+| `rounded-sm`   | 8px    | Badges de segment, pastilles numérotées         |
+| `rounded-md`   | 12px   | Inputs, boutons secondaires, boutons icône      |
+| `rounded-lg`   | 14px   | Boutons primaires, nav actif, bandeaux d'alerte |
+| `rounded-xl`   | 16px   | Cartes de résultat/contenu                      |
+| `rounded-2xl`  | 24px   | Bottom sheet (coins hauts), modales             |
+| `rounded-full` | —      | Chips, toggles, avatars, poignée de sheet       |
 
 **Tailles de contrôle** — pas de namespace Tailwind dédié (variables CSS `--control-*` à
 consommer via `height:var(--control-*)`, ou via la classe `h-*` équivalente puisque
 l'échelle spacing Tailwind = 4px : `h-7`=28px, `h-9`=36px, `h-10`=40px, `h-11`=44px,
 `h-12`=48px, `h-13`=52px) :
 
-| Token | Hauteur | Usage |
-|-------|---------|-------|
-| `control-xs` | 28px | Badges/toggles non interactifs |
-| `control-sm` | 36px | Chips de mode en sheet mi-hauteur |
-| `control-md` | 40px | Chips de mode pleine taille, boutons icône desktop |
-| `control-lg` | 44px | **Cible tactile minimum** (WCAG 2.5.5 — critère AAA, pas AA, mais retenu comme cible projet). Chips profil, boutons icône flottants carte |
-| `control-xl` | 48px | Champs de saisie, lignes de réglage, boutons secondaires |
-| `control-2xl` | 52px | Action principale de l'écran (une seule par vue) |
+| Token         | Hauteur | Usage                                                                                                                                     |
+| ------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `control-xs`  | 28px    | Badges/toggles non interactifs                                                                                                            |
+| `control-sm`  | 36px    | Chips de mode en sheet mi-hauteur                                                                                                         |
+| `control-md`  | 40px    | Chips de mode pleine taille, boutons icône desktop                                                                                        |
+| `control-lg`  | 44px    | **Cible tactile minimum** (WCAG 2.5.5 — critère AAA, pas AA, mais retenu comme cible projet). Chips profil, boutons icône flottants carte |
+| `control-xl`  | 48px    | Champs de saisie, lignes de réglage, boutons secondaires                                                                                  |
+| `control-2xl` | 52px    | Action principale de l'écran (une seule par vue)                                                                                          |
 
 **Ne jamais imposer une taille de contrôle en dehors de cette échelle**, et surtout ne
 jamais ajouter une règle globale `min-height:48px`/`min-width:48px` sur `button, a,
@@ -414,7 +425,7 @@ Estuaire actuels — **aucun composant neuf ne doit les utiliser**.
 4. **États dynamiques** : `role="status" aria-live="polite"` sur les zones de feedback
    (résultats d'autocomplete, confirmation de copie, toasts).
 5. **Focus visible** : géré globalement (`:focus-visible { ring-2 ring-primary
-   ring-offset-2 }`) — ne jamais poser `outline-none` sans compensation.
+ring-offset-2 }`) — ne jamais poser `outline-none` sans compensation.
 6. **Couleur** : jamais seule pour transmettre une info — icône + couleur, ou texte +
    couleur (mode de transport, alerte météo, bandeau ambré).
 7. **Cible tactile** : `control-lg` (44px) minimum pour une action réelle. **La cible
@@ -444,16 +455,18 @@ régions live) — voir la limite d'outillage en tête de fichier.
 ## Animations — Règles strictes
 
 ✅ Autorisé :
+
 ```tsx
-className="animate-fade-in"       // opacity 0→1, 150ms
-className="animate-slide-up"      // translateY(8px) + fade, 200ms (apparition modale)
-className="animate-badge-unlock"  // scale + fade, 300ms — badges déverrouillés, une seule fois
-className="animate-count-up"      // translateY(4px) + fade, 200ms (compteurs)
-className="animate-sheet-grow"    // scaleY 0.92→1, 200ms — croissance collapsed/mid du sheet
-className="transition-colors"     // hover/focus — durée via duration-fast/normal/slow
+className = 'animate-fade-in' // opacity 0→1, 150ms
+className = 'animate-slide-up' // translateY(8px) + fade, 200ms (apparition modale)
+className = 'animate-badge-unlock' // scale + fade, 300ms — badges déverrouillés, une seule fois
+className = 'animate-count-up' // translateY(4px) + fade, 200ms (compteurs)
+className = 'animate-sheet-grow' // scaleY 0.92→1, 200ms — croissance collapsed/mid du sheet
+className = 'transition-colors' // hover/focus — durée via duration-fast/normal/slow
 ```
 
 ❌ Interdit :
+
 - Toute animation en boucle visible en permanence (anneau qui pulse, indicateur "live" en
   boucle) — un suivi GPS actif se signale par un état statique ou une pulsation **unique**
   au changement d'état, jamais continue. Deux animations de ce type ont été retirées
@@ -506,7 +519,7 @@ import { PageWithSidebar } from '../components/PageWithSidebar'
 export function SomePage() {
   return (
     <PageWithSidebar>
-      <div className="min-h-screen bg-bg pb-[calc(var(--height-bottomnav)+1rem)] lg:pb-6">
+      <div className="min-h-dvh bg-bg pb-[calc(var(--height-bottomnav)+1rem)] lg:pb-6">
         <main className="max-w-2xl mx-auto px-4 py-5 lg:px-6 lg:max-w-260">
           {/* max-w-260 = 1040px (échelle Tailwind, 4px/unité) — largeur de lecture max desktop.
               padding-bottom réservé à .bottom-nav en mobile (fixed, hors flux). */}

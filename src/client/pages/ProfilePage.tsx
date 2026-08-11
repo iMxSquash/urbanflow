@@ -306,7 +306,7 @@ export default function ProfilePage() {
 
   return (
     <PageWithSidebar>
-      <div className="min-h-screen bg-bg pb-[calc(var(--height-bottomnav)+1rem)] lg:pb-6">
+      <div className="min-h-dvh bg-bg pb-[calc(var(--height-bottomnav)+1rem)] lg:pb-6">
         <PageHeader>
           <div className="max-w-2xl mx-auto flex items-center gap-3 px-4 h-16 lg:max-w-260">
             <span
