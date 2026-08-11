@@ -5,6 +5,7 @@ import { useDemoStore } from '../stores/demo.store'
 import { useThemeStore } from '../stores/theme.store'
 import type { ThemePreference } from '../stores/theme.store'
 import { useInstallPrompt } from '../hooks/use-install-prompt'
+import { useAppCacheSize } from '../hooks/use-app-cache-size'
 import { isIosDevice } from '../utils/platform'
 import { BackButton } from '../components/BackButton'
 import { DeleteAccountModal } from '../components/DeleteAccountModal'
@@ -106,6 +107,7 @@ export default function ParametresPage() {
   const setTheme = useThemeStore((s) => s.setTheme)
   const { canInstall, isInstalled, promptInstall } = useInstallPrompt()
   const isIOS = isIosDevice()
+  const appCacheSize = useAppCacheSize()
 
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
@@ -369,7 +371,9 @@ export default function ParametresPage() {
                     subtitle={
                       !isInstalled && !canInstall && isIOS
                         ? 'Partager → Sur l’écran d’accueil'
-                        : 'Accès hors-ligne · 1,2 Mo'
+                        : appCacheSize
+                          ? `Accès hors-ligne · ${appCacheSize}`
+                          : 'Accès hors-ligne'
                     }
                     action={
                       canInstall ? (

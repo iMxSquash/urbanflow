@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useProfileStore } from '../stores/profile.store'
 import { useInstallPrompt } from '../hooks/use-install-prompt'
+import { useAppCacheSize } from '../hooks/use-app-cache-size'
 import { isIosDevice } from '../utils/platform'
 import { BackButton } from '../components/BackButton'
 import { ModeChip } from '../components/ModeChip'
@@ -26,6 +27,7 @@ export default function OnboardingPage() {
   const updateProfile = useProfileStore((s) => s.updateProfile)
   const { canInstall, isInstalled, promptInstall } = useInstallPrompt()
   const isIOS = isIosDevice()
+  const appCacheSize = useAppCacheSize()
 
   const [preference, setPreference] = useState<UserPreference>('eco')
   const [modes, setModes] = useState<TransportMode[]>(DEFAULT_MODES)
@@ -211,7 +213,9 @@ export default function OnboardingPage() {
               <span className="text-caption text-text-muted">
                 {!isInstalled && !canInstall && isIOS
                   ? 'Partager → Sur l’écran d’accueil'
-                  : 'Accès hors-ligne aux derniers itinéraires · 1,2 Mo'}
+                  : appCacheSize
+                    ? `Accès hors-ligne aux derniers itinéraires · ${appCacheSize}`
+                    : 'Accès hors-ligne aux derniers itinéraires'}
               </span>
             </span>
             {canInstall && (
