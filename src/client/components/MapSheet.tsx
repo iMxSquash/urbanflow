@@ -1072,6 +1072,30 @@ function DesktopFormSummary({
 // `data-mobile-minimized` dans index.css).
 const MINIMIZE_SWIPE_THRESHOLD_PX = 24
 
+// Même geste que la poignée mais déclenché n'importe où sur le sheet — seuil
+// bien plus large que `MINIMIZE_SWIPE_THRESHOLD_PX` car ici le doigt peut
+// aussi bien vouloir faire défiler une liste, glisser un slider ou taper un
+// bouton : un seuil court transformerait n'importe quel scroll en fermeture
+// accidentelle du sheet.
+const BODY_SWIPE_THRESHOLD_PX = 80
+
+// Un swipe démarré à l'intérieur d'une liste qui défile encore (résultats,
+// suggestions d'adresse) doit rester un scroll, pas un geste de sheet — donc
+// on ne déclenche le geste "corps entier" que si la zone défilable la plus
+// proche du point de départ est déjà à son bord (scrollTop 0). `boundary`
+// arrête la remontée au conteneur du sheet pour ne pas sortir de celui-ci.
+function findScrollableAncestorScrollTop(
+  target: EventTarget | null,
+  boundary: HTMLElement | null,
+): number | null {
+  let el = target instanceof HTMLElement ? target : null
+  while (el && el !== boundary) {
+    if (el.scrollHeight > el.clientHeight + 1) return el.scrollTop
+    el = el.parentElement
+  }
+  return null
+}
+
 // Un cran en arrière — Échap replie le sheet d'un niveau (MAQUETTE.md §8).
 // 'tracking' n'a pas de parent : un suivi actif ne se replie pas au clavier.
 const PARENT_STATE: Partial<Record<SheetState, SheetState>> = {
@@ -1179,22 +1203,29 @@ export function MapSheet(props: MapSheetProps) {
     setMobileMinimized(false)
   }
 
-  // Swipe vertical sur la poignée mobile — rétrécit/restaure indépendamment
-  // de l'état, sans intercepter le tap simple (qui garde la navigation
-  // agrandir/réduire existante entre états). `didSwipe` évite que le click
-  // émis juste après le pointerup ne redéclenche aussi la navigation d'état.
+  // Swipe vertical — rétrécit/restaure indépendamment de l'état, sans
+  // intercepter le tap simple (qui garde la navigation agrandir/réduire
+  // existante entre états). `didSwipe` évite que le click émis juste après
+  // le pointerup ne redéclenche aussi la navigation d'état ou un bouton situé
+  // sous le doigt (cf. `handleSheetClickCapture`, seul endroit qui le lit).
+  const sheetRef = useRef<HTMLDivElement | null>(null)
   const swipeStartY = useRef<number | null>(null)
+  const swipeThreshold = useRef(MINIMIZE_SWIPE_THRESHOLD_PX)
+  const swipeStartScrollTop = useRef<number | null>(null)
   const didSwipe = useRef(false)
 
-  function handleSheetHandlePointerDown(e: React.PointerEvent) {
-    swipeStartY.current = e.clientY
-    didSwipe.current = false
-  }
-
-  function handleSheetHandlePointerMove(e: React.PointerEvent) {
+  // Logique commune poignée / corps du sheet — seuls le seuil et la garde de
+  // scroll de départ diffèrent selon l'origine du geste (cf. les deux paires
+  // de handlers ci-dessous).
+  function handleSwipeMove(clientY: number) {
     if (swipeStartY.current === null) return
-    const delta = e.clientY - swipeStartY.current
-    if (delta > MINIMIZE_SWIPE_THRESHOLD_PX && state !== 'collapsed') {
+    const delta = clientY - swipeStartY.current
+    const threshold = swipeThreshold.current
+    // Geste parti du milieu d'une liste encore scrollée : on laisse le
+    // scroll natif faire son travail plutôt que de fermer/ouvrir le sheet.
+    if (swipeStartScrollTop.current !== null && swipeStartScrollTop.current > 0) return
+
+    if (delta > threshold && state !== 'collapsed') {
       didSwipe.current = true
       swipeStartY.current = null
       // Depuis `search`, minimiser revient à l'état d'où la saisie a été
@@ -1203,7 +1234,7 @@ export function MapSheet(props: MapSheetProps) {
       // commis à résumer.
       if (state === 'search') onStateChange(backTarget(state)!)
       else setMobileMinimized(true)
-    } else if (delta < -MINIMIZE_SWIPE_THRESHOLD_PX) {
+    } else if (delta < -threshold) {
       didSwipe.current = true
       swipeStartY.current = null
       // Depuis `collapsed`/`mid`, tirer vers le haut ouvre directement la
@@ -1216,16 +1247,70 @@ export function MapSheet(props: MapSheetProps) {
     }
   }
 
-  function handleSheetHandlePointerUp() {
+  function handleSheetHandlePointerDown(e: React.PointerEvent) {
+    // Isole ce geste de celui du corps (cf. `handleBodyPointerDown`) : sans
+    // ça, l'événement remonte jusqu'au sheet et écrase le seuil poignée par
+    // le seuil corps juste après l'avoir posé.
+    e.stopPropagation()
+    swipeStartY.current = e.clientY
+    swipeThreshold.current = MINIMIZE_SWIPE_THRESHOLD_PX
+    swipeStartScrollTop.current = null
+    didSwipe.current = false
+  }
+
+  function handleSheetHandlePointerMove(e: React.PointerEvent) {
+    e.stopPropagation()
+    handleSwipeMove(e.clientY)
+  }
+
+  function handleSheetHandlePointerUp(e: React.PointerEvent) {
+    e.stopPropagation()
     swipeStartY.current = null
+  }
+
+  // Même geste déclenché depuis n'importe quel point du sheet (pas
+  // seulement la poignée) — cf. `BODY_SWIPE_THRESHOLD_PX` pour pourquoi le
+  // seuil y est plus large.
+  function handleBodyPointerDown(e: React.PointerEvent) {
+    if (isDesktop) return
+    swipeStartY.current = e.clientY
+    swipeThreshold.current = BODY_SWIPE_THRESHOLD_PX
+    swipeStartScrollTop.current = findScrollableAncestorScrollTop(e.target, sheetRef.current)
+    didSwipe.current = false
+  }
+
+  function handleBodyPointerMove(e: React.PointerEvent) {
+    if (isDesktop) return
+    handleSwipeMove(e.clientY)
+  }
+
+  function handleBodyPointerUp() {
+    swipeStartY.current = null
+  }
+
+  // Avale le click de fin de geste avant qu'il n'atteigne un bouton du sheet
+  // situé sous le doigt (ex : relâcher un swipe au-dessus de "Appliquer") —
+  // en phase capture, donc avant tout onClick interne, y compris celui de la
+  // poignée.
+  function handleSheetClickCapture(e: React.MouseEvent) {
+    if (didSwipe.current) {
+      didSwipe.current = false
+      e.preventDefault()
+      e.stopPropagation()
+    }
   }
 
   // Desktop : panneau latéral permanent, `aside` + landmark plutôt qu'un
   // dialogue transitoire (MAQUETTE.md §5.2 "Panneau en aside + landmarks").
-  const Wrapper = isDesktop ? 'aside' : 'div'
+  // Casté en 'div' côté types uniquement : `aside` partage la même interface
+  // DOM pour les props utilisées ici (attributs standards, pas de ref
+  // spécifique à HTMLDivElement en jeu), et un type union rendrait le typage
+  // du `ref` ambigu pour TypeScript.
+  const Wrapper = (isDesktop ? 'aside' : 'div') as 'div'
 
   return (
     <Wrapper
+      ref={sheetRef}
       className="bottom-sheet lg:relative"
       data-sheet-state={state}
       data-desktop-collapsed={isDesktop ? desktopCollapsed : undefined}
@@ -1238,6 +1323,11 @@ export function MapSheet(props: MapSheetProps) {
             ? "Recherche et suivi d'itinéraire"
             : undefined
       }
+      onPointerDown={handleBodyPointerDown}
+      onPointerMove={handleBodyPointerMove}
+      onPointerUp={handleBodyPointerUp}
+      onPointerCancel={handleBodyPointerUp}
+      onClickCapture={handleSheetClickCapture}
     >
       {!isDesktop && (
         <div className="relative self-stretch shrink-0 -mx-4 -mt-2 px-4">
@@ -1248,10 +1338,6 @@ export function MapSheet(props: MapSheetProps) {
             onPointerUp={handleSheetHandlePointerUp}
             onPointerCancel={handleSheetHandlePointerUp}
             onClick={() => {
-              if (didSwipe.current) {
-                didSwipe.current = false
-                return
-              }
               if (mobileMinimized) {
                 setMobileMinimized(false)
                 return
