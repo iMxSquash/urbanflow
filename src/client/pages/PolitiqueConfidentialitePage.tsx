@@ -17,6 +17,11 @@ export default function PolitiqueConfidentialitePage() {
         <ul className="list-disc pl-5 flex flex-col gap-1">
           <li>Email et mot de passe (haché, jamais stocké en clair) pour la création de compte.</li>
           <li>
+            8 codes de récupération (hachés, jamais stockés en clair) générés à l'inscription pour
+            réinitialiser le mot de passe sans envoi d'email — affichés en clair une seule fois,
+            conservés le temps de vie du compte.
+          </li>
+          <li>
             Profil de mobilité : modes de transport préférés, seuil de marche, préférence
             (éco/rapide/équilibré), besoin d'accessibilité PMR.
           </li>
@@ -72,6 +77,9 @@ export default function PolitiqueConfidentialitePage() {
         <p>
           Mots de passe hachés (bcrypt), jetons d'authentification de courte durée (15 minutes),
           jeton de rafraîchissement en cookie HttpOnly/Secure/SameSite=Strict, connexions chiffrées.
+          En cas d'oubli, le mot de passe se réinitialise via un code de récupération sauvegardé à
+          usage unique (haché, jamais un envoi d'email) : son utilisation révoque automatiquement
+          toutes les sessions actives, par précaution en cas de compromission.
         </p>
       </LegalSection>
 

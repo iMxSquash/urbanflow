@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { register } from '../services/auth.service'
 import { useAuthStore } from '../stores/auth.store'
 import { AuthShell, AuthFooterNotice } from '../components/AuthShell'
+import { RecoveryCodesReveal } from '../components/RecoveryCodesReveal'
 
 interface FormErrors {
   email?: string
@@ -61,6 +62,11 @@ export default function RegisterPage() {
   const [apiError, setApiError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  // Compte créé côté serveur mais pas encore "actif" côté client tant que les
+  // codes n'ont pas été confirmés — évite d'émettre une session avant que
+  // l'utilisateur ait eu l'occasion de sauvegarder ses codes.
+  const [pendingAccessToken, setPendingAccessToken] = useState<string | null>(null)
+  const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -73,14 +79,20 @@ export default function RegisterPage() {
 
     setIsLoading(true)
     try {
-      const { accessToken } = await register({ email, password, termsAccepted })
-      setAuth(accessToken)
-      navigate('/onboarding')
+      const { accessToken, recoveryCodes } = await register({ email, password, termsAccepted })
+      setPendingAccessToken(accessToken)
+      setRecoveryCodes(recoveryCodes)
     } catch (err) {
       setApiError(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {
       setIsLoading(false)
     }
+  }
+
+  function handleRecoveryCodesConfirmed() {
+    if (!pendingAccessToken) return
+    setAuth(pendingAccessToken)
+    navigate('/onboarding')
   }
 
   function handleEmailChange(v: string) {
@@ -106,6 +118,21 @@ export default function RegisterPage() {
   function handleContinueAsGuest() {
     continueAsGuest()
     navigate('/')
+  }
+
+  if (recoveryCodes) {
+    return (
+      <AuthShell active="register">
+        <RecoveryCodesReveal
+          codes={recoveryCodes}
+          heading="Vos codes de récupération"
+          description="En l'absence d'envoi d'email, ces 8 codes sont le seul moyen de récupérer votre compte en cas de mot de passe oublié. Ils ne seront plus jamais affichés — enregistrez-les maintenant."
+          confirmLabel="J'ai enregistré mes codes de récupération"
+          continueLabel="Continuer"
+          onContinue={handleRecoveryCodesConfirmed}
+        />
+      </AuthShell>
+    )
   }
 
   return (

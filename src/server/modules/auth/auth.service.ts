@@ -1,11 +1,13 @@
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
-import { randomUUID } from 'crypto'
+import { randomBytes, randomUUID } from 'crypto'
 import { pool } from '../../db/pool.js'
+import { withTransaction } from '../../db/with-transaction.js'
 import { requireEnv } from '../../config/env.js'
 import {
   EmailExistsError,
   InvalidCredentialsError,
+  InvalidRecoveryCodeError,
   InvalidTokenError,
   UserNotFoundError,
 } from './auth.errors.js'
@@ -15,6 +17,14 @@ const BCRYPT_ROUNDS = 10
 const ACCESS_EXPIRY = '15m'
 const REFRESH_EXPIRY = '7d'
 const REFRESH_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000
+
+// Codes de récupération sauvegardés (NIST SP 800-63B-4 §4.2.1.1) — pas d'envoi
+// d'email, cf. docs/recherche-mot-de-passe-oublie.md. 80 bits d'entropie
+// (minimum NIST : 64 bits), alphabet Crockford Base32 (sans I, L, O, U —
+// ambigus à la recopie manuelle).
+const RECOVERY_CODE_COUNT = 8
+const RECOVERY_CODE_BYTES = 10
+const RECOVERY_CODE_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
 
 // Fenêtre de grâce anti-course sur la rotation du refresh token : deux
 // requêtes concurrentes sur le même cookie (StrictMode, double onglet, retry
@@ -29,6 +39,33 @@ let _dummyHash: string | undefined
 async function getDummyHash(): Promise<string> {
   if (!_dummyHash) _dummyHash = await bcrypt.hash('_dummy_', BCRYPT_ROUNDS)
   return _dummyHash
+}
+
+function generateRecoveryCode(): string {
+  const bytes = randomBytes(RECOVERY_CODE_BYTES)
+  let bits = 0
+  let value = 0
+  let output = ''
+  for (const byte of bytes) {
+    value = (value << 8) | byte
+    bits += 8
+    while (bits >= 5) {
+      output += RECOVERY_CODE_ALPHABET[(value >>> (bits - 5)) & 0x1f]
+      bits -= 5
+    }
+  }
+  return output.match(/.{4}/g)!.join('-')
+}
+
+interface RecoveryCodeSet {
+  plainCodes: string[]
+  hashes: string[]
+}
+
+async function generateRecoveryCodeSet(): Promise<RecoveryCodeSet> {
+  const plainCodes = Array.from({ length: RECOVERY_CODE_COUNT }, generateRecoveryCode)
+  const hashes = await Promise.all(plainCodes.map((code) => bcrypt.hash(code, BCRYPT_ROUNDS)))
+  return { plainCodes, hashes }
 }
 
 function signAccessToken(payload: AuthTokenPayload): string {
@@ -96,25 +133,41 @@ async function issueTokenPair(
 export async function registerUser(
   email: string,
   password: string
-): Promise<{ accessToken: string; refreshToken: string }> {
+): Promise<{ accessToken: string; refreshToken: string; recoveryCodes: string[] }> {
   const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS)
+  // Affichés en clair une seule fois dans la réponse d'inscription — jamais
+  // relisibles ensuite (seul code_hash est conservé en base).
+  const { plainCodes, hashes } = await generateRecoveryCodeSet()
 
   let user: { id: string; email: string }
   try {
     // termsAccepted est validé à `true` par le schéma Zod avant d'arriver ici
     // (registerSchema) — l'inscription ne peut pas aboutir sans acceptation.
-    const result = await pool.query(
-      'INSERT INTO users (email, password_hash, terms_accepted_at) VALUES ($1, $2, now()) RETURNING id, email',
-      [email, passwordHash]
-    )
-    user = result.rows[0] as { id: string; email: string }
+    // Transaction : un utilisateur créé sans ses codes de récupération (si le
+    // second INSERT échouait isolément) ne pourrait plus jamais en obtenir.
+    user = await withTransaction(async (client) => {
+      const result = await client.query<{ id: string; email: string }>(
+        'INSERT INTO users (email, password_hash, terms_accepted_at) VALUES ($1, $2, now()) RETURNING id, email',
+        [email, passwordHash]
+      )
+      const row = result.rows[0] as { id: string; email: string }
+      await client.query(
+        'INSERT INTO recovery_codes (user_id, code_hash) SELECT $1, unnest($2::text[])',
+        [row.id, hashes]
+      )
+      return row
+    })
   } catch (err) {
     if ((err as { code?: string }).code === '23505') throw new EmailExistsError(err)
     throw err
   }
 
   // Pas de case "Rester connecté" à l'inscription — cookie persistant par défaut.
-  return issueTokenPair({ sub: user.id, email: user.email }, true)
+  const { accessToken, refreshToken } = await issueTokenPair(
+    { sub: user.id, email: user.email },
+    true
+  )
+  return { accessToken, refreshToken, recoveryCodes: plainCodes }
 }
 
 export async function loginUser(
@@ -274,4 +327,95 @@ export async function logoutUser(incomingToken: string): Promise<void> {
     // Les erreurs DB propagent ici pour que le controller retourne 500.
     await pool.query('DELETE FROM refresh_tokens WHERE id = $1', [leaf.id])
   }
+}
+
+interface RecoveryCodeRow {
+  id: string
+  code_hash: string
+}
+
+// Réinitialise le mot de passe via un code de récupération sauvegardé (NIST
+// SP 800-63B-4 §4.2.1.1 — méthode suffisante pour un compte sans vérification
+// d'identité, cf. §4.2.2.1). Exécute toujours exactement RECOVERY_CODE_COUNT
+// bcrypt.compare (complétés par le hash factice au-delà des codes réellement
+// stockés, jamais d'arrêt anticipé sur un match) : le timing ne varie ni avec
+// l'existence de l'email, ni avec le nombre de codes qu'il reste à l'utilisateur
+// — pour ne pas rouvrir le canal d'énumération déjà fermé sur loginUser.
+export async function recoverPassword(
+  email: string,
+  recoveryCode: string,
+  newPassword: string
+): Promise<{ replacementCode: string }> {
+  const userResult = await pool.query<{ id: string }>('SELECT id FROM users WHERE email = $1', [
+    email,
+  ])
+  const user = userResult.rows[0] as { id: string } | undefined
+
+  const codesResult = await pool.query<RecoveryCodeRow>(
+    'SELECT id, code_hash FROM recovery_codes WHERE user_id = $1 AND used_at IS NULL',
+    [user?.id ?? null]
+  )
+
+  const dummyHash = await getDummyHash()
+  let matchedCodeId: string | null = null
+  for (let i = 0; i < RECOVERY_CODE_COUNT; i++) {
+    const row = codesResult.rows[i] as RecoveryCodeRow | undefined
+    const isMatch = await bcrypt.compare(recoveryCode, row?.code_hash ?? dummyHash)
+    if (row && isMatch && matchedCodeId === null) {
+      matchedCodeId = row.id
+    }
+  }
+
+  if (!user || !matchedCodeId) {
+    throw new InvalidRecoveryCodeError()
+  }
+
+  const newPasswordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS)
+  const replacementCode = generateRecoveryCode()
+  const replacementHash = await bcrypt.hash(replacementCode, BCRYPT_ROUNDS)
+
+  await withTransaction(async (client) => {
+    // Usage unique (NIST §4.2.1.1) : le `AND used_at IS NULL` fait de cet UPDATE
+    // un CAS atomique — si une requête concurrente a consommé ce même code entre
+    // la lecture ci-dessus et cette écriture, rowCount vaut 0 et on rejette,
+    // au lieu de réinitialiser le mot de passe une seconde fois sur un code déjà
+    // utilisé (même famille de garde que la rotation de refresh token).
+    const updated = await client.query(
+      'UPDATE recovery_codes SET used_at = now() WHERE id = $1 AND used_at IS NULL',
+      [matchedCodeId]
+    )
+    if (updated.rowCount === 0) {
+      throw new InvalidRecoveryCodeError()
+    }
+    await client.query('UPDATE users SET password_hash = $1 WHERE id = $2', [
+      newPasswordHash,
+      user.id,
+    ])
+    // Un mot de passe oublié est traité comme une compromission possible :
+    // toutes les sessions actives sont révoquées.
+    await client.query('DELETE FROM refresh_tokens WHERE user_id = $1', [user.id])
+    await client.query('INSERT INTO recovery_codes (user_id, code_hash) VALUES ($1, $2)', [
+      user.id,
+      replacementHash,
+    ])
+  })
+
+  return { replacementCode }
+}
+
+// Régénère l'intégralité du jeu de codes — invalide tous les codes précédents
+// (usés ou non), à l'image de GitHub ("Generating a new set of recovery codes
+// will invalidate any codes you previously generated").
+export async function regenerateRecoveryCodes(userId: string): Promise<string[]> {
+  const { plainCodes, hashes } = await generateRecoveryCodeSet()
+
+  await withTransaction(async (client) => {
+    await client.query('DELETE FROM recovery_codes WHERE user_id = $1', [userId])
+    await client.query(
+      'INSERT INTO recovery_codes (user_id, code_hash) SELECT $1, unnest($2::text[])',
+      [userId, hashes]
+    )
+  })
+
+  return plainCodes
 }

@@ -18,6 +18,29 @@ const options: swaggerJsdoc.Options = {
             accessToken: { type: 'string', description: 'JWT access token (15 min)' },
           },
         },
+        RegisterResponse: {
+          type: 'object',
+          properties: {
+            accessToken: { type: 'string', description: 'JWT access token (15 min)' },
+            recoveryCodes: {
+              type: 'array',
+              items: { type: 'string' },
+              description:
+                '8 codes de récupération en clair (format XXXX-XXXX-XXXX-XXXX), affichés une seule fois — jamais relisibles ensuite',
+              example: ['XM3K-9PQR-2T7V-4WYZ'],
+            },
+          },
+        },
+        RecoveryCodesResponse: {
+          type: 'object',
+          properties: {
+            recoveryCodes: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Nouveau jeu de 8 codes — invalide tous les codes précédents',
+            },
+          },
+        },
         Error: {
           type: 'object',
           properties: {

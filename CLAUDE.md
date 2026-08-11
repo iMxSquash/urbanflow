@@ -49,6 +49,16 @@ Nantes Métropole — réseau Naolib (Semitan). Toutes les coordonnées GPS, don
 - « Rester connecté » (login uniquement) : coché → cookie de refresh persistant
   (7j) ; décoché → cookie de session, effacé à la fermeture du navigateur (le
   token reste valide 7j côté serveur, seule la persistance du cookie change)
+- Mot de passe oublié : 8 codes de récupération sauvegardés (`recovery_codes`,
+  générés à l'inscription, 80 bits d'entropie, hachés bcrypt), sur le modèle
+  NIST SP 800-63B-4 §4.2.1.1 (« Saved Recovery Codes ») — pas d'envoi d'email
+  (cf. `docs/recherche-mot-de-passe-oublie.md`, argument écologique explicitement
+  écarté comme négligeable). `POST /api/auth/password/recover` : usage unique,
+  révoque toutes les sessions actives de l'utilisateur, émet un code de
+  remplacement. `POST /api/auth/recovery-codes/regenerate` (authGuard, depuis
+  Paramètres) : invalide tout le jeu précédent et en émet 8 nouveaux, comme
+  GitHub. Réponse indifférenciée sur email inconnu / code invalide, même
+  égalisation de timing que `loginUser`
 
 ### Tests
 - Vitest pour les tests unitaires et d'intégration

@@ -9,6 +9,7 @@ import { useAppCacheSize } from '../hooks/use-app-cache-size'
 import { isIosDevice } from '../utils/platform'
 import { BackButton } from '../components/BackButton'
 import { DeleteAccountModal } from '../components/DeleteAccountModal'
+import { RegenerateRecoveryCodesModal } from '../components/RegenerateRecoveryCodesModal'
 import { exportUserData } from '../services/auth.service'
 import LogoutButton from '../components/LogoutButton'
 import { PageHeader } from '../components/PageHeader'
@@ -110,6 +111,7 @@ export default function ParametresPage() {
   const appCacheSize = useAppCacheSize()
 
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showRegenModal, setShowRegenModal] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
   const themeGroupRef = useRef<HTMLSpanElement>(null)
@@ -456,6 +458,35 @@ export default function ParametresPage() {
                 </div>
               </div>
 
+              {/* ── Sécurité ─────────────────────────────────────────────────── */}
+              <div className="flex flex-col gap-2">
+                <span className="text-caption font-bold tracking-[0.06em] uppercase text-text-subtle">
+                  Sécurité
+                </span>
+                <div className="card overflow-hidden">
+                  <SettingsRow
+                    icon={
+                      <>
+                        <rect x="5" y="11" width="14" height="9" rx="2" />
+                        <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                      </>
+                    }
+                    title="Codes de récupération"
+                    subtitle="Utilisés pour changer votre mot de passe sans email"
+                    action={
+                      <button
+                        type="button"
+                        onClick={() => setShowRegenModal(true)}
+                        className="text-caption font-semibold text-primary shrink-0"
+                      >
+                        Régénérer
+                      </button>
+                    }
+                    border={false}
+                  />
+                </div>
+              </div>
+
               <LogoutButton />
             </div>
 
@@ -627,6 +658,9 @@ export default function ParametresPage() {
         </main>
 
         {showDeleteModal && <DeleteAccountModal onClose={() => setShowDeleteModal(false)} />}
+        {showRegenModal && (
+          <RegenerateRecoveryCodesModal onClose={() => setShowRegenModal(false)} />
+        )}
       </div>
     </PageWithSidebar>
   )
