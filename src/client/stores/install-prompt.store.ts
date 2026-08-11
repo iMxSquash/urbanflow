@@ -13,7 +13,9 @@ interface InstallPromptState {
 
 function isRunningStandalone() {
   const nav = window.navigator as Navigator & { standalone?: boolean }
-  return window.matchMedia?.('(display-mode: standalone)').matches === true || nav.standalone === true
+  return (
+    window.matchMedia?.('(display-mode: standalone)').matches === true || nav.standalone === true
+  )
 }
 
 export const useInstallPromptStore = create<InstallPromptState>((set, get) => ({

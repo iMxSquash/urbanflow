@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useProfileStore } from '../stores/profile.store'
 import { useInstallPrompt } from '../hooks/use-install-prompt'
+import { isIosDevice } from '../utils/platform'
 import { BackButton } from '../components/BackButton'
 import { ModeChip } from '../components/ModeChip'
 import { PROFILE_PRESETS } from '../constants/profile-presets'
@@ -23,7 +24,8 @@ const DEFAULT_MODES: TransportMode[] = ['walk', 'bike', 'tramway', 'bus']
 export default function OnboardingPage() {
   const navigate = useNavigate()
   const updateProfile = useProfileStore((s) => s.updateProfile)
-  const { canInstall, promptInstall } = useInstallPrompt()
+  const { canInstall, isInstalled, promptInstall } = useInstallPrompt()
+  const isIOS = isIosDevice()
 
   const [preference, setPreference] = useState<UserPreference>('eco')
   const [modes, setModes] = useState<TransportMode[]>(DEFAULT_MODES)
@@ -207,7 +209,9 @@ export default function OnboardingPage() {
             <span className="flex-1 flex flex-col gap-0.5">
               <span className="text-body-sm font-semibold">Installer UrbanFlow</span>
               <span className="text-caption text-text-muted">
-                Accès hors-ligne aux derniers itinéraires · 1,2 Mo
+                {!isInstalled && !canInstall && isIOS
+                  ? 'Partager → Sur l’écran d’accueil'
+                  : 'Accès hors-ligne aux derniers itinéraires · 1,2 Mo'}
               </span>
             </span>
             {canInstall && (

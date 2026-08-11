@@ -5,6 +5,7 @@ import { useDemoStore } from '../stores/demo.store'
 import { useThemeStore } from '../stores/theme.store'
 import type { ThemePreference } from '../stores/theme.store'
 import { useInstallPrompt } from '../hooks/use-install-prompt'
+import { isIosDevice } from '../utils/platform'
 import { BackButton } from '../components/BackButton'
 import { DeleteAccountModal } from '../components/DeleteAccountModal'
 import { exportUserData } from '../services/auth.service'
@@ -104,6 +105,7 @@ export default function ParametresPage() {
   const theme = useThemeStore((s) => s.theme)
   const setTheme = useThemeStore((s) => s.setTheme)
   const { canInstall, isInstalled, promptInstall } = useInstallPrompt()
+  const isIOS = isIosDevice()
 
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
@@ -364,7 +366,11 @@ export default function ParametresPage() {
                       </>
                     }
                     title="Installer UrbanFlow"
-                    subtitle="Accès hors-ligne · 1,2 Mo"
+                    subtitle={
+                      !isInstalled && !canInstall && isIOS
+                        ? 'Partager → Sur l’écran d’accueil'
+                        : 'Accès hors-ligne · 1,2 Mo'
+                    }
                     action={
                       canInstall ? (
                         <button
@@ -376,7 +382,11 @@ export default function ParametresPage() {
                         </button>
                       ) : (
                         <span className="text-caption text-text-muted shrink-0">
-                          {isInstalled ? 'Déjà installée' : 'Non disponible pour le moment'}
+                          {isInstalled
+                            ? 'Déjà installée'
+                            : isIOS
+                              ? 'Manuel'
+                              : 'Non disponible pour le moment'}
                         </span>
                       )
                     }
