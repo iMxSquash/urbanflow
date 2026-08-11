@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { registerSW } from 'virtual:pwa-register'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import './index.css'
+import './stores/install-prompt.store'
 import App from './App'
 
 registerSW({ immediate: true })
