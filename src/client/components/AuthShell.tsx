@@ -29,9 +29,9 @@ function tabClass(isActive: boolean): string {
  * recentrer. */
 export function AuthShell({ active, children }: AuthShellProps) {
   return (
-    <main className="min-h-screen bg-bg flex flex-col lg:flex-row">
+    <main className="min-h-dvh bg-bg flex flex-col lg:flex-row">
       {/* Panneau de marque — bandeau 196px mobile → colonne pleine hauteur desktop */}
-      <div className="h-[196px] shrink-0 flex flex-col justify-end gap-2 p-6 bg-primary lg:h-auto lg:w-2/5 lg:min-w-[380px] lg:justify-center lg:p-16">
+      <div className="h-49 shrink-0 flex flex-col justify-end gap-2 p-6 bg-primary lg:h-auto lg:w-2/5 lg:min-w-95 lg:justify-center lg:p-16">
         <img src={urbanflowIcon} alt="" width={40} height={40} className="lg:w-14 lg:h-14" />
         <span className="text-h2 font-bold text-on-primary tracking-tight lg:text-display">
           UrbanFlow

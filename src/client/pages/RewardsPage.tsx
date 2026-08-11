@@ -411,7 +411,7 @@ export default function RewardsPage() {
 
   return (
     <PageWithSidebar>
-      <div className="min-h-screen bg-bg pb-[calc(var(--height-bottomnav)+1rem)] lg:pb-6">
+      <div className="min-h-dvh bg-bg pb-[calc(var(--height-bottomnav)+1rem)] lg:pb-6">
         <PageHeader>
           <div className="max-w-2xl mx-auto flex flex-col gap-3 px-4 py-3.5 lg:max-w-260 lg:px-10 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
             <div className="flex items-center justify-between lg:justify-start lg:gap-4">

@@ -75,7 +75,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <main className="min-h-screen bg-bg flex items-center justify-center px-4 py-6">
+    <main className="min-h-dvh bg-bg flex items-center justify-center px-4 py-6">
       <div className="w-full max-w-sm bg-surface rounded-2xl shadow-modal flex flex-col p-5 gap-4">
         <div className="flex items-center gap-2.5">
           <BackButton aria-label="Étape précédente" onClick={() => navigate(-1)} />

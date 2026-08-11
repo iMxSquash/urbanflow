@@ -35,12 +35,12 @@ export function Toggle({ checked, onChange, label, description, id }: ToggleProp
       <span
         aria-hidden="true"
         className={[
-          'shrink-0 w-[46px] h-7 rounded-full flex items-center p-[3px] transition-colors duration-fast',
+          'shrink-0 w-11.5 h-7 rounded-full flex items-center p-0.75 transition-colors duration-fast',
           'peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-primary peer-focus-visible:ring-offset-2',
           checked ? 'bg-primary justify-end' : 'bg-border justify-start',
         ].join(' ')}
       >
-        <span className="w-[22px] h-[22px] rounded-full bg-surface shadow-card" />
+        <span className="size-5.5 rounded-full bg-surface shadow-card" />
       </span>
     </label>
   )

@@ -91,7 +91,7 @@ export default function DashboardPage() {
 
   return (
     <PageWithSidebar>
-      <div className="min-h-screen bg-bg pb-[calc(var(--height-bottomnav)+1rem)] lg:pb-6">
+      <div className="min-h-dvh bg-bg pb-[calc(var(--height-bottomnav)+1rem)] lg:pb-6">
         {/* ── Mobile : header + cartes empilées ─────────────────────────── */}
         <div className="lg:hidden">
           <header className="bg-primary px-5 pt-4.5 pb-5 flex flex-col gap-3.5">
