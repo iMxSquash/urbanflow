@@ -103,7 +103,7 @@ export default function ParametresPage() {
   } = useDemoStore()
   const theme = useThemeStore((s) => s.theme)
   const setTheme = useThemeStore((s) => s.setTheme)
-  const { canInstall, promptInstall } = useInstallPrompt()
+  const { canInstall, isInstalled, promptInstall } = useInstallPrompt()
 
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
@@ -376,7 +376,7 @@ export default function ParametresPage() {
                         </button>
                       ) : (
                         <span className="text-caption text-text-muted shrink-0">
-                          Déjà installée
+                          {isInstalled ? 'Déjà installée' : 'Non disponible pour le moment'}
                         </span>
                       )
                     }

@@ -1,30 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useInstallPromptStore } from '../stores/install-prompt.store'
 
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
-}
-
-/** Capture l'événement `beforeinstallprompt` pour proposer l'installation PWA
- * au moment choisi par l'UI plutôt que la bannière native du navigateur. */
+/** Expose l'état d'installabilité PWA capturé par `install-prompt.store` — voir
+ * ce store pour pourquoi la capture ne peut pas vivre dans ce hook. */
 export function useInstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
+  const deferredPrompt = useInstallPromptStore((s) => s.deferredPrompt)
+  const isInstalled = useInstallPromptStore((s) => s.isInstalled)
+  const promptInstall = useInstallPromptStore((s) => s.promptInstall)
 
-  useEffect(() => {
-    function handler(e: Event) {
-      e.preventDefault()
-      setDeferredPrompt(e as BeforeInstallPromptEvent)
-    }
-    window.addEventListener('beforeinstallprompt', handler)
-    return () => window.removeEventListener('beforeinstallprompt', handler)
-  }, [])
-
-  async function promptInstall() {
-    if (!deferredPrompt) return
-    await deferredPrompt.prompt()
-    await deferredPrompt.userChoice
-    setDeferredPrompt(null)
-  }
-
-  return { canInstall: !!deferredPrompt, promptInstall }
+  return { canInstall: !!deferredPrompt, isInstalled, promptInstall }
 }
