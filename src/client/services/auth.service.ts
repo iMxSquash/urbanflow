@@ -16,7 +16,11 @@ interface AuthTokenResponse {
   accessToken: string
 }
 
-export async function register(payload: RegisterPayload): Promise<AuthTokenResponse> {
+interface RegisterResponse extends AuthTokenResponse {
+  recoveryCodes: string[]
+}
+
+export async function register(payload: RegisterPayload): Promise<RegisterResponse> {
   const res = await fetch('/api/auth/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -24,7 +28,44 @@ export async function register(payload: RegisterPayload): Promise<AuthTokenRespo
     credentials: 'include',
   })
 
-  return parseJsonResponse<AuthTokenResponse>(res, "Erreur lors de l'inscription")
+  return parseJsonResponse<RegisterResponse>(res, "Erreur lors de l'inscription")
+}
+
+interface RecoverPasswordPayload {
+  email: string
+  recoveryCode: string
+  newPassword: string
+}
+
+interface RecoverPasswordResponse {
+  replacementCode: string
+}
+
+// Pas d'envoi d'email — réinitialisation via un code de récupération sauvegardé
+// (cf. docs/recherche-mot-de-passe-oublie.md). Ne connecte pas automatiquement.
+export async function recoverPassword(
+  payload: RecoverPasswordPayload
+): Promise<RecoverPasswordResponse> {
+  const res = await fetch('/api/auth/password/recover', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    credentials: 'include',
+  })
+
+  return parseJsonResponse<RecoverPasswordResponse>(res, 'Code de récupération invalide')
+}
+
+interface RegenerateRecoveryCodesResponse {
+  recoveryCodes: string[]
+}
+
+export async function regenerateRecoveryCodes(): Promise<RegenerateRecoveryCodesResponse> {
+  const res = await apiFetch('/api/auth/recovery-codes/regenerate', { method: 'POST' })
+  return parseJsonResponse<RegenerateRecoveryCodesResponse>(
+    res,
+    'Impossible de régénérer les codes de récupération'
+  )
 }
 
 export async function refreshToken(signal?: AbortSignal): Promise<AuthTokenResponse | null> {

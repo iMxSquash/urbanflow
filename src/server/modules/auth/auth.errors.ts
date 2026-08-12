@@ -33,3 +33,9 @@ export class UserNotFoundError extends AuthError {
     super('USER_NOT_FOUND', 404, 'Utilisateur introuvable')
   }
 }
+
+export class InvalidRecoveryCodeError extends AuthError {
+  constructor() {
+    super('INVALID_RECOVERY_CODE', 401, 'Code de récupération invalide')
+  }
+}

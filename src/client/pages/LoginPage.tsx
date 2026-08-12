@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { login } from '../services/auth.service'
 import { useAuthStore } from '../stores/auth.store'
 import { AuthShell, AuthFooterNotice } from '../components/AuthShell'
@@ -154,11 +154,14 @@ export default function LoginPage() {
               <p className="text-body-sm text-danger-text">{fieldErrors.password}</p>
             )}
           </div>
+          <Link
+            to="/mot-de-passe-oublie"
+            className="inline-block mt-1.5 text-caption font-semibold text-primary"
+          >
+            Mot de passe oublié ?
+          </Link>
         </div>
 
-        {/* Pas de lien "Mot de passe oublié" : aucun endpoint de réinitialisation
-         * n'existe côté serveur (pas d'envoi d'email dans ce projet) — un lien
-         * href="#" sans action réelle serait un bouton mort. */}
         <label className="flex items-center gap-2 cursor-pointer text-body-sm text-text">
           <input
             type="checkbox"

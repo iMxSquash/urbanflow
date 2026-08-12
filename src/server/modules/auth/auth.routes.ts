@@ -2,7 +2,7 @@ import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
 import { validate } from '../../middleware/validate.js'
 import { authGuard } from '../../middleware/auth-guard.js'
-import { registerSchema, loginSchema } from './auth.schema.js'
+import { registerSchema, loginSchema, recoverPasswordSchema } from './auth.schema.js'
 import * as authController from './auth.controller.js'
 
 function makeAuthRateLimit(limit: number, message: string): ReturnType<typeof rateLimit> {
@@ -62,11 +62,13 @@ const router = Router()
  *                 description: Doit valoir `true` — horodaté côté serveur dans `users.terms_accepted_at`
  *     responses:
  *       201:
- *         description: Utilisateur créé — access token retourné, refresh token en cookie HttpOnly
+ *         description: >
+ *           Utilisateur créé — access token retourné, refresh token en cookie HttpOnly,
+ *           et 8 codes de récupération à sauvegarder (affichés une seule fois).
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/AuthResponse'
+ *               $ref: '#/components/schemas/RegisterResponse'
  *       400:
  *         description: Données invalides (format email, règles mot de passe)
  *         content:
@@ -263,5 +265,113 @@ router.get('/me/export', refreshRateLimit, authGuard, authController.exportData)
  *               $ref: '#/components/schemas/Error'
  */
 router.post('/consent', refreshRateLimit, authGuard, authController.recordConsent)
+
+/**
+ * @swagger
+ * /api/auth/password/recover:
+ *   post:
+ *     summary: Réinitialise le mot de passe via un code de récupération sauvegardé
+ *     description: >
+ *       Aucun envoi d'email — méthode conforme à NIST SP 800-63B-4 §4.2.1.1
+ *       (« Saved Recovery Codes ») pour un compte sans vérification d'identité.
+ *       Le code utilisé est invalidé (usage unique) et remplacé par un nouveau ;
+ *       toutes les sessions actives de l'utilisateur sont révoquées. L'utilisateur
+ *       n'est pas connecté automatiquement — redirection vers /login.
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, recoveryCode, newPassword]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: alice@example.com
+ *               recoveryCode:
+ *                 type: string
+ *                 example: XM3K-9PQR-2T7V-4WYZ
+ *               newPassword:
+ *                 type: string
+ *                 minLength: 8
+ *                 description: Min 8 chars, 1 majuscule, 1 chiffre
+ *     responses:
+ *       200:
+ *         description: Mot de passe changé — nouveau code de remplacement retourné
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 replacementCode:
+ *                   type: string
+ *                   description: Remplace le code consommé — à sauvegarder immédiatement
+ *       400:
+ *         description: Données invalides
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: >
+ *           Email ou code de récupération invalide — réponse indifférenciée
+ *           (anti-énumération de comptes)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       429:
+ *         description: Trop de tentatives (5 req / 15 min par IP)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post(
+  '/password/recover',
+  credentialsRateLimit,
+  validate(recoverPasswordSchema),
+  authController.recoverPassword
+)
+
+/**
+ * @swagger
+ * /api/auth/recovery-codes/regenerate:
+ *   post:
+ *     summary: Régénère le jeu de codes de récupération
+ *     description: >
+ *       Invalide immédiatement tous les codes précédents (utilisés ou non) et en
+ *       émet 8 nouveaux, à l'image de GitHub.
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Nouveau jeu de codes généré
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/RecoveryCodesResponse'
+ *       401:
+ *         description: Token manquant ou invalide
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       429:
+ *         description: Trop de requêtes (60 req / 15 min par IP)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+router.post(
+  '/recovery-codes/regenerate',
+  refreshRateLimit,
+  authGuard,
+  authController.regenerateRecoveryCodes
+)
 
 export default router

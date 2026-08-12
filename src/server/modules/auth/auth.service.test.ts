@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken'
 
 // Mocks hoistés avant les imports du module testé
 vi.mock('../../db/pool.js', () => ({
-  pool: { query: vi.fn() },
+  pool: { query: vi.fn(), connect: vi.fn() },
 }))
 
 vi.mock('bcrypt', () => ({
@@ -27,11 +27,15 @@ import {
   refreshTokens,
   logoutUser,
   recordRgpdConsent,
+  recoverPassword,
+  regenerateRecoveryCodes,
 } from './auth.service.js'
 
 const mockQuery = pool.query as ReturnType<typeof vi.fn>
+const mockConnect = pool.connect as ReturnType<typeof vi.fn>
 const mockHash = bcrypt.hash as ReturnType<typeof vi.fn>
 const mockCompare = bcrypt.compare as ReturnType<typeof vi.fn>
+const mockClient = { query: vi.fn(), release: vi.fn() }
 
 const USER_ID = 'aaaaaaaa-0000-0000-0000-000000000001'
 const USER_EMAIL = 'alice@nantes.fr'
@@ -40,41 +44,66 @@ const HASHED = '$2b$10$mockedHashedPassword'
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockConnect.mockResolvedValue(mockClient)
 })
 
 // ─── registerUser ─────────────────────────────────────────────────────────────
 
 describe('registerUser', () => {
-  it('crée un utilisateur et retourne access + refresh token', async () => {
-    mockQuery
+  it('crée un utilisateur et retourne access + refresh token + 8 codes de récupération', async () => {
+    mockClient.query
+      .mockResolvedValueOnce({ rows: [] }) // BEGIN
       .mockResolvedValueOnce({ rows: [{ id: USER_ID, email: USER_EMAIL }] }) // INSERT user
-      .mockResolvedValueOnce({ rows: [] }) // INSERT refresh_token
+      .mockResolvedValueOnce({ rows: [] }) // INSERT recovery_codes (bulk)
+      .mockResolvedValueOnce({ rows: [] }) // COMMIT
+    mockQuery.mockResolvedValueOnce({ rows: [] }) // INSERT refresh_token (hors transaction)
     mockHash.mockResolvedValue(HASHED)
 
     const result = await registerUser(USER_EMAIL, PASSWORD)
 
     expect(result.accessToken).toBeTypeOf('string')
     expect(result.refreshToken).toBeTypeOf('string')
-    expect(mockQuery).toHaveBeenCalledTimes(2)
+    expect(result.recoveryCodes).toHaveLength(8)
+    expect(new Set(result.recoveryCodes).size).toBe(8) // pas de doublon
+    for (const code of result.recoveryCodes) {
+      expect(code).toMatch(/^[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}$/)
+    }
+    // Utilisateur + codes de récupération dans la même transaction — un
+    // échec du 2e INSERT ne doit jamais laisser un compte sans codes.
+    expect(mockConnect).toHaveBeenCalledTimes(1)
+    expect(mockClient.query).toHaveBeenCalledWith('COMMIT')
+    expect(mockClient.release).toHaveBeenCalledTimes(1)
+    expect(mockQuery).toHaveBeenCalledTimes(1)
     expect(mockHash).toHaveBeenCalledWith(PASSWORD, 10)
   })
 
-  it("lance EMAIL_EXISTS si l'email est déjà pris", async () => {
+  it("lance EMAIL_EXISTS si l'email est déjà pris, sans toucher au refresh token", async () => {
     mockHash.mockResolvedValue(HASHED)
     const pgError = Object.assign(new Error('unique violation'), { code: '23505' })
-    mockQuery.mockRejectedValueOnce(pgError)
+    mockClient.query
+      .mockResolvedValueOnce({ rows: [] }) // BEGIN
+      .mockRejectedValueOnce(pgError) // INSERT user → 23505
+      .mockResolvedValueOnce({ rows: [] }) // ROLLBACK
 
     await expect(registerUser(USER_EMAIL, PASSWORD)).rejects.toThrow('EMAIL_EXISTS')
-    expect(mockQuery).toHaveBeenCalledTimes(1)
+    expect(mockClient.query).toHaveBeenCalledWith('ROLLBACK')
+    expect(mockQuery).not.toHaveBeenCalled()
   })
 
   it('race condition — deux inscriptions concurrentes avec le même email : une seule réussit', async () => {
     mockHash.mockResolvedValue(HASHED)
     const pgError = Object.assign(new Error('unique violation'), { code: '23505' })
-    mockQuery
-      .mockResolvedValueOnce({ rows: [{ id: USER_ID, email: USER_EMAIL }] }) // INSERT call 1 → succès
-      .mockRejectedValueOnce(pgError) // INSERT call 2 → 23505
-      .mockResolvedValueOnce({ rows: [] }) // storeRefreshToken call 1
+    let userInsertCount = 0
+    mockClient.query.mockImplementation((sql: string) => {
+      if (sql.startsWith('INSERT INTO users')) {
+        userInsertCount++
+        return userInsertCount === 1
+          ? Promise.resolve({ rows: [{ id: USER_ID, email: USER_EMAIL }] })
+          : Promise.reject(pgError)
+      }
+      return Promise.resolve({ rows: [] })
+    })
+    mockQuery.mockResolvedValue({ rows: [] }) // storeRefreshToken (gagnant uniquement)
 
     const results = await Promise.allSettled([
       registerUser(USER_EMAIL, PASSWORD),
@@ -329,5 +358,137 @@ describe('recordRgpdConsent', () => {
       'UPDATE users SET rgpd_consent_at = now() WHERE id = $1',
       [USER_ID]
     )
+  })
+})
+
+// ─── recoverPassword ──────────────────────────────────────────────────────────
+
+describe('recoverPassword', () => {
+  const RECOVERY_CODE = 'ABCD-EFGH-JKMN-PQRS'
+  const NEW_PASSWORD = 'NewPassword1'
+  const CODE_ROW_1 = { id: 'code-1', code_hash: '$2b$10$hash1' }
+  const CODE_ROW_2 = { id: 'code-2', code_hash: '$2b$10$hash2' }
+
+  it('valide un code, change le mot de passe, révoque les sessions et retourne un code de remplacement', async () => {
+    mockQuery
+      .mockResolvedValueOnce({ rows: [{ id: USER_ID }] }) // SELECT users
+      .mockResolvedValueOnce({ rows: [CODE_ROW_1, CODE_ROW_2] }) // SELECT recovery_codes non utilisés
+    mockCompare.mockResolvedValueOnce(true) // le code correspond au premier hash comparé
+    mockHash.mockResolvedValue(HASHED)
+    mockClient.query.mockResolvedValue({ rows: [], rowCount: 1 })
+
+    const result = await recoverPassword(USER_EMAIL, RECOVERY_CODE, NEW_PASSWORD)
+
+    expect(result.replacementCode).toMatch(/^[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}$/)
+    // Exactement RECOVERY_CODE_COUNT (8) comparaisons, quel que soit le nombre
+    // de codes réellement stockés — timing constant (finding égalisation).
+    expect(mockCompare).toHaveBeenCalledTimes(8)
+    expect(mockConnect).toHaveBeenCalledTimes(1)
+    expect(mockClient.query).toHaveBeenCalledWith('BEGIN')
+    expect(mockClient.query).toHaveBeenCalledWith(
+      'UPDATE recovery_codes SET used_at = now() WHERE id = $1 AND used_at IS NULL',
+      [CODE_ROW_1.id]
+    )
+    expect(mockClient.query).toHaveBeenCalledWith(
+      'UPDATE users SET password_hash = $1 WHERE id = $2',
+      [HASHED, USER_ID]
+    )
+    expect(mockClient.query).toHaveBeenCalledWith('DELETE FROM refresh_tokens WHERE user_id = $1', [
+      USER_ID,
+    ])
+    expect(mockClient.query).toHaveBeenCalledWith('COMMIT')
+    expect(mockClient.release).toHaveBeenCalledTimes(1)
+  })
+
+  it('lance INVALID_RECOVERY_CODE si aucun code stocké ne correspond, sans toucher à la transaction', async () => {
+    mockQuery
+      .mockResolvedValueOnce({ rows: [{ id: USER_ID }] })
+      .mockResolvedValueOnce({ rows: [CODE_ROW_1, CODE_ROW_2] })
+    mockCompare.mockResolvedValue(false)
+
+    await expect(recoverPassword(USER_EMAIL, 'code-invalide', NEW_PASSWORD)).rejects.toThrow(
+      'INVALID_RECOVERY_CODE'
+    )
+    expect(mockCompare).toHaveBeenCalledTimes(8)
+    expect(mockConnect).not.toHaveBeenCalled()
+  })
+
+  it("lance INVALID_RECOVERY_CODE si l'email est inconnu, avec le même nombre de comparaisons qu'un email connu", async () => {
+    mockQuery
+      .mockResolvedValueOnce({ rows: [] }) // SELECT users : aucun résultat
+      .mockResolvedValueOnce({ rows: [] }) // SELECT recovery_codes : rien à comparer
+
+    await expect(recoverPassword('inconnu@nantes.fr', RECOVERY_CODE, NEW_PASSWORD)).rejects.toThrow(
+      'INVALID_RECOVERY_CODE'
+    )
+    // Aucun code réel à comparer : les 8 comparaisons se font contre le hash
+    // factice — même coût observable que le cas "email connu, aucun match".
+    expect(mockCompare).toHaveBeenCalledTimes(8)
+    expect(mockConnect).not.toHaveBeenCalled()
+  })
+
+  it('marque le bon code comme utilisé même quand il ne correspond pas au premier hash testé', async () => {
+    mockQuery
+      .mockResolvedValueOnce({ rows: [{ id: USER_ID }] })
+      .mockResolvedValueOnce({ rows: [CODE_ROW_1, CODE_ROW_2] })
+    mockCompare.mockResolvedValueOnce(false).mockResolvedValueOnce(true) // correspond au 2e hash
+    mockHash.mockResolvedValue(HASHED)
+    mockClient.query.mockResolvedValue({ rows: [], rowCount: 1 })
+
+    await recoverPassword(USER_EMAIL, RECOVERY_CODE, NEW_PASSWORD)
+
+    expect(mockClient.query).toHaveBeenCalledWith(
+      'UPDATE recovery_codes SET used_at = now() WHERE id = $1 AND used_at IS NULL',
+      [CODE_ROW_2.id]
+    )
+  })
+
+  it('lance INVALID_RECOVERY_CODE si le code a déjà été consommé par une requête concurrente', async () => {
+    mockQuery
+      .mockResolvedValueOnce({ rows: [{ id: USER_ID }] })
+      .mockResolvedValueOnce({ rows: [CODE_ROW_1, CODE_ROW_2] })
+    mockCompare.mockResolvedValueOnce(true) // le code est valide...
+    mockHash.mockResolvedValue(HASHED)
+    // ...mais une autre requête a déjà consommé ce même code entre temps : le
+    // CAS `AND used_at IS NULL` ne met à jour aucune ligne (rowCount 0).
+    mockClient.query.mockImplementation((sql: string) => {
+      if (sql.startsWith('UPDATE recovery_codes')) {
+        return Promise.resolve({ rows: [], rowCount: 0 })
+      }
+      return Promise.resolve({ rows: [] })
+    })
+
+    await expect(recoverPassword(USER_EMAIL, RECOVERY_CODE, NEW_PASSWORD)).rejects.toThrow(
+      'INVALID_RECOVERY_CODE'
+    )
+    expect(mockClient.query).not.toHaveBeenCalledWith('COMMIT')
+    expect(mockClient.query).toHaveBeenCalledWith('ROLLBACK')
+  })
+})
+
+// ─── regenerateRecoveryCodes ──────────────────────────────────────────────────
+
+describe('regenerateRecoveryCodes', () => {
+  it('invalide les codes existants et émet un nouveau jeu de 8 codes', async () => {
+    mockHash.mockResolvedValue(HASHED)
+    mockClient.query.mockResolvedValue({ rows: [] })
+
+    const codes = await regenerateRecoveryCodes(USER_ID)
+
+    expect(codes).toHaveLength(8)
+    expect(new Set(codes).size).toBe(8)
+    for (const code of codes) {
+      expect(code).toMatch(/^[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]{4}$/)
+    }
+    expect(mockClient.query).toHaveBeenCalledWith('BEGIN')
+    expect(mockClient.query).toHaveBeenCalledWith('DELETE FROM recovery_codes WHERE user_id = $1', [
+      USER_ID,
+    ])
+    expect(mockClient.query).toHaveBeenCalledWith(
+      'INSERT INTO recovery_codes (user_id, code_hash) SELECT $1, unnest($2::text[])',
+      [USER_ID, Array(8).fill(HASHED)]
+    )
+    expect(mockClient.query).toHaveBeenCalledWith('COMMIT')
+    expect(mockClient.release).toHaveBeenCalledTimes(1)
   })
 })

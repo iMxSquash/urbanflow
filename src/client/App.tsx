@@ -6,6 +6,7 @@ import { useThemeSync } from './hooks/use-theme-sync'
 
 const LoginPage = lazy(() => import('./pages/LoginPage'))
 const RegisterPage = lazy(() => import('./pages/RegisterPage'))
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'))
 const OnboardingPage = lazy(() => import('./pages/OnboardingPage'))
 const ProfilePage = lazy(() => import('./pages/ProfilePage'))
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
@@ -43,6 +44,7 @@ function AppRoutes() {
         {/* Routes publiques */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/mot-de-passe-oublie" element={<ForgotPasswordPage />} />
         <Route path="/mentions-legales" element={<MentionsLegalesPage />} />
         <Route path="/cgu" element={<CguPage />} />
         <Route path="/confidentialite" element={<PolitiqueConfidentialitePage />} />

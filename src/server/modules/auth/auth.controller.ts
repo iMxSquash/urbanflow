@@ -28,9 +28,12 @@ function handleAuthError(err: unknown, res: Response): void {
 export async function register(req: Request, res: Response): Promise<void> {
   try {
     const { email, password } = req.body as { email: string; password: string }
-    const { accessToken, refreshToken } = await authService.registerUser(email, password)
+    const { accessToken, refreshToken, recoveryCodes } = await authService.registerUser(
+      email,
+      password
+    )
     res.cookie(REFRESH_COOKIE, refreshToken, cookieOptions)
-    res.status(201).json({ accessToken })
+    res.status(201).json({ accessToken, recoveryCodes })
   } catch (err) {
     handleAuthError(err, res)
   }
@@ -114,6 +117,32 @@ export async function recordConsent(req: Request, res: Response): Promise<void> 
   try {
     await authService.recordRgpdConsent(req.user!.sub)
     res.status(204).send()
+  } catch (err) {
+    handleAuthError(err, res)
+  }
+}
+
+// Réinitialise le mot de passe via un code de récupération — pas de connexion
+// automatique (redirection vers /login côté client), pour ne pas émettre de
+// session sur la base d'un secret potentiellement recopié à voix haute.
+export async function recoverPassword(req: Request, res: Response): Promise<void> {
+  try {
+    const { email, recoveryCode, newPassword } = req.body as {
+      email: string
+      recoveryCode: string
+      newPassword: string
+    }
+    const { replacementCode } = await authService.recoverPassword(email, recoveryCode, newPassword)
+    res.status(200).json({ replacementCode })
+  } catch (err) {
+    handleAuthError(err, res)
+  }
+}
+
+export async function regenerateRecoveryCodes(req: Request, res: Response): Promise<void> {
+  try {
+    const recoveryCodes = await authService.regenerateRecoveryCodes(req.user!.sub)
+    res.status(200).json({ recoveryCodes })
   } catch (err) {
     handleAuthError(err, res)
   }

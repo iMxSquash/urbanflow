@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { registerSchema, loginSchema } from './auth.schema.js'
+import { registerSchema, loginSchema, recoverPasswordSchema } from './auth.schema.js'
 
 describe('registerSchema', () => {
   const valid = { email: 'alice@nantes.fr', password: 'Password1', termsAccepted: true }
@@ -56,6 +56,33 @@ describe('loginSchema', () => {
 
   it('rejette un mot de passe vide', () => {
     const result = loginSchema.safeParse({ ...valid, password: '' })
+    expect(result.success).toBe(false)
+  })
+})
+
+describe('recoverPasswordSchema', () => {
+  const valid = {
+    email: 'alice@nantes.fr',
+    recoveryCode: 'ABCD-EFGH-JKMN-PQRS',
+    newPassword: 'Password1',
+  }
+
+  it('accepte un email, un code et un nouveau mot de passe valides', () => {
+    expect(recoverPasswordSchema.safeParse(valid).success).toBe(true)
+  })
+
+  it('rejette un email mal formé', () => {
+    const result = recoverPasswordSchema.safeParse({ ...valid, email: 'mauvais' })
+    expect(result.success).toBe(false)
+  })
+
+  it('rejette un code de récupération vide', () => {
+    const result = recoverPasswordSchema.safeParse({ ...valid, recoveryCode: '' })
+    expect(result.success).toBe(false)
+  })
+
+  it('rejette un nouveau mot de passe qui ne respecte pas la règle commune', () => {
+    const result = recoverPasswordSchema.safeParse({ ...valid, newPassword: 'short' })
     expect(result.success).toBe(false)
   })
 })

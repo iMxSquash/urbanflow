@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import urbanflowIcon from '../assets/urbanflow-icon.svg'
 
 interface AuthShellProps {
-  active: 'login' | 'register'
+  // 'recovery' : écran "mot de passe oublié", hors des deux onglets Connexion/Inscription.
+  active: 'login' | 'register' | 'recovery'
   children: ReactNode
 }
 
