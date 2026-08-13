@@ -12,6 +12,17 @@ const journeyRateLimit = rateLimit({
   message: { error: "Trop de requêtes de calcul d'itinéraire, réessayez plus tard" },
 })
 
+// authGuard retiré (navigation invité) : cette route reste anonyme mais expose
+// la clé OpenWeatherMap payante à tout appelant — un rate limit dédié compense
+// l'absence de garde-fou par compte, au-delà du limiteur global 100/15min.
+const weatherRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { error: 'Trop de requêtes météo, réessayez plus tard' },
+})
+
 /**
  * @swagger
  * tags:
@@ -109,6 +120,6 @@ const journeyRateLimit = rateLimit({
 const router = Router()
 
 router.post('/journey', journeyRateLimit, validate(journeyRequestSchema), routingController.journey)
-router.get('/weather', routingController.weather)
+router.get('/weather', weatherRateLimit, routingController.weather)
 
 export default router
