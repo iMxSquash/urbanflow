@@ -64,7 +64,7 @@ export function GuestLockOverlay({
   description = 'Connectez-vous ou créez un compte gratuitement pour accéder à cette section.',
 }: GuestLockOverlayProps) {
   return (
-    <div className="absolute inset-0 z-30 flex items-center justify-center bg-bg/75 backdrop-blur-sm">
+    <div className="absolute inset-0 z-overlay flex items-center justify-center bg-bg/75 backdrop-blur-sm">
       <div className="w-full max-w-xs flex flex-col items-center gap-3 p-6 text-center card">
         <span
           aria-hidden="true"
