@@ -1,6 +1,6 @@
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getLastJourney } from '../utils/last-journey-cache'
+import { getLastJourney, type CachedJourney } from '../utils/last-journey-cache'
 import { useFocusTrap } from '../hooks/use-focus-trap'
 
 function formatCo2(grams: number): string {
@@ -17,10 +17,23 @@ function formatSavedAt(iso: string): string {
  * qui reste consultable (dernier itinéraire calculé, mis en cache localement,
  * et les pages qui ne dépendent pas du réseau carte/routage). */
 export function OfflinePanel() {
-  const lastJourney = getLastJourney()
+  const [lastJourney, setLastJourney] = useState<CachedJourney | null>(null)
   const dialogRef = useRef<HTMLDivElement>(null)
   // Rien à fermer : l'état se referme tout seul au retour du réseau (Échap no-op).
   useFocusTrap(dialogRef, () => {})
+
+  // Lecture IndexedDB locale, pas un appel réseau — un effet est le bon
+  // outil ici (la règle CLAUDE.md "pas de useEffect pour les appels API"
+  // cible les appels HTTP au backend, pas le stockage navigateur).
+  useEffect(() => {
+    let cancelled = false
+    void getLastJourney().then((journey) => {
+      if (!cancelled) setLastJourney(journey)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   return (
     <div className="fixed inset-0 z-modal flex flex-col">
@@ -54,14 +67,19 @@ export function OfflinePanel() {
         </span>
       </div>
 
+      {/* Même chrome visuel que .bottom-sheet (index.css) — surface, bordure,
+       * arrondi haut, ombre, poignée — sans réutiliser la classe elle-même :
+       * `.bottom-sheet` porte aussi le positionnement `fixed`/`z-sheet` et la
+       * bascule desktop en panneau latéral 400px de MapSheet, tous deux hors
+       * sujet ici (l'état hors ligne n'est pas piloté par `SheetState`). */}
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="Mode hors ligne"
-        className="bg-surface border-t border-border rounded-t-2xl px-4 pt-2.5 pb-4 flex flex-col gap-3"
+        className="bg-surface border-t border-border rounded-t-2xl shadow-sheet px-4 pt-2 pb-3 flex flex-col gap-3"
       >
-        <span aria-hidden="true" className="self-center w-10 h-1 rounded-full bg-border" />
+        <span aria-hidden="true" className="self-center bottom-sheet-handle" />
 
         <div className="flex items-start gap-3">
           <span className="size-11 rounded-md bg-surface-sunken flex items-center justify-center shrink-0">

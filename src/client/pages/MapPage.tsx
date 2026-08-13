@@ -176,7 +176,7 @@ export default function MapPage() {
   useEffect(() => {
     if (journeys.length === 0 || !toLabel) return
     const best = journeys[0]
-    saveLastJourney({
+    void saveLastJourney({
       fromLabel: geoPosition ? 'Ma position' : (fromLabel ?? 'Votre position'),
       toLabel,
       durationMin: best.totalDurationMin,
