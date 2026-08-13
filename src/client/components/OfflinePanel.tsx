@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { getLastJourney, type CachedJourney } from '../utils/last-journey-cache'
 import { useFocusTrap } from '../hooks/use-focus-trap'
+import { LastJourneyModal } from './LastJourneyModal'
 
 function formatCo2(grams: number): string {
   return grams >= 1000
@@ -13,14 +13,27 @@ function formatSavedAt(iso: string): string {
   return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 }
 
+// Référence stable : une closure inline recréée à chaque rendu ferait
+// dépendre l'effet de useFocusTrap (deps [ref, onEscape]) du rendu courant et
+// re-déclencherait le focus initial (donc lui volerait le focus) à chaque
+// re-render d'OfflinePanel — notamment à l'ouverture de LastJourneyModal.
+function noop() {}
+
+interface OfflinePanelProps {
+  /** Force une relecture immédiate de la connectivité (navigator.onLine),
+   * sans recharger la page ni rejouer le bootstrap applicatif (useAuthInit). */
+  onRetry: () => void
+}
+
 /** État hors ligne (MAQUETTE.md §5.7 / 6.2) — recouvre la carte, propose ce
  * qui reste consultable (dernier itinéraire calculé, mis en cache localement,
  * et les pages qui ne dépendent pas du réseau carte/routage). */
-export function OfflinePanel() {
+export function OfflinePanel({ onRetry }: OfflinePanelProps) {
   const [lastJourney, setLastJourney] = useState<CachedJourney | null>(null)
+  const [showLastJourneyDetail, setShowLastJourneyDetail] = useState(false)
   const dialogRef = useRef<HTMLDivElement>(null)
   // Rien à fermer : l'état se referme tout seul au retour du réseau (Échap no-op).
-  useFocusTrap(dialogRef, () => {})
+  useFocusTrap(dialogRef, noop)
 
   // Lecture IndexedDB locale, pas un appel réseau — un effet est le bon
   // outil ici (la règle CLAUDE.md "pas de useEffect pour les appels API"
@@ -36,7 +49,9 @@ export function OfflinePanel() {
   }, [])
 
   return (
-    <div className="fixed inset-0 z-modal flex flex-col">
+    // z-drawer (< z-navbar) : la nav (fixe sur mobile) doit rester utilisable
+    // pour quitter l'état hors ligne, cf. GuestLockOverlay (commit 9b1ca5b).
+    <div className="fixed inset-0 z-drawer flex flex-col">
       <div
         aria-hidden="true"
         className="flex-1"
@@ -72,12 +87,15 @@ export function OfflinePanel() {
        * `.bottom-sheet` porte aussi le positionnement `fixed`/`z-sheet` et la
        * bascule desktop en panneau latéral 400px de MapSheet, tous deux hors
        * sujet ici (l'état hors ligne n'est pas piloté par `SheetState`). */}
+      {/* pb élargi sous lg : dégage la nav mobile fixe (z-navbar, désormais
+       * au-dessus du panneau) qui sinon recouvrirait "Réessayer" — même
+       * variable/valeur que DashboardPage/ProfilePage/RewardsPage. */}
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="Mode hors ligne"
-        className="bg-surface border-t border-border rounded-t-2xl shadow-sheet px-4 pt-2 pb-3 flex flex-col gap-3"
+        className="bg-surface border-t border-border rounded-t-2xl shadow-sheet px-4 pt-2 pb-3 max-lg:pb-[calc(var(--height-bottomnav)+1rem)] flex flex-col gap-3"
       >
         <span aria-hidden="true" className="self-center bottom-sheet-handle" />
 
@@ -107,13 +125,21 @@ export function OfflinePanel() {
           </span>
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <span className="text-caption font-bold tracking-[0.06em] uppercase text-text-subtle">
-            Disponible hors ligne
-          </span>
+        {/* Le reste (dashboard, récompenses, profil...) ne dépend pas du
+         * réseau et reste atteignable via la nav, désormais visible
+         * au-dessus de ce panneau — pas besoin d'un raccourci dédié ici. */}
+        {lastJourney && (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-caption font-bold tracking-[0.06em] uppercase text-text-subtle">
+              Disponible hors ligne
+            </span>
 
-          {lastJourney && (
-            <div className="flex items-center gap-3 p-3.5 rounded-md border border-border">
+            <button
+              type="button"
+              onClick={() => setShowLastJourneyDetail(true)}
+              aria-label={`Voir le détail du dernier trajet, ${lastJourney.fromLabel} vers ${lastJourney.toLabel}`}
+              className="flex items-center gap-3 p-3.5 rounded-md border border-border text-left"
+            >
               <svg
                 aria-hidden="true"
                 width="18"
@@ -138,50 +164,25 @@ export function OfflinePanel() {
                   · −{formatCo2(lastJourney.co2SavedGrams)}
                 </span>
               </span>
-            </div>
-          )}
+              <svg
+                aria-hidden="true"
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-text-muted shrink-0"
+              >
+                <path d="M9 6l6 6-6 6" />
+              </svg>
+            </button>
+          </div>
+        )}
 
-          <Link
-            to="/dashboard"
-            className="flex items-center gap-3 p-3.5 rounded-md border border-border no-underline text-text"
-          >
-            <svg
-              aria-hidden="true"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-text-muted shrink-0"
-            >
-              <path d="M6 20v-6M12 20V7M18 20v-9M3 20h18" />
-            </svg>
-            <span className="flex-1 text-body-sm font-semibold">Mes progrès et badges</span>
-            <svg
-              aria-hidden="true"
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-text-muted shrink-0"
-            >
-              <path d="M9 6l6 6-6 6" />
-            </svg>
-          </Link>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => window.location.reload()}
-          className="btn-primary w-full"
-        >
+        <button type="button" onClick={onRetry} className="btn-primary w-full">
           <svg
             aria-hidden="true"
             width="16"
@@ -198,6 +199,14 @@ export function OfflinePanel() {
           Réessayer
         </button>
       </div>
+
+      {/* Rendu hors de `dialogRef` (pas un enfant du conteneur piégé par
+       * useFocusTrap ci-dessus) : `LastJourneyModal` gère son propre piège de
+       * focus via `Modal` — l'imbriquer sous `dialogRef` ferait courir les
+       * deux pièges sur le même sous-arbre DOM et se disputer le focus. */}
+      {showLastJourneyDetail && lastJourney && (
+        <LastJourneyModal journey={lastJourney} onClose={() => setShowLastJourneyDetail(false)} />
+      )}
     </div>
   )
 }

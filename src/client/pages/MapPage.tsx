@@ -57,7 +57,7 @@ interface DemoScenarioState {
 export default function MapPage() {
   const isGuest = useAuthStore((s) => s.isGuest)
   const { geolocationConsent, grantGeolocation, denyGeolocation } = useConsentStore()
-  const isOnline = useOnlineStatus()
+  const { isOnline, recheck: recheckOnlineStatus } = useOnlineStatus()
   const isDarkMode = useIsDarkMode()
   const { position: geoPosition, error: geoError, loading: geoLoading, locate } = useGeolocation()
   const [addressPosition, setAddressPosition] = useState<Coordinates | null>(null)
@@ -346,7 +346,9 @@ export default function MapPage() {
       <div className="h-screen lg:h-auto lg:flex-1 lg:min-w-0">
         {/* Ne recouvre pas un suivi de trajet déjà en cours — le GPS et le
          * segment affiché ne dépendent pas du réseau une fois le trajet chargé. */}
-        {!isOnline && tracking.trackingPhase !== 'active' && <OfflinePanel />}
+        {!isOnline && tracking.trackingPhase !== 'active' && (
+          <OfflinePanel onRetry={recheckOnlineStatus} />
+        )}
 
         <main
           className="h-full relative overflow-hidden isolate group"
