@@ -6,11 +6,14 @@ import type {
   RewardType,
   UserRedemption,
 } from '../services/rewards.service'
+import { GuestLocked } from '../components/GuestLocked'
 import { PageHeader } from '../components/PageHeader'
 import { PageWithSidebar } from '../components/PageWithSidebar'
 import { useFetchResource } from '../hooks/use-fetch-resource'
+import { useAuthStore } from '../stores/auth.store'
 import { useResourceCacheStore } from '../stores/resource-cache.store'
 import { CACHE_KEYS, CACHE_TTL_MS } from '../constants/cache-keys'
+import { GUEST_FAKE_CATALOG, GUEST_FAKE_REDEMPTIONS } from '../constants/guest-fake-data'
 
 // ── Formatage ──────────────────────────────────────────────────────────────────
 
@@ -347,6 +350,7 @@ function HistorySection({
 type Tab = 'catalog' | 'history'
 
 export default function RewardsPage() {
+  const isGuest = useAuthStore((s) => s.isGuest)
   const [tab, setTab] = useState<Tab>('catalog')
 
   const {
@@ -354,7 +358,12 @@ export default function RewardsPage() {
     loading: catalogLoading,
     error: catalogError,
     refetch: refetchCatalog,
-  } = useFetchResource(CACHE_KEYS.rewardsCatalog, getRewardCatalog, CACHE_TTL_MS.rewardsCatalog)
+  } = useFetchResource(
+    CACHE_KEYS.rewardsCatalog,
+    getRewardCatalog,
+    CACHE_TTL_MS.rewardsCatalog,
+    !isGuest
+  )
   const {
     data: redemptionsData,
     loading: redemptionsLoading,
@@ -363,11 +372,12 @@ export default function RewardsPage() {
   } = useFetchResource(
     CACHE_KEYS.rewardsRedemptions,
     getMyRedemptions,
-    CACHE_TTL_MS.rewardsRedemptions
+    CACHE_TTL_MS.rewardsRedemptions,
+    !isGuest
   )
 
-  const catalog = catalogData ?? null
-  const redemptions = redemptionsData ?? []
+  const catalog = isGuest ? GUEST_FAKE_CATALOG : (catalogData ?? null)
+  const redemptions = isGuest ? GUEST_FAKE_REDEMPTIONS : (redemptionsData ?? [])
   const loading = catalogLoading || redemptionsLoading
   const error = catalogError ?? redemptionsError
 
@@ -381,6 +391,7 @@ export default function RewardsPage() {
 
   const handlePurchase = useCallback(
     async (rewardId: string) => {
+      if (isGuest) return
       const reward = catalog?.rewards.find((r) => r.id === rewardId)
       if (!reward) return
 
@@ -406,7 +417,7 @@ export default function RewardsPage() {
         setPurchasingId(null)
       }
     },
-    [catalog, refetchCatalog, refetchRedemptions]
+    [catalog, isGuest, refetchCatalog, refetchRedemptions]
   )
 
   return (
@@ -490,10 +501,36 @@ export default function RewardsPage() {
             </div>
           )}
 
-          {/* Mobile : un seul panneau à la fois, piloté par les tabs ── */}
-          <div className="lg:hidden">
-            {tab === 'catalog' ? (
-              <section id="panel-catalog" role="tabpanel" aria-labelledby="tab-catalog">
+          <GuestLocked
+            active={isGuest}
+            title="Créez un compte pour échanger vos points"
+            description="Connectez-vous ou créez un compte gratuitement pour échanger vos points contre des récompenses."
+          >
+            {/* Mobile : un seul panneau à la fois, piloté par les tabs ── */}
+            <div className="lg:hidden">
+              {tab === 'catalog' ? (
+                <section id="panel-catalog" role="tabpanel" aria-labelledby="tab-catalog">
+                  <CatalogSection
+                    loading={loading}
+                    catalog={catalog}
+                    purchasingId={purchasingId}
+                    onPurchase={handlePurchase}
+                  />
+                </section>
+              ) : (
+                <section id="panel-history" role="tabpanel" aria-labelledby="tab-history">
+                  <HistorySection loading={loading} redemptions={redemptions} />
+                </section>
+              )}
+            </div>
+
+            {/* Desktop : Catalogue + Historique côte à côte, pas de tabs
+             * (MAQUETTE.md §5.5 — "cohabitation sans tabs") ── */}
+            <div className="hidden lg:grid lg:grid-cols-[1.6fr_1fr] lg:gap-5 lg:items-start">
+              <section aria-labelledby="catalog-heading-lg">
+                <h2 id="catalog-heading-lg" className="text-h3 font-bold mb-3">
+                  Catalogue
+                </h2>
                 <CatalogSection
                   loading={loading}
                   catalog={catalog}
@@ -501,34 +538,14 @@ export default function RewardsPage() {
                   onPurchase={handlePurchase}
                 />
               </section>
-            ) : (
-              <section id="panel-history" role="tabpanel" aria-labelledby="tab-history">
+              <section aria-labelledby="history-heading-lg">
+                <h2 id="history-heading-lg" className="text-h3 font-bold mb-3">
+                  Historique
+                </h2>
                 <HistorySection loading={loading} redemptions={redemptions} />
               </section>
-            )}
-          </div>
-
-          {/* Desktop : Catalogue + Historique côte à côte, pas de tabs
-           * (MAQUETTE.md §5.5 — "cohabitation sans tabs") ── */}
-          <div className="hidden lg:grid lg:grid-cols-[1.6fr_1fr] lg:gap-5 lg:items-start">
-            <section aria-labelledby="catalog-heading-lg">
-              <h2 id="catalog-heading-lg" className="text-h3 font-bold mb-3">
-                Catalogue
-              </h2>
-              <CatalogSection
-                loading={loading}
-                catalog={catalog}
-                purchasingId={purchasingId}
-                onPurchase={handlePurchase}
-              />
-            </section>
-            <section aria-labelledby="history-heading-lg">
-              <h2 id="history-heading-lg" className="text-h3 font-bold mb-3">
-                Historique
-              </h2>
-              <HistorySection loading={loading} redemptions={redemptions} />
-            </section>
-          </div>
+            </div>
+          </GuestLocked>
         </main>
       </div>
 

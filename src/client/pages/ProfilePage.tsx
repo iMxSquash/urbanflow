@@ -2,11 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useProfileStore } from '../stores/profile.store'
 import { useAuthStore } from '../stores/auth.store'
+import { useGuestSafeEffect } from '../hooks/use-guest-safe-effect'
+import { GuestLocked } from '../components/GuestLocked'
 import { ModeChip } from '../components/ModeChip'
 import { PageHeader } from '../components/PageHeader'
 import { PageWithSidebar } from '../components/PageWithSidebar'
 import { Slider } from '../components/Slider'
 import { PROFILE_PRESETS } from '../constants/profile-presets'
+import { GUEST_PROFILE } from '../constants/guest-fake-data'
 import { TRANSPORT_MODES } from '@shared/types/index'
 import type { MobilityProfile, TransportMode, UserPreference } from '@shared/types/index'
 import { SCORING_WEIGHTS } from '@shared/constants/scoring-weights'
@@ -37,26 +40,29 @@ interface FormState {
   pmrAccessibility: boolean
 }
 
-function ProfileForm({ profile }: { profile: MobilityProfile }) {
+function ProfileForm({ profile, isGuest }: { profile: MobilityProfile; isGuest: boolean }) {
   const updateProfile = useProfileStore((s) => s.updateProfile)
   const radioGroupRef = useRef<HTMLDivElement>(null)
-  const isFirstRender = useRef(true)
 
-  const [form, setForm] = useState<FormState>({
+  const initialForm: FormState = {
     preference: profile.preference,
     modes: profile.preferredModes,
     maxWalkMinutes: Math.max(5, profile.maxWalkMinutes),
     pmrAccessibility: profile.pmrAccessibility,
-  })
+  }
+  const [form, setForm] = useState<FormState>(initialForm)
+  
+  const initialFormRef = useRef(initialForm)
   const [saveError, setSaveError] = useState<string | null>(null)
 
   // Sauvegarde automatique, débattue, à chaque changement (MAQUETTE.md §5.3 :
-  // "pas de bouton Enregistrer — bandeau Enregistré automatiquement").
+  // "pas de bouton Enregistrer — bandeau Enregistré automatiquement"). Ne
+  // sauvegarde jamais pour un invité — profil fictif, pas de compte serveur
+  // (le PUT authentifié 401'd déclencherait un clearAuth() qui l'éjecterait,
+  // même piège que fetchProfile ailleurs dans cette fonctionnalité).
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false
-      return
-    }
+    if (isGuest) return
+    if (JSON.stringify(form) === JSON.stringify(initialFormRef.current)) return
     const timer = setTimeout(() => {
       updateProfile({
         preference: form.preference,
@@ -69,7 +75,7 @@ function ProfileForm({ profile }: { profile: MobilityProfile }) {
     }, 500)
     return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form])
+  }, [form, isGuest])
 
   function handleRadioKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
     if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) return
@@ -296,13 +302,13 @@ export default function ProfilePage() {
   const fetchError = useProfileStore((s) => s.error)
   const fetchProfile = useProfileStore((s) => s.fetchProfile)
   const user = useAuthStore((s) => s.user)
+  const isGuest = useAuthStore((s) => s.isGuest)
 
-  useEffect(() => {
-    void fetchProfile()
-  }, [fetchProfile])
+  useGuestSafeEffect(fetchProfile, [fetchProfile])
 
   const isInitialLoading = !profile && isLoading
   const initials = user ? user.email.slice(0, 2).toUpperCase() : '?'
+  const displayedProfile = isGuest ? GUEST_PROFILE : profile
 
   return (
     <PageWithSidebar>
@@ -339,7 +345,7 @@ export default function ProfilePage() {
         </PageHeader>
 
         <main className="max-w-2xl mx-auto px-4 py-5 lg:px-6 lg:max-w-260">
-          {fetchError && !profile && (
+          {fetchError && !profile && !isGuest && (
             <div
               role="alert"
               className="bg-danger-surface rounded-xl px-4 py-3 text-danger-text text-body-sm mb-4"
@@ -350,8 +356,14 @@ export default function ProfilePage() {
 
           {isInitialLoading ? (
             <ProfileSkeleton />
-          ) : profile ? (
-            <ProfileForm profile={profile} />
+          ) : displayedProfile ? (
+            <GuestLocked
+              active={isGuest}
+              title="Créez un compte pour accéder à votre profil"
+              description="Connectez-vous ou créez un compte gratuitement pour régler vos préférences de mobilité."
+            >
+              <ProfileForm profile={displayedProfile} isGuest={isGuest} />
+            </GuestLocked>
           ) : null}
         </main>
       </div>

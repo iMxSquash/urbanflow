@@ -2,20 +2,26 @@ import { useEffect } from 'react'
 import { getUserBadges } from '../services/gamification.service'
 import { BackButton } from '../components/BackButton'
 import { BadgeGrid } from '../components/BadgeGrid'
+import { GuestLocked } from '../components/GuestLocked'
 import { PageHeader } from '../components/PageHeader'
 import { PageWithSidebar } from '../components/PageWithSidebar'
+import { useAuthStore } from '../stores/auth.store'
 import { useGamificationStore } from '../stores/gamification.store'
 import { useFetchResource } from '../hooks/use-fetch-resource'
 import { CACHE_KEYS, CACHE_TTL_MS } from '../constants/cache-keys'
+import { GUEST_FAKE_BADGES } from '../constants/guest-fake-data'
 
 /** Écran badges — drill-down depuis « Mes progrès » (MAQUETTE.md §5.4, 3.2 · Badges). */
 export default function DashboardBadgesPage() {
+  const isGuest = useAuthStore((s) => s.isGuest)
+
   const { data: badgesData, loading } = useFetchResource(
     CACHE_KEYS.gamificationBadges,
     getUserBadges,
-    CACHE_TTL_MS.gamificationBadges
+    CACHE_TTL_MS.gamificationBadges,
+    !isGuest
   )
-  const badges = badgesData ?? []
+  const badges = isGuest ? GUEST_FAKE_BADGES : (badgesData ?? [])
 
   const newlyUnlocked = useGamificationStore((s) => s.newlyUnlockedBadges)
   const clearNewlyUnlocked = useGamificationStore((s) => s.clearNewlyUnlockedBadges)
@@ -42,7 +48,13 @@ export default function DashboardBadgesPage() {
         </PageHeader>
 
         <main className="max-w-2xl mx-auto px-4 py-4 lg:max-w-260 lg:px-10 lg:py-8">
-          <BadgeGrid badges={badges} newlyUnlocked={newlyUnlocked} loading={loading} />
+          <GuestLocked
+            active={isGuest}
+            title="Créez un compte pour débloquer des badges"
+            description="Connectez-vous ou créez un compte gratuitement pour suivre vos badges."
+          >
+            <BadgeGrid badges={badges} newlyUnlocked={newlyUnlocked} loading={loading} />
+          </GuestLocked>
         </main>
       </div>
     </PageWithSidebar>

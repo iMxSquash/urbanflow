@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { recordTrip } from '../services/gamification.service'
 import type { RecordTripResult } from '../services/gamification.service'
+import { useAuthStore } from '../stores/auth.store'
 import { useGamificationStore } from '../stores/gamification.store'
 import { useActiveTracking } from './use-active-tracking'
 import type { Coordinates, Journey } from '@shared/types/index'
@@ -19,11 +20,28 @@ interface UseTripTrackingOptions {
   fallbackDestination: Coordinates
 }
 
+/** Résultat local sans appel réseau pour un invité — `POST /api/gamification/record-trip`
+ * est authGuard'd et un invité n'a pas de solde de points serveur. Un 401 ici
+ * déclencherait un clearAuth() qui réinitialiserait isGuest (même piège que
+ * fetchProfile sur MapPage) ; on construit donc un résultat à points nuls à
+ * partir des données déjà connues côté client (CO2 déjà calculé par le
+ * routing, public) pour que le résumé de trajet reste affichable. */
+function buildGuestTripResult(journey: Journey): RecordTripResult {
+  return {
+    tripId: 'guest',
+    co2SavedGrams: journey.co2SavingG,
+    pointsEarned: 0,
+    totalPoints: 0,
+    newlyUnlockedBadges: [],
+  }
+}
+
 /** Machine à états du suivi GPS d'un trajet : consentement → suivi actif → arrivée
  * (automatique par proximité GPS ou manuelle via "Terminer le trajet") → résumé.
  * Isolé de `MapPage` pour ne pas mélanger cette logique avec la recherche/le layout
  * de la carte (cf. code review "Frontend — Pages React"). */
 export function useTripTracking({ selectedJourney, fallbackDestination }: UseTripTrackingOptions) {
+  const isGuest = useAuthStore((s) => s.isGuest)
   const [trackingPhase, setTrackingPhase] = useState<TrackingPhase>('idle')
   const [activeTracking, setActiveTracking] = useState<ActiveTrackingState | null>(null)
   const [summaryResult, setSummaryResult] = useState<RecordTripResult | null>(null)
@@ -47,18 +65,25 @@ export function useTripTracking({ selectedJourney, fallbackDestination }: UseTri
     if (!selectedJourney || !activeTracking) return
     stopTracking()
     const realDurationMin = Math.round((Date.now() - activeTracking.startTime) / 60_000)
-    const { segments } = selectedJourney
-    try {
-      const result = await recordTrip(segments)
-      useGamificationStore.getState().setTripResult(result.totalPoints, result.newlyUnlockedBadges)
-      setSummaryResult(result)
+    if (isGuest) {
+      setSummaryResult(buildGuestTripResult(selectedJourney))
       setSummaryDurationMin(Math.max(1, realDurationMin))
-    } catch {
-      // Échec silencieux : le résumé ne s'affiche pas mais le suivi est bien arrêté
+    } else {
+      const { segments } = selectedJourney
+      try {
+        const result = await recordTrip(segments)
+        useGamificationStore
+          .getState()
+          .setTripResult(result.totalPoints, result.newlyUnlockedBadges)
+        setSummaryResult(result)
+        setSummaryDurationMin(Math.max(1, realDurationMin))
+      } catch {
+        // Échec silencieux : le résumé ne s'affiche pas mais le suivi est bien arrêté
+      }
     }
     setTrackingPhase('done')
     setActiveTracking(null)
-  }, [selectedJourney, activeTracking, stopTracking])
+  }, [selectedJourney, activeTracking, isGuest, stopTracking])
 
   // Détection d'arrivée
   useEffect(() => {
@@ -83,6 +108,10 @@ export function useTripTracking({ selectedJourney, fallbackDestination }: UseTri
   const skip = useCallback(async () => {
     setTrackingPhase('idle')
     if (!selectedJourney) return
+    if (isGuest) {
+      setTripResult(buildGuestTripResult(selectedJourney))
+      return
+    }
     const { segments } = selectedJourney
     try {
       const result = await recordTrip(segments, false)
@@ -91,7 +120,7 @@ export function useTripTracking({ selectedJourney, fallbackDestination }: UseTri
     } catch {
       // Le toast ne s'affiche pas en cas d'erreur réseau — pas de crash UI
     }
-  }, [selectedJourney])
+  }, [selectedJourney, isGuest])
 
   const requestEndTrip = useCallback(() => setShowEndTripConfirm(true), [])
   const cancelEndTripConfirm = useCallback(() => setShowEndTripConfirm(false), [])
