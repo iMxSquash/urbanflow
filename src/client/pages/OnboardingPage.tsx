@@ -1,9 +1,11 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useProfileStore } from '../stores/profile.store'
+import { useAuthStore } from '../stores/auth.store'
 import { useInstallPrompt } from '../hooks/use-install-prompt'
 import { useAppCacheSize } from '../hooks/use-app-cache-size'
 import { isIosDevice } from '../utils/platform'
+import { GuestLocked } from '../components/GuestLocked'
 import { ModeChip } from '../components/ModeChip'
 import { PROFILE_PRESETS } from '../constants/profile-presets'
 import urbanflowIcon from '../assets/urbanflow-icon.svg'
@@ -28,6 +30,7 @@ const DEFAULT_MODES: TransportMode[] = ['walk', 'bike', 'tramway', 'bus']
 export default function OnboardingPage() {
   const navigate = useNavigate()
   const updateProfile = useProfileStore((s) => s.updateProfile)
+  const isGuest = useAuthStore((s) => s.isGuest)
   const { canInstall, isInstalled, promptInstall } = useInstallPrompt()
   const isIOS = isIosDevice()
   const appCacheSize = useAppCacheSize()
@@ -104,29 +107,108 @@ export default function OnboardingPage() {
             </p>
           </div>
 
-          <div
-            ref={radioGroupRef}
-            role="radiogroup"
-            aria-label="Profil par défaut"
-            className="flex flex-col gap-2"
-            onKeyDown={handleRadioKeyDown}
+          <GuestLocked
+            active={isGuest}
+            title="Créez un compte pour continuer"
+            description="Connectez-vous ou créez un compte gratuitement pour enregistrer votre profil de mobilité."
+            className="flex-1 flex flex-col min-h-0"
           >
-            {PROFILE_PRESETS.map((opt) => {
-              const isSelected = preference === opt.value
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={isSelected}
-                  tabIndex={isSelected ? 0 : -1}
-                  onClick={() => setPreference(opt.value)}
-                  className={[
-                    'flex items-center gap-3 p-3.5 rounded-xl border text-left transition-colors duration-fast',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary',
-                    isSelected ? 'border-[1.5px] border-primary bg-primary-surface' : 'border-border',
-                  ].join(' ')}
-                >
+            <div className="flex-1 flex flex-col gap-4 min-h-0">
+              <div
+                ref={radioGroupRef}
+                role="radiogroup"
+                aria-label="Profil par défaut"
+                className="flex flex-col gap-2"
+                onKeyDown={handleRadioKeyDown}
+              >
+                {PROFILE_PRESETS.map((opt) => {
+                  const isSelected = preference === opt.value
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={isSelected}
+                      tabIndex={isSelected ? 0 : -1}
+                      onClick={() => setPreference(opt.value)}
+                      className={[
+                        'flex items-center gap-3 p-3.5 rounded-xl border text-left transition-colors duration-fast',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary',
+                        isSelected
+                          ? 'border-[1.5px] border-primary bg-primary-surface'
+                          : 'border-border',
+                      ].join(' ')}
+                    >
+                      <svg
+                        aria-hidden="true"
+                        width="22"
+                        height="22"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.75"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className={
+                          isSelected ? 'text-primary shrink-0' : 'text-text-muted shrink-0'
+                        }
+                      >
+                        {opt.icon}
+                      </svg>
+                      <span className="flex-1 flex flex-col gap-0.5">
+                        <span className="text-body-sm font-bold">{opt.label}</span>
+                        <span className="text-caption text-text-muted">{opt.description}</span>
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className={[
+                          'size-6 rounded-full flex items-center justify-center shrink-0',
+                          isSelected ? 'bg-primary' : 'border-2 border-border',
+                        ].join(' ')}
+                      >
+                        {isSelected && (
+                          <svg
+                            width="13"
+                            height="13"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="text-on-primary"
+                          >
+                            <path d="M20 6L9 17l-5-5" />
+                          </svg>
+                        )}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div>
+                <span className="block text-caption font-bold tracking-[0.06em] uppercase text-text-subtle mb-2">
+                  Modes que vous utilisez
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {ONBOARDING_MODES.map((mode) => (
+                    <ModeChip
+                      key={mode}
+                      mode={mode}
+                      selected={modes.includes(mode)}
+                      onClick={() => toggleMode(mode)}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div role="alert" aria-live="polite" className="min-h-0">
+                {error && <p className="text-body-sm text-danger-text">{error}</p>}
+              </div>
+
+              <div className="mt-auto flex flex-col gap-2.5 lg:mt-0">
+                <div className="flex items-center gap-3 p-3.5 rounded-xl bg-surface-sunken">
                   <svg
                     aria-hidden="true"
                     width="22"
@@ -137,120 +219,54 @@ export default function OnboardingPage() {
                     strokeWidth="1.75"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className={isSelected ? 'text-primary shrink-0' : 'text-text-muted shrink-0'}
+                    className="text-text shrink-0"
                   >
-                    {opt.icon}
+                    <rect x="6" y="2.5" width="12" height="19" rx="2.5" />
+                    <path d="M12 6v7M9 10l3 3 3-3" />
                   </svg>
                   <span className="flex-1 flex flex-col gap-0.5">
-                    <span className="text-body-sm font-bold">{opt.label}</span>
-                    <span className="text-caption text-text-muted">{opt.description}</span>
+                    <span className="text-body-sm font-semibold">Installer UrbanFlow</span>
+                    <span className="text-caption text-text-muted">
+                      {!isInstalled && !canInstall && isIOS
+                        ? 'Partager → Sur l’écran d’accueil'
+                        : appCacheSize
+                          ? `Accès hors-ligne aux derniers itinéraires · ${appCacheSize}`
+                          : 'Accès hors-ligne aux derniers itinéraires'}
+                    </span>
                   </span>
-                  <span
-                    aria-hidden="true"
-                    className={[
-                      'size-6 rounded-full flex items-center justify-center shrink-0',
-                      isSelected ? 'bg-primary' : 'border-2 border-border',
-                    ].join(' ')}
-                  >
-                    {isSelected && (
-                      <svg
-                        width="13"
-                        height="13"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="3.2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="text-on-primary"
-                      >
-                        <path d="M20 6L9 17l-5-5" />
-                      </svg>
-                    )}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
+                  {canInstall && (
+                    <button
+                      type="button"
+                      onClick={() => void promptInstall()}
+                      className="shrink-0 h-9 px-3.5 rounded-md bg-text text-bg text-caption font-semibold"
+                    >
+                      Installer
+                    </button>
+                  )}
+                </div>
 
-          <div>
-            <span className="block text-caption font-bold tracking-[0.06em] uppercase text-text-subtle mb-2">
-              Modes que vous utilisez
-            </span>
-            <div className="flex flex-wrap gap-1.5">
-              {ONBOARDING_MODES.map((mode) => (
-                <ModeChip
-                  key={mode}
-                  mode={mode}
-                  selected={modes.includes(mode)}
-                  onClick={() => toggleMode(mode)}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div role="alert" aria-live="polite" className="min-h-0">
-            {error && <p className="text-body-sm text-danger-text">{error}</p>}
-          </div>
-
-          <div className="mt-auto flex flex-col gap-2.5 lg:mt-0">
-            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-surface-sunken">
-              <svg
-                aria-hidden="true"
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.75"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="text-text shrink-0"
-              >
-                <rect x="6" y="2.5" width="12" height="19" rx="2.5" />
-                <path d="M12 6v7M9 10l3 3 3-3" />
-              </svg>
-              <span className="flex-1 flex flex-col gap-0.5">
-                <span className="text-body-sm font-semibold">Installer UrbanFlow</span>
-                <span className="text-caption text-text-muted">
-                  {!isInstalled && !canInstall && isIOS
-                    ? 'Partager → Sur l’écran d’accueil'
-                    : appCacheSize
-                      ? `Accès hors-ligne aux derniers itinéraires · ${appCacheSize}`
-                      : 'Accès hors-ligne aux derniers itinéraires'}
-                </span>
-              </span>
-              {canInstall && (
                 <button
                   type="button"
-                  onClick={() => void promptInstall()}
-                  className="shrink-0 h-9 px-3.5 rounded-md bg-text text-bg text-caption font-semibold"
+                  onClick={() => void handleStart()}
+                  className="btn-primary w-full"
+                  disabled={isSaving}
+                  aria-busy={isSaving}
                 >
-                  Installer
+                  {isSaving ? (
+                    <>
+                      <span
+                        aria-hidden="true"
+                        className="inline-block w-4 h-4 border-2 border-on-primary border-t-transparent rounded-full animate-spin"
+                      />
+                      Enregistrement…
+                    </>
+                  ) : (
+                    'Commencer'
+                  )}
                 </button>
-              )}
+              </div>
             </div>
-
-            <button
-              type="button"
-              onClick={() => void handleStart()}
-              className="btn-primary w-full"
-              disabled={isSaving}
-              aria-busy={isSaving}
-            >
-              {isSaving ? (
-                <>
-                  <span
-                    aria-hidden="true"
-                    className="inline-block w-4 h-4 border-2 border-on-primary border-t-transparent rounded-full animate-spin"
-                  />
-                  Enregistrement…
-                </>
-              ) : (
-                'Commencer'
-              )}
-            </button>
-          </div>
+          </GuestLocked>
         </div>
       </div>
     </main>

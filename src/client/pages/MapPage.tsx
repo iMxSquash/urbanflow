@@ -21,10 +21,12 @@ import { useOnlineStatus } from '../hooks/use-online-status'
 import { saveLastJourney } from '../utils/last-journey-cache'
 import { recordGeolocationConsent } from '../services/auth.service'
 import { useGeolocation } from '../hooks/use-geolocation'
+import { useGuestSafeEffect } from '../hooks/use-guest-safe-effect'
 import { useIsDarkMode } from '../hooks/use-is-dark-mode'
 import { useJourney } from '../hooks/use-journey'
 import { useTripTracking } from '../hooks/use-trip-tracking'
 import { useWeather } from '../hooks/use-weather'
+import { useAuthStore } from '../stores/auth.store'
 import { useConsentStore } from '../stores/consent.store'
 import { useMapLayersStore } from '../stores/map-layers.store'
 import { useProfileStore } from '../stores/profile.store'
@@ -53,6 +55,7 @@ interface DemoScenarioState {
 }
 
 export default function MapPage() {
+  const isGuest = useAuthStore((s) => s.isGuest)
   const { geolocationConsent, grantGeolocation, denyGeolocation } = useConsentStore()
   const isOnline = useOnlineStatus()
   const isDarkMode = useIsDarkMode()
@@ -107,9 +110,7 @@ export default function MapPage() {
   const locatedOnMount = useRef(false)
   const scenarioApplied = useRef(false)
 
-  useEffect(() => {
-    void fetchProfile()
-  }, [fetchProfile])
+  useGuestSafeEffect(fetchProfile, [fetchProfile])
 
   useEffect(() => {
     if (geolocationConsent === 'granted' && !locatedOnMount.current) {
@@ -188,7 +189,10 @@ export default function MapPage() {
   function handleGrant() {
     locatedOnMount.current = true
     grantGeolocation()
-    void recordGeolocationConsent()
+    // POST /api/auth/consent est authGuard'd — ne trace le consentement côté
+    // serveur que pour un compte réel ; le consentement local (Zustand) suffit
+    // à l'expérience invité et évite un 401 -> clearAuth() qui l'éjecterait.
+    if (!isGuest) void recordGeolocationConsent()
     locate()
   }
 

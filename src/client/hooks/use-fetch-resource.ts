@@ -8,11 +8,14 @@ interface UseFetchResourceResult<T> {
   refetch: (force?: boolean) => Promise<T>
 }
 
-/** Hook générique de fetch avec cache TTL partagé — voir resource-cache.store.ts. */
+/** Hook générique de fetch avec cache TTL partagé — voir resource-cache.store.ts.
+ * `enabled: false` (ex. utilisateur invité) désactive le fetch réseau sans
+ * changer la forme du retour — évite un appel authentifié voué au 401. */
 export function useFetchResource<T>(
   key: string,
   fetcher: () => Promise<T>,
-  ttlMs?: number
+  ttlMs?: number,
+  enabled = true
 ): UseFetchResourceResult<T> {
   // Cast non vérifiable à l'exécution : le cache est générique sur une clé
   // string, TypeScript ne peut pas relier `key` au `T` de cet appel précis.
@@ -22,10 +25,13 @@ export function useFetchResource<T>(
   // dans tout le code, ce qui rend ce cast sûr en pratique sans nécessiter de
   // validation runtime.
   const cached = useResourceCacheStore((s) => s.entries[key]?.data as T | undefined)
-  const [loading, setLoading] = useState(cached === undefined)
+  const [loadingState, setLoading] = useState(cached === undefined)
   const [error, setError] = useState<string | null>(null)
+  const loading = enabled && loadingState
 
   useEffect(() => {
+    if (!enabled) return
+
     let cancelled = false
 
     fetchCached(key, fetcher, ttlMs)
@@ -45,7 +51,7 @@ export function useFetchResource<T>(
     // key détermine entièrement la ressource demandée ; fetcher ferme sur des
     // identifiants déjà capturés par key, pas besoin de le lister ici.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key])
+  }, [key, enabled])
 
   // Déclenchement manuel (ex. après une action qui invalide la donnée) — ne
   // gère pas loading/error lui-même : l'appelant sait déjà gérer son propre
@@ -56,5 +62,10 @@ export function useFetchResource<T>(
     [key, ttlMs]
   )
 
-  return { data: cached, loading, error, refetch }
+  // `enabled: false` doit vraiment masquer la donnée, pas seulement sauter le
+  // fetch réseau — sans ce filtre, une donnée réelle mise en cache par une
+  // session authentifiée précédente resterait lisible via `cached` même après
+  // clearAuth() (qui ne vide jamais resource-cache.store), en contradiction
+  // avec le docstring de ce hook.
+  return { data: enabled ? cached : undefined, loading, error, refetch }
 }
