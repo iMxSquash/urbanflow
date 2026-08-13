@@ -52,10 +52,10 @@ export function JourneyLayer({ journey, activeSegmentIdx }: JourneyLayerProps) {
 
         return (
           <Polyline
-            key={idx}
+            key={`${journey.id}-${idx}`}
             positions={positions}
+            className={modeRouteClassName(segment.mode)}
             pathOptions={{
-              className: modeRouteClassName(segment.mode),
               weight: activeSegmentIdx === idx ? 7 : segment.mode === 'walk' ? 3 : 5,
               opacity: isActive ? 0.9 : 0.2,
               dashArray: segment.mode === 'walk' ? '5 9' : undefined,
