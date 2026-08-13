@@ -1,6 +1,5 @@
 import { Router } from 'express'
 import rateLimit from 'express-rate-limit'
-import { authGuard } from '../../middleware/auth-guard.js'
 import { validate } from '../../middleware/validate.js'
 import { journeyRequestSchema } from './routing.schema.js'
 import * as routingController from './routing.controller.js'
@@ -33,9 +32,9 @@ const journeyRateLimit = rateLimit({
  *       DEMO_MODE=true → DemoProvider (JSON statiques, toujours disponible).
  *       Filtres appliqués avant le classement : modes non souhaités éliminés,
  *       segments de marche dépassant maxWalkMinutes supprimés (PMR : seuil réduit à 5 min).
+ *       Accessible sans authentification — la recherche d'itinéraire ne nécessite pas de compte
+ *       (navigation invité).
  *     tags: [Routing]
- *     security:
- *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -100,12 +99,6 @@ const journeyRateLimit = rateLimit({
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
- *       401:
- *         description: Token manquant ou invalide
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Error'
  *       502:
  *         description: Tous les providers de routage ont échoué
  *         content:
@@ -115,13 +108,7 @@ const journeyRateLimit = rateLimit({
  */
 const router = Router()
 
-router.post(
-  '/journey',
-  journeyRateLimit,
-  authGuard,
-  validate(journeyRequestSchema),
-  routingController.journey
-)
-router.get('/weather', authGuard, routingController.weather)
+router.post('/journey', journeyRateLimit, validate(journeyRequestSchema), routingController.journey)
+router.get('/weather', routingController.weather)
 
 export default router
