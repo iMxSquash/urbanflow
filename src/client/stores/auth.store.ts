@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import { refreshToken } from '../services/auth.service'
 
 interface AuthUser {
@@ -43,33 +44,48 @@ function parseJwtPayload(token: string): AuthUser | null {
   }
 }
 
-export const useAuthStore = create<AuthState>((set) => {
-  let pendingRefresh: Promise<string | null> | null = null
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => {
+      let pendingRefresh: Promise<string | null> | null = null
 
-  return {
-    accessToken: null,
-    user: null,
-    isInitialized: false,
-    isGuest: false,
+      return {
+        accessToken: null,
+        user: null,
+        isInitialized: false,
+        isGuest: false,
 
-    setAuth: (token) => set({ accessToken: token, user: parseJwtPayload(token), isGuest: false }),
-    clearAuth: () => set({ accessToken: null, user: null, isGuest: false }),
-    setInitialized: () => set({ isInitialized: true }),
-    continueAsGuest: () => set({ isGuest: true, isInitialized: true }),
+        setAuth: (token) =>
+          set({ accessToken: token, user: parseJwtPayload(token), isGuest: false }),
+        clearAuth: () => set({ accessToken: null, user: null, isGuest: false }),
+        setInitialized: () => set({ isInitialized: true }),
+        continueAsGuest: () => set({ isGuest: true, isInitialized: true }),
 
-    refreshIfNeeded: () => {
-      if (!pendingRefresh) {
-        pendingRefresh = refreshToken()
-          .then((data) => {
-            const token = data?.accessToken ?? null
-            if (token) set({ accessToken: token, user: parseJwtPayload(token) })
-            return token
-          })
-          .finally(() => {
-            pendingRefresh = null
-          })
+        refreshIfNeeded: () => {
+          if (!pendingRefresh) {
+            pendingRefresh = refreshToken()
+              .then((data) => {
+                const token = data?.accessToken ?? null
+                if (token) set({ accessToken: token, user: parseJwtPayload(token) })
+                return token
+              })
+              .finally(() => {
+                pendingRefresh = null
+              })
+          }
+          return pendingRefresh
+        },
       }
-      return pendingRefresh
     },
-  }
-})
+    {
+      name: 'urbanflow-auth',
+      // Seul `isGuest` est persisté : le mode invité ne doit pas être perdu à
+      // chaque rechargement de page (sinon ProtectedRoute renvoie vers /login
+      // faute de token ET de flag invité). Le token, lui, ne doit jamais
+      // toucher le stockage web (cf. CLAUDE.md — cookie HttpOnly uniquement) ;
+      // après un reload il est retrouvé via `refreshIfNeeded()`, pas via ce
+      // store persisté.
+      partialize: (state) => ({ isGuest: state.isGuest }),
+    }
+  )
+)
