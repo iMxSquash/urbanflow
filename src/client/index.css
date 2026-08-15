@@ -237,6 +237,9 @@
   --height-navbar: 4rem;
   --height-bottomnav: 4.5rem;
 
+  /* ─── Largeurs nommées ───────────────────── */
+  --width-sidebar: 14.5rem;
+
   /* ─── Z-index ────────────────────────────── */
   /* .bottom-sheet vit hors du contexte isolate de <main> (cf. z-1100 plus
    * bas) : modal/toast doivent dépasser sa valeur pour s'afficher par-dessus
@@ -893,7 +896,7 @@
   .bottom-nav {
     @apply fixed inset-x-0 bottom-0 z-navbar grid grid-cols-4 gap-1 px-2 pt-2;
     @apply bg-surface border-t border-border;
-    @apply lg:static lg:flex lg:flex-col lg:w-58 lg:h-screen lg:p-4 lg:border-t-0 lg:border-r lg:border-border;
+    @apply lg:static lg:flex lg:flex-col lg:w-(--width-sidebar) lg:h-screen lg:p-4 lg:border-t-0 lg:border-r lg:border-border;
     /* env() ne peut pas s'exprimer en classe utilitaire */
     padding-bottom: calc(var(--spacing) * 2 + env(safe-area-inset-bottom));
     /* Sans z-index explicite, un `position:fixed` sans z-index (auto) se classe

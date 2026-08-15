@@ -57,8 +57,11 @@ export function OfflinePanel({ onRetry }: OfflinePanelProps) {
     // empilement — même technique que `.bottom-sheet` lui-même pour ses états
     // où la nav doit rester affichée (`max-lg:bottom-(--height-bottomnav)`
     // dans index.css) : le panneau s'arrête avant la bande occupée par la nav
-    // fixe mobile au lieu de compter sur un z-index inférieur au sien.
-    <div className="fixed inset-x-0 top-0 max-lg:bottom-[var(--height-bottomnav)] lg:bottom-0 z-modal flex flex-col">
+    // fixe mobile au lieu de compter sur un z-index inférieur au sien. Même
+    // logique côté desktop : la sidebar (`lg:static`, donc jamais recouverte
+    // par un simple ordre de z-index face à un élément `fixed`) doit rester
+    // dégagée, d'où `lg:left-[var(--width-sidebar)]` plutôt que `inset-x-0`.
+    <div className="fixed left-0 right-0 lg:left-[var(--width-sidebar)] top-0 max-lg:bottom-[var(--height-bottomnav)] lg:bottom-0 z-modal flex flex-col">
       <div
         aria-hidden="true"
         className="flex-1"
