@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { getLastJourney, type CachedJourney } from '../utils/last-journey-cache'
 import { useFocusTrap } from '../hooks/use-focus-trap'
+import { useMediaQuery } from '../hooks/use-media-query'
 import { LastJourneyModal } from './LastJourneyModal'
 
 function formatCo2(grams: number): string {
@@ -32,8 +33,14 @@ export function OfflinePanel({ onRetry }: OfflinePanelProps) {
   const [lastJourney, setLastJourney] = useState<CachedJourney | null>(null)
   const [showLastJourneyDetail, setShowLastJourneyDetail] = useState(false)
   const dialogRef = useRef<HTMLDivElement>(null)
-  // Rien à fermer : l'état se referme tout seul au retour du réseau (Échap no-op).
-  useFocusTrap(dialogRef, noop)
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
+  // Rien à fermer : l'état se referme tout seul au retour du réseau (Échap
+  // no-op). Piège désactivé au clavier en desktop : le panneau y devient un
+  // panneau latéral permanent à côté de la nav (toujours cliquable/visible),
+  // pas un dialogue bloquant — le piéger empêcherait d'atteindre la nav au
+  // Tab alors qu'elle reste utilisable à la souris, même incohérence que
+  // MapSheet évite déjà via son propre `isDialog` (mobile uniquement).
+  useFocusTrap(dialogRef, noop, !isDesktop)
 
   // Lecture IndexedDB locale, pas un appel réseau — un effet est le bon
   // outil ici (la règle CLAUDE.md "pas de useEffect pour les appels API"
@@ -61,7 +68,13 @@ export function OfflinePanel({ onRetry }: OfflinePanelProps) {
     // logique côté desktop : la sidebar (`lg:static`, donc jamais recouverte
     // par un simple ordre de z-index face à un élément `fixed`) doit rester
     // dégagée, d'où `lg:left-[var(--width-sidebar)]` plutôt que `inset-x-0`.
-    <div className="fixed left-0 right-0 lg:left-[var(--width-sidebar)] top-0 max-lg:bottom-[var(--height-bottomnav)] lg:bottom-0 z-modal flex flex-col">
+    // `lg:flex-row` : ≥1024px, le contenu (banderole + dernier trajet +
+    // réessayer) quitte le gabarit "bottom sheet mobile" pour devenir un
+    // panneau latéral docké — même position/traitement que le panneau
+    // desktop de MapSheet (`aside`, 400px, coin arrondi côté carte) plutôt
+    // qu'une carte ancrée en bas avec poignée de balayage, geste tactile qui
+    // n'a pas de sens au clavier/souris.
+    <div className="fixed left-0 right-0 lg:left-[var(--width-sidebar)] top-0 max-lg:bottom-[var(--height-bottomnav)] lg:bottom-0 z-modal flex flex-col lg:flex-row">
       <div
         aria-hidden="true"
         className="flex-1"
@@ -93,18 +106,21 @@ export function OfflinePanel({ onRetry }: OfflinePanelProps) {
       </div>
 
       {/* Même chrome visuel que .bottom-sheet (index.css) — surface, bordure,
-       * arrondi haut, ombre, poignée — sans réutiliser la classe elle-même :
-       * `.bottom-sheet` porte aussi le positionnement `fixed`/`z-sheet` et la
-       * bascule desktop en panneau latéral 400px de MapSheet, tous deux hors
-       * sujet ici (l'état hors ligne n'est pas piloté par `SheetState`). */}
+       * arrondi, ombre — sans réutiliser la classe elle-même : `.bottom-sheet`
+       * porte aussi `z-sheet` et le pilotage par `SheetState`, hors sujet ici.
+       * `lg:order-first` : premier enfant du flex-row desktop ci-dessus, donc
+       * à gauche (contre la sidebar) — le fond hachué (dernier enfant, ordre
+       * par défaut) occupe le reste, à droite, à la place de la carte. */}
       <div
         ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
+        role={isDesktop ? undefined : 'dialog'}
+        aria-modal={isDesktop ? undefined : true}
         aria-label="Mode hors ligne"
-        className="bg-surface border-t border-border rounded-t-2xl shadow-sheet px-4 pt-2 pb-3 flex flex-col gap-3"
+        className="bg-surface border-t border-border max-lg:rounded-t-2xl max-lg:shadow-sheet lg:order-first lg:w-100 lg:min-w-95 lg:border-t-0 lg:rounded-r-2xl lg:shadow-card px-4 pt-2 pb-3 flex flex-col gap-3"
       >
-        <span aria-hidden="true" className="self-center bottom-sheet-handle" />
+        {/* Poignée de balayage : affordance tactile, sans équivalent/sens au
+         * clavier-souris — masquée sur le panneau docké desktop. */}
+        <span aria-hidden="true" className="self-center bottom-sheet-handle lg:hidden" />
 
         <div className="flex items-start gap-3">
           <span className="size-11 rounded-md bg-surface-sunken flex items-center justify-center shrink-0">
