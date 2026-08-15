@@ -372,11 +372,16 @@ export default function MapPage() {
             />
           )}
 
-          {/* Redondant en desktop : le panneau docké de MapSheet porte déjà
-           * "Pas de connexion" — cette bannière n'a de sens que flottant sur
-           * la carte hachurée plein écran mobile. */}
+          {/* Visible aussi en desktop (décision produit) : `<main>` est un
+           * `flex-1` placé après `<MapSheet>` dans la ligne flex du parent —
+           * `absolute left-3.5 right-3.5` reste donc cadré sur la largeur de
+           * `<main>` (relative) et ne déborde jamais sur le sheet docké,
+           * plutôt qu'un `fixed` pleine largeur qui le recouvrirait. Léger
+           * doublon avec le "Pas de connexion" du panneau docké, jugé
+           * acceptable pour garder le même repère "carte indisponible" qu'en
+           * mobile plutôt que d'en priver le desktop. */}
           {!isOnline && tracking.trackingPhase !== 'active' && (
-            <div className="absolute top-3.5 left-3.5 right-3.5 z-sheet lg:hidden flex items-center gap-2.5 h-11 px-3.5 rounded-md bg-warning-surface border-[1.5px] border-warning-border">
+            <div className="absolute top-3.5 left-3.5 right-3.5 z-sheet flex items-center gap-2.5 h-11 px-3.5 rounded-md bg-warning-surface border-[1.5px] border-warning-border">
               <svg
                 aria-hidden="true"
                 width="17"
