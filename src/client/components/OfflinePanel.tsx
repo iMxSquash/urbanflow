@@ -49,9 +49,16 @@ export function OfflinePanel({ onRetry }: OfflinePanelProps) {
   }, [])
 
   return (
-    // z-drawer (< z-navbar) : la nav (fixe sur mobile) doit rester utilisable
-    // pour quitter l'état hors ligne, cf. GuestLockOverlay (commit 9b1ca5b).
-    <div className="fixed inset-0 z-drawer flex flex-col">
+    // z-modal : doit rester au-dessus de MapSheet (z-sheet, toujours monté,
+    // même hors ligne) pour le recouvrir/remplacer, pas juste au-dessus de la
+    // carte. z-navbar (30) est très inférieur à z-sheet (1100) : aucune
+    // valeur de z-index unique ne peut à la fois dépasser le sheet et rester
+    // sous la nav. La nav reste donc visible par géométrie, pas par
+    // empilement — même technique que `.bottom-sheet` lui-même pour ses états
+    // où la nav doit rester affichée (`max-lg:bottom-(--height-bottomnav)`
+    // dans index.css) : le panneau s'arrête avant la bande occupée par la nav
+    // fixe mobile au lieu de compter sur un z-index inférieur au sien.
+    <div className="fixed inset-x-0 top-0 max-lg:bottom-[var(--height-bottomnav)] lg:bottom-0 z-modal flex flex-col">
       <div
         aria-hidden="true"
         className="flex-1"
@@ -87,15 +94,12 @@ export function OfflinePanel({ onRetry }: OfflinePanelProps) {
        * `.bottom-sheet` porte aussi le positionnement `fixed`/`z-sheet` et la
        * bascule desktop en panneau latéral 400px de MapSheet, tous deux hors
        * sujet ici (l'état hors ligne n'est pas piloté par `SheetState`). */}
-      {/* pb élargi sous lg : dégage la nav mobile fixe (z-navbar, désormais
-       * au-dessus du panneau) qui sinon recouvrirait "Réessayer" — même
-       * variable/valeur que DashboardPage/ProfilePage/RewardsPage. */}
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="Mode hors ligne"
-        className="bg-surface border-t border-border rounded-t-2xl shadow-sheet px-4 pt-2 pb-3 max-lg:pb-[calc(var(--height-bottomnav)+1rem)] flex flex-col gap-3"
+        className="bg-surface border-t border-border rounded-t-2xl shadow-sheet px-4 pt-2 pb-3 flex flex-col gap-3"
       >
         <span aria-hidden="true" className="self-center bottom-sheet-handle" />
 
