@@ -84,7 +84,10 @@ export function OfflinePanel({ onRetry }: OfflinePanelProps) {
         }}
       />
 
-      <div className="absolute top-3.5 left-3.5 right-3.5 flex items-center gap-2.5 h-11 px-3.5 rounded-md bg-warning-surface border-[1.5px] border-warning-border">
+      {/* Redondant en desktop : le panneau docké ci-dessous porte déjà "Pas
+       * de connexion" — cette banderole n'a de sens que flottant sur la
+       * carte hachurée plein écran mobile. */}
+      <div className="absolute top-3.5 left-3.5 right-3.5 lg:hidden flex items-center gap-2.5 h-11 px-3.5 rounded-md bg-warning-surface border-[1.5px] border-warning-border">
         <svg
           aria-hidden="true"
           width="17"
