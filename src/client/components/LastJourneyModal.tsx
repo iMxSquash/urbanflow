@@ -16,9 +16,10 @@ function formatSavedAt(iso: string): string {
   return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 }
 
-/** Détail du dernier trajet mis en cache (`OfflinePanel`) — se limite aux
- * champs présents dans `CachedJourney` (résumé, pas de géométrie de trajet
- * stockée) : pas de carte ni de segments à afficher hors ligne. */
+/** Détail du dernier trajet mis en cache (mode hors ligne de `MapSheet`) —
+ * se limite aux champs présents dans `CachedJourney` (résumé, pas de
+ * géométrie de trajet stockée) : pas de carte ni de segments à afficher
+ * hors ligne. */
 export function LastJourneyModal({ journey, onClose }: LastJourneyModalProps) {
   return (
     <Modal titleId="last-journey-title" descriptionId="last-journey-desc" onClose={onClose}>

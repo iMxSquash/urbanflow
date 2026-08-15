@@ -832,6 +832,14 @@
     &[data-sheet-state='tracking'] {
       @apply max-lg:top-43 max-lg:overflow-y-auto;
     }
+    /* Mode hors ligne (orthogonal à `state`, cf. MapSheet.tsx) — même
+     * dégagement de nav que `collapsed`/`mid`/`results` (`max-lg:bottom-
+     * (--height-bottomnav)`), mais `h-auto` plutôt qu'un `max-height` fixe :
+     * la hauteur du contenu varie selon qu'une carte "dernier trajet" est
+     * présente ou non, même raisonnement que `collapsed`/`mid` ci-dessus. */
+    &[data-sheet-state='offline'] {
+      @apply max-lg:h-auto max-lg:bottom-(--height-bottomnav) max-lg:overflow-y-auto;
+    }
 
     /* Rétrécissement manuel (swipe bas sur la poignée, MapSheet.tsx) —
      * indépendant de l'état actif. Contenu réel remplacé par

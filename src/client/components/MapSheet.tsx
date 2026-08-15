@@ -8,7 +8,9 @@ import type {
 } from '@shared/types/index'
 import { TRANSPORT_MODES, USER_PREFERENCES } from '@shared/types/index'
 import { useAddressAutocomplete } from '../hooks/use-address-autocomplete'
+import { useFocusTrap } from '../hooks/use-focus-trap'
 import { useMediaQuery } from '../hooks/use-media-query'
+import { getLastJourney, type CachedJourney } from '../utils/last-journey-cache'
 import { AddressSearch } from './AddressSearch'
 import { AddressSuggestionsList } from './AddressSuggestionsList'
 import { Co2FactorsNote } from './Co2FactorsNote'
@@ -17,10 +19,27 @@ import { EmptyResultsPanel } from './EmptyResultsPanel'
 import { IconButton } from './IconButton'
 import { JourneyPanel, type JourneyTrackingPhase } from './JourneyPanel'
 import { JourneyResults } from './JourneyResults'
+import { LastJourneyModal } from './LastJourneyModal'
 import { ModeChip } from './ModeChip'
 import { Slider } from './Slider'
 import { Spinner } from './Spinner'
 import { Toggle } from './Toggle'
+
+function formatCo2(grams: number): string {
+  return grams >= 1000
+    ? `${(grams / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} kg`
+    : `${grams} g`
+}
+
+function formatSavedAt(iso: string): string {
+  return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+}
+
+// Référence stable : une closure inline recréée à chaque rendu ferait dépendre
+// l'effet de useFocusTrap (deps [ref, onEscape, enabled]) du rendu courant et
+// re-déclencherait le focus initial (donc lui volerait le focus) à chaque
+// re-render du sheet en mode hors ligne.
+function noop() {}
 
 // ── État du sheet — MAQUETTE.md §5.2 (8 états, le 8e — fin de trajet — est une
 // modale gérée séparément par MapPage via JourneySummaryModal) ──────────────
@@ -80,6 +99,15 @@ interface MapSheetProps {
   weather?: WeatherCondition | null
   onDepartClick: () => void
   onEndTrip: () => void
+
+  /** Mode d'affichage orthogonal à `state` — au même titre que
+   * `desktopCollapsed`/`mobileMinimized` (internes), recouvre le contenu
+   * normal du sheet sans toucher à la machine à états de navigation
+   * (MAQUETTE.md §5.7). */
+  offline: boolean
+  /** Force une relecture immédiate de la connectivité (navigator.onLine),
+   * sans recharger la page ni rejouer le bootstrap applicatif (useAuthInit). */
+  onRetry: () => void
 }
 
 const PREFERENCE_META: Record<UserPreference, { label: string; icon: React.ReactNode }> = {
@@ -1065,6 +1093,124 @@ function DesktopFormSummary({
   )
 }
 
+// Contenu du mode hors ligne (MAQUETTE.md §5.7 / 6.2) — recouvre le contenu
+// normal du sheet, propose ce qui reste consultable (dernier itinéraire
+// calculé, mis en cache localement). Le fond hachuré + bandeau ambré sont une
+// préoccupation de la zone carte (`MapPage.tsx`), pas du sheet.
+function OfflineContent({
+  lastJourney,
+  onSelectLastJourney,
+  onRetry,
+}: {
+  lastJourney: CachedJourney | null
+  onSelectLastJourney: () => void
+  onRetry: () => void
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-start gap-3">
+        <span className="size-11 rounded-md bg-surface-sunken flex items-center justify-center shrink-0">
+          <svg
+            aria-hidden="true"
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-text-muted"
+          >
+            <path d="M2 8.5a15 15 0 0 1 20 0M5.5 12a10 10 0 0 1 13 0M9 15.5a5 5 0 0 1 6 0M12 19h.01" />
+            <path d="M4 4l16 16" />
+          </svg>
+        </span>
+        <span className="flex flex-col gap-1">
+          <span className="text-body-lg font-bold">Pas de connexion</span>
+          <span className="text-body-sm text-text-muted leading-snug">
+            Le calcul d'itinéraire reprendra dès le retour du réseau.
+          </span>
+        </span>
+      </div>
+
+      {/* Le reste (dashboard, récompenses, profil...) ne dépend pas du réseau
+       * et reste atteignable via la nav, désormais visible au-dessus de ce
+       * panneau — pas besoin d'un raccourci dédié ici. */}
+      {lastJourney && (
+        <div className="flex flex-col gap-1.5">
+          <span className="text-caption font-bold tracking-[0.06em] uppercase text-text-subtle">
+            Disponible hors ligne
+          </span>
+
+          <button
+            type="button"
+            onClick={onSelectLastJourney}
+            aria-label={`Voir le détail du dernier trajet, ${lastJourney.fromLabel} vers ${lastJourney.toLabel}`}
+            className="flex items-center gap-3 p-3.5 rounded-md border border-border text-left"
+          >
+            <svg
+              aria-hidden="true"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-text-muted shrink-0"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7v5l3.5 2" />
+            </svg>
+            <span className="flex-1 flex flex-col gap-0.5 min-w-0">
+              <span className="text-body-sm font-semibold truncate">
+                {lastJourney.fromLabel} → {lastJourney.toLabel}
+              </span>
+              <span className="text-caption text-text-muted">
+                Enregistré à {formatSavedAt(lastJourney.savedAt)} · {lastJourney.durationMin} min ·
+                −{formatCo2(lastJourney.co2SavedGrams)}
+              </span>
+            </span>
+            <svg
+              aria-hidden="true"
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-text-muted shrink-0"
+            >
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      <button type="button" onClick={onRetry} className="btn-primary w-full">
+        <svg
+          aria-hidden="true"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v4h-4" />
+        </svg>
+        Réessayer
+      </button>
+    </div>
+  )
+}
+
 // ── MapSheet ─────────────────────────────────────────────────────────────────
 
 // Distance de swipe verticale (px) sur la poignée mobile avant de basculer
@@ -1134,10 +1280,46 @@ export function MapSheet(props: MapSheetProps) {
     weather,
     onDepartClick,
     onEndTrip,
+    offline,
+    onRetry,
   } = props
 
   const isDesktop = useMediaQuery('(min-width: 1024px)')
-  const isDialog = !isDesktop && state !== 'collapsed'
+  const isDialog = offline ? !isDesktop : !isDesktop && state !== 'collapsed'
+
+  // Dernier itinéraire mis en cache (IndexedDB, pas un appel réseau — la
+  // règle CLAUDE.md "pas de useEffect pour les appels API" cible les appels
+  // HTTP au backend, pas le stockage navigateur), relu à chaque passage hors
+  // ligne plutôt qu'une seule fois au montage puisque `MapSheet` reste monté
+  // en continu, contrairement à l'ancien `OfflinePanel` démonté/remonté par
+  // `MapPage` à chaque bascule de connectivité.
+  const [lastJourney, setLastJourney] = useState<CachedJourney | null>(null)
+  const [showLastJourneyDetail, setShowLastJourneyDetail] = useState(false)
+
+  // `MapSheet` reste monté en continu (contrairement à l'ancien `OfflinePanel`
+  // démonté par `MapPage` au retour du réseau, qui fermait `LastJourneyModal`
+  // gratuitement avec lui) — sans ce reset, rouvrir une connexion pendant que
+  // la modale est ouverte la laisserait flotter au-dessus du sheet redevenu
+  // normal. Ajusté pendant le rendu (pattern React "adjusting state when a
+  // prop changes", déjà utilisé plus bas pour `desktopCollapsed`/
+  // `mobileMinimized`) plutôt qu'un effet, pour éviter un rendu en cascade
+  // évitable.
+  const [prevOffline, setPrevOffline] = useState(offline)
+  if (offline !== prevOffline) {
+    setPrevOffline(offline)
+    if (!offline) setShowLastJourneyDetail(false)
+  }
+
+  useEffect(() => {
+    if (!offline) return
+    let cancelled = false
+    void getLastJourney().then((journey) => {
+      if (!cancelled) setLastJourney(journey)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [offline])
 
   // `search` est accessible depuis plusieurs états (`collapsed` en premier
   // contact, `mid` pour corriger une adresse déjà choisie) — contrairement
@@ -1214,10 +1396,17 @@ export function MapSheet(props: MapSheetProps) {
   const swipeStartScrollTop = useRef<number | null>(null)
   const didSwipe = useRef(false)
 
+  // Piège le focus uniquement en mode hors ligne mobile — même raisonnement
+  // que le reste du sheet (cf. `isDialog`) : en desktop le panneau devient
+  // permanent à côté d'une nav toujours cliquable, la piéger la rendrait
+  // inatteignable au clavier.
+  useFocusTrap(sheetRef, noop, offline && !isDesktop)
+
   // Logique commune poignée / corps du sheet — seuls le seuil et la garde de
   // scroll de départ diffèrent selon l'origine du geste (cf. les deux paires
   // de handlers ci-dessous).
   function handleSwipeMove(clientY: number) {
+    if (offline) return
     if (swipeStartY.current === null) return
     const delta = clientY - swipeStartY.current
     const threshold = swipeThreshold.current
@@ -1272,7 +1461,7 @@ export function MapSheet(props: MapSheetProps) {
   // seulement la poignée) — cf. `BODY_SWIPE_THRESHOLD_PX` pour pourquoi le
   // seuil y est plus large.
   function handleBodyPointerDown(e: React.PointerEvent) {
-    if (isDesktop) return
+    if (isDesktop || offline) return
     swipeStartY.current = e.clientY
     swipeThreshold.current = BODY_SWIPE_THRESHOLD_PX
     swipeStartScrollTop.current = findScrollableAncestorScrollTop(e.target, sheetRef.current)
@@ -1309,252 +1498,301 @@ export function MapSheet(props: MapSheetProps) {
   const Wrapper = (isDesktop ? 'aside' : 'div') as 'div'
 
   return (
-    <Wrapper
-      ref={sheetRef}
-      className="bottom-sheet lg:relative"
-      data-sheet-state={state}
-      data-desktop-collapsed={isDesktop ? desktopCollapsed : undefined}
-      data-mobile-minimized={!isDesktop ? mobileMinimized : undefined}
-      role={isDialog ? 'dialog' : undefined}
-      aria-label={
-        isDesktop
-          ? 'Recherche et résultats'
-          : isDialog
-            ? "Recherche et suivi d'itinéraire"
-            : undefined
-      }
-      onPointerDown={handleBodyPointerDown}
-      onPointerMove={handleBodyPointerMove}
-      onPointerUp={handleBodyPointerUp}
-      onPointerCancel={handleBodyPointerUp}
-      onClickCapture={handleSheetClickCapture}
-    >
-      {!isDesktop && (
-        <div className="relative self-stretch shrink-0 -mx-4 -mt-2 px-4">
-          <button
-            type="button"
-            onPointerDown={handleSheetHandlePointerDown}
-            onPointerMove={handleSheetHandlePointerMove}
-            onPointerUp={handleSheetHandlePointerUp}
-            onPointerCancel={handleSheetHandlePointerUp}
-            onClick={() => {
-              if (mobileMinimized) {
-                setMobileMinimized(false)
-                return
-              }
-              if (state === 'collapsed') {
-                onStateChange(hasFrom ? 'mid' : 'search')
-                return
-              }
-              const parent = backTarget(state)
-              // Pas de parent (`tracking`) : réduire le panneau au lieu de
-              // ne rien faire — seul le rétrécissement manuel a un sens
-              // pour un suivi actif, cf. `PARENT_STATE`.
-              if (parent) onStateChange(parent)
-              else setMobileMinimized(true)
-            }}
-            aria-label={
-              mobileMinimized || state === 'collapsed'
-                ? 'Agrandir le panneau'
-                : 'Réduire le panneau'
-            }
-            className="w-full pt-2 pb-1.5 flex items-center justify-center touch-none"
-          >
-            <span className="bottom-sheet-handle" aria-hidden="true" />
-          </button>
-
-          {!mobileMinimized &&
-            toLabel &&
-            state !== 'results' &&
-            state !== 'detail' &&
-            state !== 'tracking' && (
+    <>
+      <Wrapper
+        ref={sheetRef}
+        className="bottom-sheet lg:relative"
+        data-sheet-state={offline ? 'offline' : state}
+        data-desktop-collapsed={isDesktop ? desktopCollapsed : undefined}
+        data-mobile-minimized={!isDesktop ? mobileMinimized : undefined}
+        role={isDialog ? 'dialog' : undefined}
+        aria-modal={offline && !isDesktop ? true : undefined}
+        aria-label={
+          offline
+            ? 'Mode hors ligne'
+            : isDesktop
+              ? 'Recherche et résultats'
+              : isDialog
+                ? "Recherche et suivi d'itinéraire"
+                : undefined
+        }
+        onPointerDown={handleBodyPointerDown}
+        onPointerMove={handleBodyPointerMove}
+        onPointerUp={handleBodyPointerUp}
+        onPointerCancel={handleBodyPointerUp}
+        onClickCapture={handleSheetClickCapture}
+      >
+        {!isDesktop && (
+          <div className="relative self-stretch shrink-0 -mx-4 -mt-2 px-4">
+            {offline ? (
+              // Pas d'affordance interactive hors ligne : rien à agrandir/
+              // réduire/minimiser (cf. OfflineContent, contenu toujours complet).
+              <div
+                aria-hidden="true"
+                className="w-full pt-2 pb-1.5 flex items-center justify-center"
+              >
+                <span className="bottom-sheet-handle" />
+              </div>
+            ) : (
               <button
                 type="button"
-                onClick={onCancelSearch}
-                aria-label="Annuler la recherche"
-                className="absolute top-1 right-3 w-8 h-8 flex items-center justify-center rounded-full text-text-subtle hover:text-text hover:bg-surface-sunken transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                onPointerDown={handleSheetHandlePointerDown}
+                onPointerMove={handleSheetHandlePointerMove}
+                onPointerUp={handleSheetHandlePointerUp}
+                onPointerCancel={handleSheetHandlePointerUp}
+                onClick={() => {
+                  if (mobileMinimized) {
+                    setMobileMinimized(false)
+                    return
+                  }
+                  if (state === 'collapsed') {
+                    onStateChange(hasFrom ? 'mid' : 'search')
+                    return
+                  }
+                  const parent = backTarget(state)
+                  // Pas de parent (`tracking`) : réduire le panneau au lieu de
+                  // ne rien faire — seul le rétrécissement manuel a un sens
+                  // pour un suivi actif, cf. `PARENT_STATE`.
+                  if (parent) onStateChange(parent)
+                  else setMobileMinimized(true)
+                }}
+                aria-label={
+                  mobileMinimized || state === 'collapsed'
+                    ? 'Agrandir le panneau'
+                    : 'Réduire le panneau'
+                }
+                className="w-full pt-2 pb-1.5 flex items-center justify-center touch-none"
               >
-                <svg
-                  aria-hidden="true"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 14 14"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                >
-                  <path d="M1 1l12 12M13 1L1 13" />
-                </svg>
+                <span className="bottom-sheet-handle" aria-hidden="true" />
               </button>
             )}
-        </div>
-      )}
 
-      {isDesktop && (
-        <button
-          type="button"
-          onClick={() => setDesktopCollapsed((v) => !v)}
-          aria-label={
-            desktopCollapsed
-              ? 'Agrandir le panneau de recherche'
-              : 'Réduire le panneau de recherche'
-          }
-          aria-expanded={!desktopCollapsed}
-          className="bottom-sheet-desktop-tab"
-        >
-          <svg
-            aria-hidden="true"
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            {desktopCollapsed ? <path d="M9 6l6 6-6 6" /> : <path d="M15 6l-6 6 6 6" />}
-          </svg>
-        </button>
-      )}
-
-      {isDesktop && desktopCollapsed ? null : isDesktop ? (
-        <DesktopPanel
-          state={state}
-          fromLabel={fromLabel}
-          toLabel={toLabel}
-          onFromSelect={onFromSelect}
-          onToSelect={onToSelect}
-          onSwap={onSwap}
-          options={options}
-          onOptionsChange={onOptionsChange}
-          journeys={journeys}
-          journeyLoading={journeyLoading}
-          journeyError={journeyError}
-          selectedJourney={selectedJourney}
-          onSelectJourney={(j) => {
-            onSelectJourney(j)
-            onStateChange('detail')
-          }}
-          onClosePanel={onClosePanel}
-          activeSegmentIdx={activeSegmentIdx}
-          onSegmentSelect={onSegmentSelect}
-          trackingPhase={trackingPhase}
-          weather={weather}
-          onDepartClick={onDepartClick}
-          onEndTrip={onEndTrip}
-        />
-      ) : (
-        <div className="flex-1 min-h-0 overflow-y-auto">
-          {/* `key` force un vrai démontage/remontage à chaque changement d'état
-           * ou de minimisation (au lieu d'un simple re-render de la branche déjà
-           * montée) : c'est ce montage DOM qui relance `animate-sheet-grow` à
-           * chaque fois, en CSS pur (`@keyframes`), sans mesure de hauteur ni
-           * rejeu JS — cf. le commentaire sur `.bottom-sheet` dans index.css
-           * pour pourquoi `top`/`bottom`/`max-height` seuls ne suffisent pas à
-           * animer `collapsed`/`mid` (hauteur intrinsèque). */}
-          <div
-            key={mobileMinimized ? 'minimized' : state}
-            className="h-full origin-bottom animate-sheet-grow"
-          >
-            {mobileMinimized ? (
-              state === 'tracking' ? (
-                <MinimizedTrackingBar
-                  onRestore={() => setMobileMinimized(false)}
-                  onEndTrip={onEndTrip}
-                />
-              ) : (
-                <MinimizedSearchBar
-                  fromLabel={fromLabel}
-                  toLabel={toLabel}
-                  onRestore={() => setMobileMinimized(false)}
-                />
-              )
-            ) : (
-              <>
-                {state === 'collapsed' && (
-                  <CollapsedView
-                    onOpenSearch={() => onStateChange('search')}
-                    preference={options.preference}
-                    onPreferenceChange={(preference) => onOptionsChange({ ...options, preference })}
-                  />
-                )}
-
-                {state === 'search' && (
-                  <SearchView
-                    fromLabel={fromLabel}
-                    fromCoords={fromCoords}
-                    toLabel={toLabel}
-                    onFromSelect={onFromSelect}
-                    onToSelect={(c, label) => {
-                      onToSelect(c, label)
-                      if (hasFrom) onStateChange('mid')
-                    }}
-                    onSwap={onSwap}
-                    onBack={() => onStateChange(backTarget('search')!)}
-                  />
-                )}
-
-                {state === 'mid' && (
-                  <MidView
-                    fromLabel={fromLabel}
-                    toLabel={toLabel}
-                    onSwap={onSwap}
-                    onEditAddresses={() => onStateChange('search')}
-                    options={options}
-                    onOptionsChange={onOptionsChange}
-                    journeys={journeys}
-                    journeyLoading={journeyLoading}
-                    journeyError={journeyError}
-                    onOpenSettings={() => onStateChange('settings')}
-                    onViewResults={() => onStateChange('results')}
-                  />
-                )}
-
-                {state === 'settings' && (
-                  <SettingsView
-                    options={options}
-                    onOptionsChange={onOptionsChange}
-                    onApply={() => onStateChange('mid')}
-                    onReset={() => {
-                      onOptionsChange(defaultOptions)
-                      onStateChange('mid')
-                    }}
-                    onCollapse={() => onStateChange('mid')}
-                  />
-                )}
-
-                {state === 'results' && (
-                  <JourneyResults
-                    journeys={journeys}
-                    onSelect={(j) => {
-                      onSelectJourney(j)
-                      onStateChange('detail')
-                    }}
-                    onClose={() => onStateChange('mid')}
-                  />
-                )}
-
-                {(state === 'detail' || state === 'tracking') && selectedJourney && (
-                  <JourneyPanel
-                    journey={selectedJourney}
-                    onClose={onClosePanel}
-                    onDepartClick={() => {
-                      onDepartClick()
-                    }}
-                    onEndTrip={onEndTrip}
-                    trackingPhase={trackingPhase}
-                    weather={weather}
-                    activeSegmentIdx={activeSegmentIdx}
-                    onSegmentSelect={onSegmentSelect}
-                  />
-                )}
-              </>
-            )}
+            {!offline &&
+              !mobileMinimized &&
+              toLabel &&
+              state !== 'results' &&
+              state !== 'detail' &&
+              state !== 'tracking' && (
+                <button
+                  type="button"
+                  onClick={onCancelSearch}
+                  aria-label="Annuler la recherche"
+                  className="absolute top-1 right-3 w-8 h-8 flex items-center justify-center rounded-full text-text-subtle hover:text-text hover:bg-surface-sunken transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  <svg
+                    aria-hidden="true"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 14 14"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  >
+                    <path d="M1 1l12 12M13 1L1 13" />
+                  </svg>
+                </button>
+              )}
           </div>
-        </div>
+        )}
+
+        {isDesktop && !offline && (
+          <button
+            type="button"
+            onClick={() => setDesktopCollapsed((v) => !v)}
+            aria-label={
+              desktopCollapsed
+                ? 'Agrandir le panneau de recherche'
+                : 'Réduire le panneau de recherche'
+            }
+            aria-expanded={!desktopCollapsed}
+            className="bottom-sheet-desktop-tab"
+          >
+            <svg
+              aria-hidden="true"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              {desktopCollapsed ? <path d="M9 6l6 6-6 6" /> : <path d="M15 6l-6 6 6 6" />}
+            </svg>
+          </button>
+        )}
+
+        {offline ? (
+          isDesktop ? (
+            <OfflineContent
+              lastJourney={lastJourney}
+              onSelectLastJourney={() => setShowLastJourneyDetail(true)}
+              onRetry={onRetry}
+            />
+          ) : (
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              {/* Même animation d'apparition que les autres états mobiles
+               * (`key`/`animate-sheet-grow`, cf. commentaire plus bas) — effet
+               * de bord naturel de la réutilisation du même gabarit, pas ajouté
+               * exprès. */}
+              <div key="offline" className="h-full origin-bottom animate-sheet-grow">
+                <OfflineContent
+                  lastJourney={lastJourney}
+                  onSelectLastJourney={() => setShowLastJourneyDetail(true)}
+                  onRetry={onRetry}
+                />
+              </div>
+            </div>
+          )
+        ) : isDesktop && desktopCollapsed ? null : isDesktop ? (
+          <DesktopPanel
+            state={state}
+            fromLabel={fromLabel}
+            toLabel={toLabel}
+            onFromSelect={onFromSelect}
+            onToSelect={onToSelect}
+            onSwap={onSwap}
+            options={options}
+            onOptionsChange={onOptionsChange}
+            journeys={journeys}
+            journeyLoading={journeyLoading}
+            journeyError={journeyError}
+            selectedJourney={selectedJourney}
+            onSelectJourney={(j) => {
+              onSelectJourney(j)
+              onStateChange('detail')
+            }}
+            onClosePanel={onClosePanel}
+            activeSegmentIdx={activeSegmentIdx}
+            onSegmentSelect={onSegmentSelect}
+            trackingPhase={trackingPhase}
+            weather={weather}
+            onDepartClick={onDepartClick}
+            onEndTrip={onEndTrip}
+          />
+        ) : (
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            {/* `key` force un vrai démontage/remontage à chaque changement d'état
+             * ou de minimisation (au lieu d'un simple re-render de la branche déjà
+             * montée) : c'est ce montage DOM qui relance `animate-sheet-grow` à
+             * chaque fois, en CSS pur (`@keyframes`), sans mesure de hauteur ni
+             * rejeu JS — cf. le commentaire sur `.bottom-sheet` dans index.css
+             * pour pourquoi `top`/`bottom`/`max-height` seuls ne suffisent pas à
+             * animer `collapsed`/`mid` (hauteur intrinsèque). */}
+            <div
+              key={mobileMinimized ? 'minimized' : state}
+              className="h-full origin-bottom animate-sheet-grow"
+            >
+              {mobileMinimized ? (
+                state === 'tracking' ? (
+                  <MinimizedTrackingBar
+                    onRestore={() => setMobileMinimized(false)}
+                    onEndTrip={onEndTrip}
+                  />
+                ) : (
+                  <MinimizedSearchBar
+                    fromLabel={fromLabel}
+                    toLabel={toLabel}
+                    onRestore={() => setMobileMinimized(false)}
+                  />
+                )
+              ) : (
+                <>
+                  {state === 'collapsed' && (
+                    <CollapsedView
+                      onOpenSearch={() => onStateChange('search')}
+                      preference={options.preference}
+                      onPreferenceChange={(preference) =>
+                        onOptionsChange({ ...options, preference })
+                      }
+                    />
+                  )}
+
+                  {state === 'search' && (
+                    <SearchView
+                      fromLabel={fromLabel}
+                      fromCoords={fromCoords}
+                      toLabel={toLabel}
+                      onFromSelect={onFromSelect}
+                      onToSelect={(c, label) => {
+                        onToSelect(c, label)
+                        if (hasFrom) onStateChange('mid')
+                      }}
+                      onSwap={onSwap}
+                      onBack={() => onStateChange(backTarget('search')!)}
+                    />
+                  )}
+
+                  {state === 'mid' && (
+                    <MidView
+                      fromLabel={fromLabel}
+                      toLabel={toLabel}
+                      onSwap={onSwap}
+                      onEditAddresses={() => onStateChange('search')}
+                      options={options}
+                      onOptionsChange={onOptionsChange}
+                      journeys={journeys}
+                      journeyLoading={journeyLoading}
+                      journeyError={journeyError}
+                      onOpenSettings={() => onStateChange('settings')}
+                      onViewResults={() => onStateChange('results')}
+                    />
+                  )}
+
+                  {state === 'settings' && (
+                    <SettingsView
+                      options={options}
+                      onOptionsChange={onOptionsChange}
+                      onApply={() => onStateChange('mid')}
+                      onReset={() => {
+                        onOptionsChange(defaultOptions)
+                        onStateChange('mid')
+                      }}
+                      onCollapse={() => onStateChange('mid')}
+                    />
+                  )}
+
+                  {state === 'results' && (
+                    <JourneyResults
+                      journeys={journeys}
+                      onSelect={(j) => {
+                        onSelectJourney(j)
+                        onStateChange('detail')
+                      }}
+                      onClose={() => onStateChange('mid')}
+                    />
+                  )}
+
+                  {(state === 'detail' || state === 'tracking') && selectedJourney && (
+                    <JourneyPanel
+                      journey={selectedJourney}
+                      onClose={onClosePanel}
+                      onDepartClick={() => {
+                        onDepartClick()
+                      }}
+                      onEndTrip={onEndTrip}
+                      trackingPhase={trackingPhase}
+                      weather={weather}
+                      activeSegmentIdx={activeSegmentIdx}
+                      onSegmentSelect={onSegmentSelect}
+                    />
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </Wrapper>
+
+      {/* Rendu hors de `sheetRef` (pas un enfant du conteneur piégé par
+       * useFocusTrap ci-dessus) : `LastJourneyModal` gère son propre piège de
+       * focus via `Modal` — l'imbriquer sous `sheetRef` ferait courir les
+       * deux pièges sur le même sous-arbre DOM et se disputer le focus. */}
+      {showLastJourneyDetail && lastJourney && (
+        <LastJourneyModal journey={lastJourney} onClose={() => setShowLastJourneyDetail(false)} />
       )}
-    </Wrapper>
+    </>
   )
 }

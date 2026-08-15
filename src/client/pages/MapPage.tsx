@@ -16,7 +16,6 @@ import { MapSheet, type SearchOptions, type SheetState } from '../components/Map
 import { TrackingConsentModal } from '../components/TrackingConsentModal'
 import { TripToast } from '../components/TripToast'
 import { UserLocationMarker } from '../components/UserLocationMarker'
-import { OfflinePanel } from '../components/OfflinePanel'
 import { useOnlineStatus } from '../hooks/use-online-status'
 import { saveLastJourney } from '../utils/last-journey-cache'
 import { recordGeolocationConsent } from '../services/auth.service'
@@ -341,20 +340,64 @@ export default function MapPage() {
         weather={weather}
         onDepartClick={tracking.openConsent}
         onEndTrip={tracking.requestEndTrip}
+        offline={!isOnline && tracking.trackingPhase !== 'active'}
+        onRetry={recheckOnlineStatus}
       />
 
       <div className="h-screen lg:h-auto lg:flex-1 lg:min-w-0">
-        {/* Ne recouvre pas un suivi de trajet déjà en cours — le GPS et le
-         * segment affiché ne dépendent pas du réseau une fois le trajet chargé. */}
-        {!isOnline && tracking.trackingPhase !== 'active' && (
-          <OfflinePanel onRetry={recheckOnlineStatus} />
-        )}
-
         <main
           className="h-full relative overflow-hidden isolate group"
           role="application"
           aria-label="Carte de mobilité de Nantes"
         >
+          {/* Fond hachuré + bandeau (MAQUETTE.md §5.7 "Hors ligne") — propriété
+           * de la zone carte, pas du sheet (qui affiche son propre contenu
+           * hors ligne via `MapSheet`'s `offline` prop). Ne recouvre pas un
+           * suivi de trajet déjà en cours — le GPS et le segment affiché ne
+           * dépendent pas du réseau une fois le trajet chargé. `z-sheet` (pas
+           * `z-modal`) : même niveau que les autres overlays flottants de
+           * cette carte (météo, localisation, bannières d'erreur ci-dessous)
+           * pour rester interlacé avec eux par ordre du DOM plutôt que de les
+           * bloquer sous un empilement supérieur — seules les tuiles Leaflet
+           * (z-index interne inférieur, cf. commentaire `.bottom-sheet` dans
+           * index.css) doivent rester sous ce calque. */}
+          {!isOnline && tracking.trackingPhase !== 'active' && (
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 z-sheet"
+              style={{
+                backgroundImage:
+                  'repeating-linear-gradient(135deg, var(--color-surface-sunken) 0 12px, var(--color-surface-muted) 12px 24px)',
+              }}
+            />
+          )}
+
+          {/* Redondant en desktop : le panneau docké de MapSheet porte déjà
+           * "Pas de connexion" — cette bannière n'a de sens que flottant sur
+           * la carte hachurée plein écran mobile. */}
+          {!isOnline && tracking.trackingPhase !== 'active' && (
+            <div className="absolute top-3.5 left-3.5 right-3.5 z-sheet lg:hidden flex items-center gap-2.5 h-11 px-3.5 rounded-md bg-warning-surface border-[1.5px] border-warning-border">
+              <svg
+                aria-hidden="true"
+                width="17"
+                height="17"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.9"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-warning shrink-0"
+              >
+                <path d="M2 8.5a15 15 0 0 1 20 0M5.5 12a10 10 0 0 1 13 0M9 15.5a5 5 0 0 1 6 0M12 19h.01" />
+                <path d="M4 4l16 16" />
+              </svg>
+              <span className="flex-1 text-body-sm font-semibold text-warning">
+                Hors ligne — carte non disponible
+              </span>
+            </div>
+          )}
+
           {weather && (
             <div className="absolute top-3 right-3 z-sheet">
               <WeatherBadge weather={weather} variant="map" />
