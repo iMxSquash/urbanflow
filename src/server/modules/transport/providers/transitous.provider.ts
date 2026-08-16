@@ -234,6 +234,12 @@ async function mapItinerary(itin: OtpItinerary, idx: number): Promise<Journey> {
         co2g,
         ...(leg.routeShortName ? { lineRef: leg.routeShortName } : {}),
         ...(lineName ? { lineName } : {}),
+        // Toujours fournis par l'API MOTIS/OTP (même sur un leg marche), donc
+        // jamais absents en pratique — permet d'afficher "de où à où" par
+        // segment (y compris les legs marche vers/depuis un arrêt), pas
+        // seulement le nom de la ligne TC.
+        ...(leg.from.name ? { fromName: leg.from.name } : {}),
+        ...(leg.to.name ? { toName: leg.to.name } : {}),
         ...(shape ? { shape } : {}),
         ...(waitTimeMin !== undefined ? { waitTimeMin } : {}),
         ...(scheduledDeparture ? { scheduledDeparture } : {}),

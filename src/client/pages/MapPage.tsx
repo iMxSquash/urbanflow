@@ -171,16 +171,35 @@ export default function MapPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userPosition, toCoords, options])
 
-  // Cache local du meilleur itinéraire — reste consultable hors ligne.
+  // Cache local du meilleur itinéraire — reste consultable hors ligne. `steps`
+  // ne retient que mode/distance/durée/ligne/noms de lieu de chaque segment,
+  // jamais `from`/`to`/`shape` (coordonnées) — même principe que la règle
+  // RGPD CLAUDE.md sur `trips` (pas de GPS précis stocké au-delà du calcul),
+  // étendu ici par cohérence à ce cache client bien que la règle ne vise
+  // formellement que la table serveur.
   useEffect(() => {
     if (journeys.length === 0 || !toLabel) return
     const best = journeys[0]
+    const resolvedFromLabel = geoPosition ? 'Ma position' : (fromLabel ?? 'Votre position')
+    const lastSegmentIdx = best.segments.length - 1
     void saveLastJourney({
-      fromLabel: geoPosition ? 'Ma position' : (fromLabel ?? 'Votre position'),
+      fromLabel: resolvedFromLabel,
       toLabel,
       durationMin: best.totalDurationMin,
       co2SavedGrams: best.co2SavingG,
       savedAt: new Date().toISOString(),
+      steps: best.segments.map((segment, idx) => ({
+        mode: segment.mode,
+        distanceKm: segment.distanceKm,
+        durationMin: segment.durationMin,
+        lineName: segment.lineName,
+        // Le provider ne connaît pas l'adresse saisie par l'utilisateur (ni
+        // en début ni en fin d'itinéraire, seulement les arrêts/stations
+        // intermédiaires) — le premier/dernier segment retombe donc sur le
+        // fromLabel/toLabel déjà résolu par la recherche.
+        fromName: segment.fromName ?? (idx === 0 ? resolvedFromLabel : undefined),
+        toName: segment.toName ?? (idx === lastSegmentIdx ? toLabel : undefined),
+      })),
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [journeys, toLabel])

@@ -1,6 +1,7 @@
 import { Modal } from './Modal'
 import type { CachedJourney } from '../utils/last-journey-cache'
 import { formatCo2, formatSavedAt } from '../utils/format-journey'
+import { MODE_ICON_PATH_BASE, MODE_LABELS, modeColorToken } from '../constants/mode-icons'
 
 interface LastJourneyModalProps {
   journey: CachedJourney
@@ -8,9 +9,13 @@ interface LastJourneyModalProps {
 }
 
 /** Détail du dernier trajet mis en cache (mode hors ligne de `MapSheet`) —
- * se limite aux champs présents dans `CachedJourney` (résumé, pas de
- * géométrie de trajet stockée) : pas de carte ni de segments à afficher
- * hors ligne. */
+ * se limite aux champs présents dans `CachedJourney` : les étapes sont un
+ * résumé texte (mode/ligne/durée/distance/noms de lieu, `CachedJourneyStep`),
+ * jamais de géométrie ni de coordonnées — pas de carte à afficher hors ligne.
+ * `journey.steps` est optionnel : un trajet mis en cache avant l'ajout de ce
+ * champ n'en a pas, la section est alors simplement omise ; `fromName`/
+ * `toName` par étape le sont aussi (arrêt/station non résolu par le
+ * provider), la ligne "de où à où" est alors omise pour cette étape. */
 export function LastJourneyModal({ journey, onClose }: LastJourneyModalProps) {
   return (
     <Modal titleId="last-journey-title" descriptionId="last-journey-desc" onClose={onClose}>
@@ -56,6 +61,61 @@ export function LastJourneyModal({ journey, onClose }: LastJourneyModalProps) {
           </p>
         </div>
       </div>
+
+      {journey.steps && journey.steps.length > 0 && (
+        <div className="flex flex-col gap-2 mb-5">
+          <p className="text-caption font-bold tracking-[0.06em] uppercase text-text-subtle">
+            Étapes
+          </p>
+          <ol className="flex flex-col gap-2">
+            {journey.steps.map((step, idx) => {
+              const tokenName = modeColorToken(step.mode)
+              return (
+                <li
+                  key={idx}
+                  className="flex items-center gap-3 bg-surface-sunken rounded-xl px-3 py-2.5"
+                >
+                  <span
+                    className="size-8 rounded-full flex items-center justify-center shrink-0"
+                    style={{
+                      backgroundColor: `var(--color-mode-${tokenName}-surface)`,
+                      color: `var(--color-mode-${tokenName})`,
+                    }}
+                  >
+                    <svg
+                      aria-hidden="true"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.9"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      {MODE_ICON_PATH_BASE[step.mode]}
+                    </svg>
+                  </span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-body-sm font-medium text-text truncate">
+                      {step.lineName ?? MODE_LABELS[step.mode]}
+                    </span>
+                    {step.fromName && step.toName && (
+                      <span className="block text-caption text-text-muted truncate">
+                        {step.fromName} → {step.toName}
+                      </span>
+                    )}
+                    <span className="block text-caption text-text-subtle">
+                      {step.durationMin} min
+                      {step.distanceKm > 0 && ` · ${step.distanceKm} km`}
+                    </span>
+                  </span>
+                </li>
+              )
+            })}
+          </ol>
+        </div>
+      )}
 
       <button type="button" onClick={onClose} className="btn-primary w-full justify-center">
         Fermer

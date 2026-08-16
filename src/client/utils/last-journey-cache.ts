@@ -1,6 +1,25 @@
+import type { TransportMode } from '@shared/types/index'
+
 const DB_NAME = 'urbanflow-last-journey'
 const STORE_NAME = 'journey'
 const RECORD_KEY = 'last'
+
+/** Résumé d'un segment, sans coordonnées — même esprit que la règle RGPD
+ * CLAUDE.md sur la table `trips` ("aucune coordonnée GPS précise stockée
+ * au-delà du calcul d'itinéraire") : rien n'exige de tracé ici, l'affichage
+ * hors ligne (`LastJourneyModal`) reste une liste textuelle, pas une carte. */
+export interface CachedJourneyStep {
+  mode: TransportMode
+  distanceKm: number
+  durationMin: number
+  lineName?: string
+  /** Nom lisible du point de départ/arrivée du segment (arrêt, station
+   * Bicloo...) — un nom de lieu, jamais des coordonnées ; absent si le
+   * provider ne l'a pas résolu (ex. un unique segment marche, où c'est le
+   * `fromLabel`/`toLabel` du trajet entier qui fait office de nom). */
+  fromName?: string
+  toName?: string
+}
 
 export interface CachedJourney {
   fromLabel: string
@@ -8,6 +27,10 @@ export interface CachedJourney {
   durationMin: number
   co2SavedGrams: number
   savedAt: string
+  /** Optionnel : absent sur un enregistrement mis en cache avant l'ajout de
+   * ce champ — `getLastJourney` ne doit pas planter sur une entrée existante
+   * sans `steps`. */
+  steps?: CachedJourneyStep[]
 }
 
 // Ouverture à la demande plutôt qu'une connexion module-level tenue en

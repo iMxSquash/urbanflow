@@ -95,7 +95,7 @@ function makeSegment(
   from: Coordinates,
   to: Coordinates,
   distKm: number,
-  opts: { lineName?: string; shape?: Coordinates[] }
+  opts: { lineName?: string; fromName?: string; toName?: string; shape?: Coordinates[] }
 ): JourneySegment {
   const speed = MODE_SPEED_KMH[mode as 'bike' | 'walk' | 'scooter'] ?? 5
   const durationMin = Math.max(1, Math.round((distKm / speed) * 60))
@@ -108,6 +108,8 @@ function makeSegment(
     durationMin,
     co2g,
     ...(opts.lineName ? { lineName: opts.lineName } : {}),
+    ...(opts.fromName ? { fromName: opts.fromName } : {}),
+    ...(opts.toName ? { toName: opts.toName } : {}),
     ...(opts.shape ? { shape: opts.shape } : {}),
   }
 }
@@ -154,15 +156,24 @@ async function buildBiclooJourney(
   ])
 
   const segments: JourneySegment[] = [
+    // `fromName` omis : `from` est l'origine saisie par l'utilisateur, pas une
+    // station — inconnue du provider (le client retombe sur le `fromLabel` de
+    // la recherche pour le tout premier segment d'un itinéraire).
     makeSegment('walk', from, depStation.coordinates, walkToDist, {
       lineName: `Vers ${depStation.name}`,
+      toName: depStation.name,
     }),
     makeSegment('bike', depStation.coordinates, arrStation.coordinates, bikeRoute.distKm, {
       lineName: `${depStation.name} → ${arrStation.name}`,
+      fromName: depStation.name,
+      toName: arrStation.name,
       shape: bikeRoute.shape.length >= 2 ? bikeRoute.shape : undefined,
     }),
+    // `toName` omis, même raison que `fromName` ci-dessus côté `to` (destination
+    // saisie par l'utilisateur) — le client retombe sur `toLabel`.
     makeSegment('walk', arrStation.coordinates, to, walkFromDist, {
       lineName: `Depuis ${arrStation.name}`,
+      fromName: arrStation.name,
     }),
   ]
 
