@@ -12,6 +12,7 @@ import { useFocusTrap } from '../hooks/use-focus-trap'
 import { useLastJourney } from '../hooks/use-last-journey'
 import { useMediaQuery } from '../hooks/use-media-query'
 import type { CachedJourney } from '../utils/last-journey-cache'
+import { formatCo2, formatSavedAt } from '../utils/format-journey'
 import { AddressSearch } from './AddressSearch'
 import { AddressSuggestionsList } from './AddressSuggestionsList'
 import { Co2FactorsNote } from './Co2FactorsNote'
@@ -25,16 +26,6 @@ import { ModeChip } from './ModeChip'
 import { Slider } from './Slider'
 import { Spinner } from './Spinner'
 import { Toggle } from './Toggle'
-
-function formatCo2(grams: number): string {
-  return grams >= 1000
-    ? `${(grams / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} kg`
-    : `${grams} g`
-}
-
-function formatSavedAt(iso: string): string {
-  return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-}
 
 // ── État du sheet — MAQUETTE.md §5.2 (8 états, le 8e — fin de trajet — est une
 // modale gérée séparément par MapPage via JourneySummaryModal) ──────────────

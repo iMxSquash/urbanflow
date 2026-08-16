@@ -1,19 +1,10 @@
 import { Modal } from './Modal'
 import type { CachedJourney } from '../utils/last-journey-cache'
+import { formatCo2, formatSavedAt } from '../utils/format-journey'
 
 interface LastJourneyModalProps {
   journey: CachedJourney
   onClose: () => void
-}
-
-function formatCo2(grams: number): string {
-  return grams >= 1000
-    ? `${(grams / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} kg`
-    : `${grams} g`
-}
-
-function formatSavedAt(iso: string): string {
-  return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 }
 
 /** Détail du dernier trajet mis en cache (mode hors ligne de `MapSheet`) —
