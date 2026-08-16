@@ -9,8 +9,9 @@ import type {
 import { TRANSPORT_MODES, USER_PREFERENCES } from '@shared/types/index'
 import { useAddressAutocomplete } from '../hooks/use-address-autocomplete'
 import { useFocusTrap } from '../hooks/use-focus-trap'
+import { useLastJourney } from '../hooks/use-last-journey'
 import { useMediaQuery } from '../hooks/use-media-query'
-import { getLastJourney, type CachedJourney } from '../utils/last-journey-cache'
+import type { CachedJourney } from '../utils/last-journey-cache'
 import { AddressSearch } from './AddressSearch'
 import { AddressSuggestionsList } from './AddressSuggestionsList'
 import { Co2FactorsNote } from './Co2FactorsNote'
@@ -1281,39 +1282,17 @@ export function MapSheet(props: MapSheetProps) {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const isDialog = offline ? !isDesktop : !isDesktop && state !== 'collapsed'
 
-  // Dernier itinéraire mis en cache (IndexedDB, pas un appel réseau — la
-  // règle CLAUDE.md "pas de useEffect pour les appels API" cible les appels
-  // HTTP au backend, pas le stockage navigateur), relu à chaque passage hors
-  // ligne plutôt qu'une seule fois au montage puisque `MapSheet` reste monté
-  // en continu, contrairement à l'ancien `OfflinePanel` démonté/remonté par
-  // `MapPage` à chaque bascule de connectivité.
-  const [lastJourney, setLastJourney] = useState<CachedJourney | null>(null)
-  const [showLastJourneyDetail, setShowLastJourneyDetail] = useState(false)
-
-  // `MapSheet` reste monté en continu (contrairement à l'ancien `OfflinePanel`
-  // démonté par `MapPage` au retour du réseau, qui fermait `LastJourneyModal`
-  // gratuitement avec lui) — sans ce reset, rouvrir une connexion pendant que
-  // la modale est ouverte la laisserait flotter au-dessus du sheet redevenu
-  // normal. Ajusté pendant le rendu (pattern React "adjusting state when a
-  // prop changes", déjà utilisé plus bas pour `desktopCollapsed`/
-  // `mobileMinimized`) plutôt qu'un effet, pour éviter un rendu en cascade
-  // évitable.
-  const [prevOffline, setPrevOffline] = useState(offline)
-  if (offline !== prevOffline) {
-    setPrevOffline(offline)
-    if (!offline) setShowLastJourneyDetail(false)
-  }
-
-  useEffect(() => {
-    if (!offline) return
-    let cancelled = false
-    void getLastJourney().then((journey) => {
-      if (!cancelled) setLastJourney(journey)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [offline])
+  // Dernier itinéraire mis en cache (IndexedDB) + état d'ouverture de sa
+  // modale de détail, relus/réinitialisés à chaque bascule hors ligne —
+  // `MapSheet` reste monté en continu, contrairement à l'ancien
+  // `OfflinePanel` démonté/remonté par `MapPage` à chaque bascule de
+  // connectivité (cf. `use-last-journey.ts` pour le détail du reset).
+  const {
+    lastJourney,
+    showDetail: showLastJourneyDetail,
+    openDetail: openLastJourneyDetail,
+    closeDetail: closeLastJourneyDetail,
+  } = useLastJourney(offline)
 
   // `search` est accessible depuis plusieurs états (`collapsed` en premier
   // contact, `mid` pour corriger une adresse déjà choisie) — contrairement
@@ -1622,7 +1601,7 @@ export function MapSheet(props: MapSheetProps) {
           isDesktop ? (
             <OfflineContent
               lastJourney={lastJourney}
-              onSelectLastJourney={() => setShowLastJourneyDetail(true)}
+              onSelectLastJourney={openLastJourneyDetail}
               onRetry={onRetry}
             />
           ) : (
@@ -1634,7 +1613,7 @@ export function MapSheet(props: MapSheetProps) {
               <div key="offline" className="h-full origin-bottom animate-sheet-grow">
                 <OfflineContent
                   lastJourney={lastJourney}
-                  onSelectLastJourney={() => setShowLastJourneyDetail(true)}
+                  onSelectLastJourney={openLastJourneyDetail}
                   onRetry={onRetry}
                 />
               </div>
@@ -1785,7 +1764,7 @@ export function MapSheet(props: MapSheetProps) {
        * focus via `Modal` — l'imbriquer sous `sheetRef` ferait courir les
        * deux pièges sur le même sous-arbre DOM et se disputer le focus. */}
       {showLastJourneyDetail && lastJourney && (
-        <LastJourneyModal journey={lastJourney} onClose={() => setShowLastJourneyDetail(false)} />
+        <LastJourneyModal journey={lastJourney} onClose={closeLastJourneyDetail} />
       )}
     </>
   )
