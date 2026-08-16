@@ -35,12 +35,6 @@ function formatSavedAt(iso: string): string {
   return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
 }
 
-// Référence stable : une closure inline recréée à chaque rendu ferait dépendre
-// l'effet de useFocusTrap (deps [ref, onEscape, enabled]) du rendu courant et
-// re-déclencherait le focus initial (donc lui volerait le focus) à chaque
-// re-render du sheet en mode hors ligne.
-function noop() {}
-
 // ── État du sheet — MAQUETTE.md §5.2 (8 états, le 8e — fin de trajet — est une
 // modale gérée séparément par MapPage via JourneySummaryModal) ──────────────
 
@@ -1400,7 +1394,7 @@ export function MapSheet(props: MapSheetProps) {
   // que le reste du sheet (cf. `isDialog`) : en desktop le panneau devient
   // permanent à côté d'une nav toujours cliquable, la piéger la rendrait
   // inatteignable au clavier.
-  useFocusTrap(sheetRef, noop, offline && !isDesktop)
+  useFocusTrap(sheetRef, () => {}, offline && !isDesktop)
 
   // Logique commune poignée / corps du sheet — seuls le seuil et la garde de
   // scroll de départ diffèrent selon l'origine du geste (cf. les deux paires
