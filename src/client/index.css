@@ -237,6 +237,9 @@
   --height-navbar: 4rem;
   --height-bottomnav: 4.5rem;
 
+  /* ─── Largeurs nommées ───────────────────── */
+  --width-sidebar: 14.5rem;
+
   /* ─── Z-index ────────────────────────────── */
   /* .bottom-sheet vit hors du contexte isolate de <main> (cf. z-1100 plus
    * bas) : modal/toast doivent dépasser sa valeur pour s'afficher par-dessus
@@ -829,6 +832,14 @@
     &[data-sheet-state='tracking'] {
       @apply max-lg:top-43 max-lg:overflow-y-auto;
     }
+    /* Mode hors ligne (orthogonal à `state`, cf. MapSheet.tsx) — même
+     * dégagement de nav que `collapsed`/`mid`/`results` (`max-lg:bottom-
+     * (--height-bottomnav)`), mais `h-auto` plutôt qu'un `max-height` fixe :
+     * la hauteur du contenu varie selon qu'une carte "dernier trajet" est
+     * présente ou non, même raisonnement que `collapsed`/`mid` ci-dessus. */
+    &[data-sheet-state='offline'] {
+      @apply max-lg:h-auto max-lg:bottom-(--height-bottomnav) max-lg:overflow-y-auto;
+    }
 
     /* Rétrécissement manuel (swipe bas sur la poignée, MapSheet.tsx) —
      * indépendant de l'état actif. Contenu réel remplacé par
@@ -886,6 +897,13 @@
   /* <div role="dialog" aria-modal="true" aria-labelledby="..."> */
   .modal {
     @apply bg-surface rounded-2xl shadow-modal p-6 lg:w-140 lg:mx-auto;
+    /* Cause racine, pas un correctif propre à un seul appelant : `Modal` est
+     * générique (7 usages), son contenu (`children`) n'a jamais de borne de
+     * hauteur — un contenu long (ex. liste d'étapes de `LastJourneyModal`)
+     * débordait donc du viewport, rendant "Fermer" inatteignable. Même seuil
+     * `vh` que `.bottom-sheet` (`max-lg:max-h-[52vh]`) pour rester cohérent
+     * avec l'unité déjà utilisée ailleurs dans ce fichier. */
+    @apply max-h-[85vh] overflow-y-auto;
   }
 
   /* ── Bottom navigation (mobile) — devient une sidebar ≥1024px ── */
@@ -893,7 +911,7 @@
   .bottom-nav {
     @apply fixed inset-x-0 bottom-0 z-navbar grid grid-cols-4 gap-1 px-2 pt-2;
     @apply bg-surface border-t border-border;
-    @apply lg:static lg:flex lg:flex-col lg:w-58 lg:h-screen lg:p-4 lg:border-t-0 lg:border-r lg:border-border;
+    @apply lg:static lg:flex lg:flex-col lg:w-sidebar lg:h-screen lg:p-4 lg:border-t-0 lg:border-r lg:border-border;
     /* env() ne peut pas s'exprimer en classe utilitaire */
     padding-bottom: calc(var(--spacing) * 2 + env(safe-area-inset-bottom));
     /* Sans z-index explicite, un `position:fixed` sans z-index (auto) se classe

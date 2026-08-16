@@ -1,7 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+
+export interface OnlineStatus {
+  isOnline: boolean
+  /** Relit `navigator.onLine` immédiatement, sans attendre un événement `online`/`offline`. */
+  recheck: () => void
+}
 
 /** Détection de connectivité réelle via les événements navigateur `online`/`offline`. */
-export function useOnlineStatus(): boolean {
+export function useOnlineStatus(): OnlineStatus {
   const [isOnline, setIsOnline] = useState(navigator.onLine)
 
   useEffect(() => {
@@ -19,5 +25,9 @@ export function useOnlineStatus(): boolean {
     }
   }, [])
 
-  return isOnline
+  const recheck = useCallback(() => {
+    setIsOnline(navigator.onLine)
+  }, [])
+
+  return { isOnline, recheck }
 }

@@ -1,12 +1,29 @@
-import { useEffect, type RefObject } from 'react'
+import { useEffect, useEffectEvent, type RefObject } from 'react'
 
 /**
  * Piège le focus clavier à l'intérieur d'un conteneur (modale, dialogue) et
  * appelle onEscape sur la touche Échap. Focus le premier élément interactif
- * au montage.
+ * au montage. `enabled` (défaut `true`) permet de désactiver le piège sans
+ * démonter le hook — utile quand le même conteneur bascule entre dialogue
+ * bloquant (mobile) et panneau permanent coexistant avec le reste de la page
+ * (desktop), où piéger le focus empêcherait d'atteindre la nav au clavier
+ * alors qu'elle reste cliquable et visible.
  */
-export function useFocusTrap(ref: RefObject<HTMLElement | null>, onEscape: () => void) {
+export function useFocusTrap(
+  ref: RefObject<HTMLElement | null>,
+  onEscape: () => void,
+  enabled = true
+) {
+  // `useEffectEvent` lit toujours le dernier `onEscape` sans figurer dans les
+  // deps de l'effet ci-dessous — un appelant qui passe une closure inline
+  // (nouvelle identité à chaque rendu) ne redéclenche donc plus l'effet (et
+  // ne vole donc plus le focus) à chaque re-render du conteneur piégé.
+  const handleEscape = useEffectEvent(() => {
+    onEscape()
+  })
+
   useEffect(() => {
+    if (!enabled) return
     const container = ref.current
     if (!container) return
 
@@ -20,7 +37,7 @@ export function useFocusTrap(ref: RefObject<HTMLElement | null>, onEscape: () =>
 
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
-        onEscape()
+        handleEscape()
         return
       }
       if (e.key === 'Tab') {
@@ -36,5 +53,5 @@ export function useFocusTrap(ref: RefObject<HTMLElement | null>, onEscape: () =>
 
     container.addEventListener('keydown', onKeyDown)
     return () => container.removeEventListener('keydown', onKeyDown)
-  }, [ref, onEscape])
+  }, [ref, enabled])
 }

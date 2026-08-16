@@ -16,7 +16,6 @@ import { MapSheet, type SearchOptions, type SheetState } from '../components/Map
 import { TrackingConsentModal } from '../components/TrackingConsentModal'
 import { TripToast } from '../components/TripToast'
 import { UserLocationMarker } from '../components/UserLocationMarker'
-import { OfflinePanel } from '../components/OfflinePanel'
 import { useOnlineStatus } from '../hooks/use-online-status'
 import { saveLastJourney } from '../utils/last-journey-cache'
 import { recordGeolocationConsent } from '../services/auth.service'
@@ -57,7 +56,7 @@ interface DemoScenarioState {
 export default function MapPage() {
   const isGuest = useAuthStore((s) => s.isGuest)
   const { geolocationConsent, grantGeolocation, denyGeolocation } = useConsentStore()
-  const isOnline = useOnlineStatus()
+  const { isOnline, recheck: recheckOnlineStatus } = useOnlineStatus()
   const isDarkMode = useIsDarkMode()
   const { position: geoPosition, error: geoError, loading: geoLoading, locate } = useGeolocation()
   const [addressPosition, setAddressPosition] = useState<Coordinates | null>(null)
@@ -172,16 +171,35 @@ export default function MapPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userPosition, toCoords, options])
 
-  // Cache local du meilleur itinéraire — reste consultable hors ligne.
+  // Cache local du meilleur itinéraire — reste consultable hors ligne. `steps`
+  // ne retient que mode/distance/durée/ligne/noms de lieu de chaque segment,
+  // jamais `from`/`to`/`shape` (coordonnées) — même principe que la règle
+  // RGPD CLAUDE.md sur `trips` (pas de GPS précis stocké au-delà du calcul),
+  // étendu ici par cohérence à ce cache client bien que la règle ne vise
+  // formellement que la table serveur.
   useEffect(() => {
     if (journeys.length === 0 || !toLabel) return
     const best = journeys[0]
-    saveLastJourney({
-      fromLabel: geoPosition ? 'Ma position' : (fromLabel ?? 'Votre position'),
+    const resolvedFromLabel = geoPosition ? 'Ma position' : (fromLabel ?? 'Votre position')
+    const lastSegmentIdx = best.segments.length - 1
+    void saveLastJourney({
+      fromLabel: resolvedFromLabel,
       toLabel,
       durationMin: best.totalDurationMin,
       co2SavedGrams: best.co2SavingG,
       savedAt: new Date().toISOString(),
+      steps: best.segments.map((segment, idx) => ({
+        mode: segment.mode,
+        distanceKm: segment.distanceKm,
+        durationMin: segment.durationMin,
+        lineName: segment.lineName,
+        // Le provider ne connaît pas l'adresse saisie par l'utilisateur (ni
+        // en début ni en fin d'itinéraire, seulement les arrêts/stations
+        // intermédiaires) — le premier/dernier segment retombe donc sur le
+        // fromLabel/toLabel déjà résolu par la recherche.
+        fromName: segment.fromName ?? (idx === 0 ? resolvedFromLabel : undefined),
+        toName: segment.toName ?? (idx === lastSegmentIdx ? toLabel : undefined),
+      })),
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [journeys, toLabel])
@@ -341,18 +359,69 @@ export default function MapPage() {
         weather={weather}
         onDepartClick={tracking.openConsent}
         onEndTrip={tracking.requestEndTrip}
+        offline={!isOnline && tracking.trackingPhase !== 'active'}
+        onRetry={recheckOnlineStatus}
       />
 
       <div className="h-screen lg:h-auto lg:flex-1 lg:min-w-0">
-        {/* Ne recouvre pas un suivi de trajet déjà en cours — le GPS et le
-         * segment affiché ne dépendent pas du réseau une fois le trajet chargé. */}
-        {!isOnline && tracking.trackingPhase !== 'active' && <OfflinePanel />}
-
         <main
           className="h-full relative overflow-hidden isolate group"
           role="application"
           aria-label="Carte de mobilité de Nantes"
         >
+          {/* Fond hachuré + bandeau (MAQUETTE.md §5.7 "Hors ligne") — propriété
+           * de la zone carte, pas du sheet (qui affiche son propre contenu
+           * hors ligne via `MapSheet`'s `offline` prop). Ne recouvre pas un
+           * suivi de trajet déjà en cours — le GPS et le segment affiché ne
+           * dépendent pas du réseau une fois le trajet chargé. `z-sheet` (pas
+           * `z-modal`) : même niveau que les autres overlays flottants de
+           * cette carte (météo, localisation, bannières d'erreur ci-dessous)
+           * pour rester interlacé avec eux par ordre du DOM plutôt que de les
+           * bloquer sous un empilement supérieur — seules les tuiles Leaflet
+           * (z-index interne inférieur, cf. commentaire `.bottom-sheet` dans
+           * index.css) doivent rester sous ce calque. */}
+          {!isOnline && tracking.trackingPhase !== 'active' && (
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 z-sheet"
+              style={{
+                backgroundImage:
+                  'repeating-linear-gradient(135deg, var(--color-surface-sunken) 0 12px, var(--color-surface-muted) 12px 24px)',
+              }}
+            />
+          )}
+
+          {/* Visible aussi en desktop (décision produit) : `<main>` est un
+           * `flex-1` placé après `<MapSheet>` dans la ligne flex du parent —
+           * `absolute left-3.5 right-3.5` reste donc cadré sur la largeur de
+           * `<main>` (relative) et ne déborde jamais sur le sheet docké,
+           * plutôt qu'un `fixed` pleine largeur qui le recouvrirait. Léger
+           * doublon avec le "Pas de connexion" du panneau docké, jugé
+           * acceptable pour garder le même repère "carte indisponible" qu'en
+           * mobile plutôt que d'en priver le desktop. */}
+          {!isOnline && tracking.trackingPhase !== 'active' && (
+            <div className="absolute top-3.5 left-3.5 right-3.5 z-sheet flex items-center gap-2.5 h-11 px-3.5 rounded-md bg-warning-surface border-[1.5px] border-warning-border">
+              <svg
+                aria-hidden="true"
+                width="17"
+                height="17"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.9"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-warning shrink-0"
+              >
+                <path d="M2 8.5a15 15 0 0 1 20 0M5.5 12a10 10 0 0 1 13 0M9 15.5a5 5 0 0 1 6 0M12 19h.01" />
+                <path d="M4 4l16 16" />
+              </svg>
+              <span className="flex-1 text-body-sm font-semibold text-warning">
+                Hors ligne — carte non disponible
+              </span>
+            </div>
+          )}
+
           {weather && (
             <div className="absolute top-3 right-3 z-sheet">
               <WeatherBadge weather={weather} variant="map" />

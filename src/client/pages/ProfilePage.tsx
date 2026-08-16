@@ -51,7 +51,7 @@ function ProfileForm({ profile, isGuest }: { profile: MobilityProfile; isGuest: 
     pmrAccessibility: profile.pmrAccessibility,
   }
   const [form, setForm] = useState<FormState>(initialForm)
-  
+
   const initialFormRef = useRef(initialForm)
   const [saveError, setSaveError] = useState<string | null>(null)
 

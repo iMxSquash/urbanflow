@@ -21,6 +21,8 @@ export interface JourneySegment {
   co2g: number
   lineRef?: string
   lineName?: string
+  fromName?: string // nom lisible du point de départ du segment (arrêt, station Bicloo...) — absent si non résolu par le provider
+  toName?: string // nom lisible du point d'arrivée du segment
   shape?: Coordinates[] // tracé réel décodé depuis legGeometry
   waitTimeMin?: number // attente à l'arrêt avant montée (TC uniquement)
   scheduledDeparture?: string // ISO — heure de départ prévue du véhicule
