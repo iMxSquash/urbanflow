@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import urbanflowIcon from '../assets/urbanflow-icon.svg'
 
 interface AuthShellProps {
   // 'recovery' : écran "mot de passe oublié", hors des deux onglets Connexion/Inscription.
@@ -32,8 +31,28 @@ export function AuthShell({ active, children }: AuthShellProps) {
   return (
     <main className="min-h-dvh bg-bg flex flex-col lg:flex-row">
       {/* Panneau de marque — bandeau 196px mobile → colonne pleine hauteur desktop */}
-      <div className="h-49 shrink-0 flex flex-col justify-end gap-2 p-6 bg-primary lg:h-auto lg:w-2/5 lg:min-w-95 lg:justify-center lg:p-16">
-        <img src={urbanflowIcon} alt="" width={40} height={40} className="lg:w-14 lg:h-14" />
+      <div className="h-49 shrink-0 flex flex-col justify-end gap-2 p-6 pb-12 bg-primary lg:h-auto lg:w-2/5 lg:min-w-95 lg:justify-center lg:p-16">
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 64 64"
+          fill="none"
+          width={40}
+          height={40}
+          className="lg:w-14 lg:h-14 text-on-primary"
+        >
+          <path
+            d="M18.1084 6.18644C22.5864 6.18644 26.2167 9.81688 26.2168 14.2948C26.2167 18.7727 22.5863 22.4032 18.1084 22.4032C13.6306 22.4031 10.0001 18.7727 10 14.2948C10.0001 9.81696 13.6305 6.18655 18.1084 6.18644ZM18.1084 11.2548C16.4293 11.2549 15.0684 12.6157 15.0684 14.2948C15.0685 15.9739 16.4293 17.3357 18.1084 17.3359C19.7876 17.3359 21.1493 15.974 21.1494 14.2948C21.1493 12.6156 19.7876 11.2548 18.1084 11.2548Z"
+            fill="currentColor"
+          />
+          <path
+            d="M46.4876 26.4576C48.7264 26.4578 50.5413 28.2724 50.5413 30.5113V39.6334C50.5412 44.4716 48.6187 49.1116 45.1976 52.5328C41.7764 55.9539 37.1365 57.8765 32.2982 57.8765C27.4598 57.8765 22.8191 55.954 19.3978 52.5328C15.9768 49.1116 14.0552 44.4715 14.055 39.6334V30.5113C14.055 28.2723 15.8697 26.4576 18.1087 26.4576C20.3477 26.4576 22.1624 28.2723 22.1624 30.5113V39.6334C22.1626 42.3211 23.2307 44.8988 25.1312 46.7994C27.0319 48.7 29.6102 49.7681 32.2982 49.7681C34.9861 49.7681 37.5645 48.7 39.4652 46.7994C41.3655 44.8988 42.4328 42.321 42.4329 39.6334V30.5113C42.4329 28.2723 44.2486 26.4576 46.4876 26.4576Z"
+            fill="currentColor"
+          />
+          <path
+            d="M46.7585 6.18697L54.2781 22.2107L47.079 18.345L40.0937 22.5847L46.7585 6.18697Z"
+            fill="currentColor"
+          />
+        </svg>
         <span className="text-h2 font-bold text-on-primary tracking-tight lg:text-display">
           UrbanFlow
         </span>
