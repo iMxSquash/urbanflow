@@ -8,17 +8,9 @@ import { isIosDevice } from '../utils/platform'
 import { GuestLocked } from '../components/GuestLocked'
 import { ModeChip } from '../components/ModeChip'
 import { PROFILE_PRESETS } from '../constants/profile-presets'
+import { TRANSPORT_MODES } from '@shared/types/index'
 import type { TransportMode, UserPreference } from '@shared/types/index'
 
-const ONBOARDING_MODES: TransportMode[] = [
-  'walk',
-  'bike',
-  'tramway',
-  'bus',
-  'scooter',
-  'navibus',
-  'train',
-]
 const DEFAULT_MODES: TransportMode[] = ['walk', 'bike', 'tramway', 'bus']
 
 /** Onboarding préférences + PWA — étape 2 sur 2 (étape 1 = inscription).
@@ -211,7 +203,7 @@ export default function OnboardingPage() {
                   Modes que vous utilisez
                 </span>
                 <div className="flex flex-wrap gap-1.5">
-                  {ONBOARDING_MODES.map((mode) => (
+                  {TRANSPORT_MODES.map((mode) => (
                     <ModeChip
                       key={mode}
                       mode={mode}
