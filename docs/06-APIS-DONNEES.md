@@ -271,17 +271,24 @@ const weightTransit = isRaining ? 1.5 : 1.0
 
 ## 7. CartoDB Positron — Tuiles carte
 
+> **Écart avec la doc historique** : CARTO exige désormais une clé API sur
+> `basemaps.cartocdn.com` (tuile watermarkée "API KEY REQUIRED" sinon, changement
+> de politique CARTO courant 2025, indépendant de ce projet). Clé gratuite (5M
+> requêtes/mois, fair use) obtenue par email sans création de compte sur
+> [carto.com/basemaps/apikey](https://carto.com/basemaps/apikey/), en fournissant
+> le(s) domaine(s) d'usage (`localhost` en dev, le domaine Vercel en prod).
+
 ### Configuration Leaflet
 
 ```typescript
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=VITE_CARTO_API_KEY', {
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
   subdomains: 'abcd',
   maxZoom: 20
 }).addTo(map)
 ```
 
-Pas de clé API. Gratuit. Fond épuré professionnel.
+Clé API requise (paramètre `key`, variable d'env `VITE_CARTO_API_KEY`). Fond épuré professionnel.
 
 ---
 
