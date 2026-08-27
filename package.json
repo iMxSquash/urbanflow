@@ -1,6 +1,6 @@
 {
-  "name": "urbanflow-smartroute",
-  "version": "0.1.0",
+  "name": "urbanflow",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "engines": {
