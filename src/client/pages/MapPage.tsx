@@ -38,8 +38,10 @@ const TanStopsLayer = lazy(() => import('../components/TanStopsLayer'))
 
 const NANTES_COMMERCE: [number, number] = [47.218, -1.553]
 const NANTES_FALLBACK_COORDS = { lat: 47.218, lng: -1.553 }
-const CARTO_POSITRON_LIGHT = 'https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
-const CARTO_POSITRON_DARK = 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+const CARTO_API_KEY = import.meta.env.VITE_CARTO_API_KEY
+const CARTO_POSITRON_LIGHT = `https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`
+const CARTO_POSITRON_DARK = `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`
+const CARTO_SUBDOMAINS = 'abcd'
 const CARTO_ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors ' +
   '&copy; <a href="https://carto.com/attributions">CARTO</a>'
@@ -474,6 +476,7 @@ export default function MapPage() {
             <TileLayer
               key={isDarkMode ? 'dark' : 'light'}
               url={isDarkMode ? CARTO_POSITRON_DARK : CARTO_POSITRON_LIGHT}
+              subdomains={CARTO_SUBDOMAINS}
               attribution={CARTO_ATTRIBUTION}
               className={
                 isDarkMode ? 'saturate-[.5] brightness-[.92]' : 'saturate-[.55] contrast-[1.02]'

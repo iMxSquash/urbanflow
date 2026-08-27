@@ -21,6 +21,12 @@ Chaque choix est justifiable en une phrase devant un jury. C'est le critère.
 
 **CartoDB Positron** (`basemaps.cartocdn.com`) — fond épuré, léger, gratuit sans carte bancaire, visuellement professionnel. Basé sur OSM.
 
+Depuis 2025, CARTO exige une clé API (fair use 5M requêtes/mois) sur ce fond de
+carte — obtenue gratuitement par email sans création de compte sur
+[carto.com/basemaps/apikey](https://carto.com/basemaps/apikey/), toujours sans
+carte bancaire. Clé exposée côté client (`VITE_CARTO_API_KEY`, requêtée
+directement par le navigateur) — voir `docs/06-APIS-DONNEES.md` §7.
+
 Alternative : tuiles OSM standard (`tile.openstreetmap.org`), mais politique d'usage restrictive et esthétique moins adaptée au projet.
 
 > « Nous avons choisi CartoDB Positron pour son fond épuré qui fait ressortir les tracés d'itinéraires, sa légèreté (éco-conception), et son accès sans carte bancaire (vs Google Maps). »

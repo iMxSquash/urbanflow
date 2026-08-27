@@ -148,6 +148,7 @@ Toutes les variables sont listées dans [`.env.example`](.env.example). Aperçu 
 | `DATABASE_URL` | Connexion PostgreSQL (Supabase Transaction Pooler en production) |
 | `DEMO_MODE` | Bascule tous les appels externes vers `src/demo-data/` |
 | `TRANSITOUS_URL`, `OSRM_URL`, `OPENWEATHER_API_KEY`, `NANTES_API_URL` | APIs de transport et météo |
+| `VITE_CARTO_API_KEY` | Tuiles CartoDB Positron (clé gratuite, fair use, voir [`docs/06-APIS-DONNEES.md`](docs/06-APIS-DONNEES.md#7-cartodb-positron--tuiles-carte)) |
 | `JWT_SECRET`, `JWT_REFRESH_SECRET`, `JWT_EXPIRY`, `JWT_REFRESH_EXPIRY` | Authentification JWT |
 | `PORT`, `NODE_ENV`, `CORS_ORIGIN` | Configuration serveur |
 

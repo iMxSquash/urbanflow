@@ -161,7 +161,7 @@ Variable d'env `DEMO_MODE=true` fait basculer TOUS les appels API externes vers 
 | Bicloo (stations vélos) | URL fixe — API Explore v2.1 de data.nantesmetropole.fr | Stations vélos temps réel, routing Bicloo |
 | TAN circuits & arrêts | `NANTES_API_URL` (défaut : API Explore v2.1 de data.nantesmetropole.fr) | Lignes et arrêts pour affichage carte |
 | SIRI-Lite Naolib | `RequestorRef: opendata` | Prochains passages temps réel (non encore intégré) |
-| CartoDB Positron | URL fixe basemaps.cartocdn.com | Tuiles cartographiques |
+| CartoDB Positron | `VITE_CARTO_API_KEY=xxx` — URL fixe basemaps.cartocdn.com | Tuiles cartographiques |
 | Nominatim | URL fixe nominatim.openstreetmap.org | Autocomplétion d'adresse — seule intégration appelée directement du navigateur, pas proxyée par le backend (cf. `docs/06-APIS-DONNEES.md` §8) |
 
 > **Écart avec le flux GBFS documenté historiquement** : `bicloo.service.ts` et
@@ -170,6 +170,17 @@ Variable d'env `DEMO_MODE=true` fait basculer TOUS les appels API externes vers 
 > deux intégrations fonctionnent (avec fallback `demo-data/` si l'API est
 > indisponible) — voir `docs/06-APIS-DONNEES.md` §5 pour le détail des endpoints
 > réels.
+
+> **Écart avec la doc historique (CartoDB Positron)** : CARTO exige désormais
+> une clé API sur `basemaps.cartocdn.com` (changement de politique CARTO
+> courant 2025, indépendant de ce projet — tuile watermarkée "API KEY REQUIRED"
+> sinon). Clé gratuite (5M req/mois, fair use) obtenue par email sans compte
+> sur carto.com/basemaps/apikey, en fournissant le(s) domaine(s) d'usage
+> (`localhost` en dev, domaine Vercel en prod). Contrairement aux autres clés
+> du tableau ci-dessus, `VITE_CARTO_API_KEY` est lue **côté client** (préfixe
+> `VITE_` requis par Vite pour l'exposer au bundle), donc à définir aussi dans
+> les env vars du projet Vercel, pas seulement côté serveur — voir
+> `docs/06-APIS-DONNEES.md` §7.
 
 ## Variables d'environnement
 

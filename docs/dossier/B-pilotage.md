@@ -53,7 +53,7 @@ Chaque technologie retenue a été mise en regard d'au moins une alternative. Le
 | Vite | Create React App, Webpack | Build 10 à 20 fois plus rapide, HMR (Hot Module Replacement) instantané, tree-shaking natif, bundle minimal (C5) |
 | TailwindCSS v4 | CSS-in-JS (Emotion), Sass | Zéro runtime CSS, purge automatique des classes inutilisées, bundle de styles inférieur à 1 ko (C5) |
 | Zustand | Redux, Context API | Légèreté (moins de 1 ko gzip), absence de boilerplate ; Redux introduit un volume de code disproportionné pour le périmètre d'un MVP solo |
-| Leaflet.js + tuiles CartoDB Positron | Google Maps Platform | Leaflet pèse environ 40 ko contre plus de 200 ko pour le SDK Google Maps ; aucune carte bancaire requise ni quota d'usage ; cartographie open source (C5) |
+| Leaflet.js + tuiles CartoDB Positron | Google Maps Platform | Leaflet pèse environ 40 ko contre plus de 200 ko pour le SDK Google Maps ; aucune carte bancaire requise (clé API gratuite, fair use 5M requêtes/mois) ; cartographie open source (C5) |
 | Recharts | Chart.js, D3.js | Composants React déclaratifs, tree-shakable, sans manipulation DOM impérative |
 | Node.js + Express + TypeScript | NestJS, Fastify | Principe KISS (Keep It Simple, Stupid) : Express est suffisant pour un monolithe modulaire ; NestJS ajoute une couche de framework non justifiée par le périmètre |
 | PostgreSQL + PostGIS | MongoDB, Redis seul | Requêtes géospatiales natives (calcul de distance, arrêts dans un rayon en mètres), modèle relationnel pour l'intégrité des données utilisateur et historique de trajets |
