@@ -1,0 +1,28 @@
+name: Suggestion de fonctionnalité
+description: Proposer une idée ou une amélioration pour UrbanFlow SmartRoute
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Projet académique solo — les suggestions sont lues avec intérêt mais ne garantissent pas une implémentation. Voir le périmètre fonctionnel dans [`docs/01-PERIMETRE-MVP.md`](../../docs/01-PERIMETRE-MVP.md).
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problème ou besoin
+      description: Quel problème cette fonctionnalité résoudrait-elle ?
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Solution envisagée
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives envisagées
