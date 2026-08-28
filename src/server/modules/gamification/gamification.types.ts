@@ -35,6 +35,7 @@ export interface BadgeWithStatus {
   modeFilter: TransportMode | null
   unlocked: boolean
   unlockedAt: string | null
+  currentValue: number
 }
 
 export interface WeeklyBar {

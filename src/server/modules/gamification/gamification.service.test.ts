@@ -365,10 +365,13 @@ describe('getUserBadges', () => {
     mode_filter: null,
   }
 
+  const BASE_STATS_ROW = { total_trips: 3, total_co2_saved_grams: 42, total_points: 10 }
+
   it('retourne un badge débloqué avec unlocked = true et unlockedAt renseigné', async () => {
     mockPoolQuery.mockResolvedValueOnce({
       rows: [{ ...BASE_BADGE, unlocked_at: '2026-05-20T10:00:00.000Z' }],
     })
+    mockPoolQuery.mockResolvedValueOnce({ rows: [BASE_STATS_ROW] })
 
     const badges = await getUserBadges(USER_ID)
 
@@ -382,6 +385,7 @@ describe('getUserBadges', () => {
     mockPoolQuery.mockResolvedValueOnce({
       rows: [{ ...BASE_BADGE, unlocked_at: null }],
     })
+    mockPoolQuery.mockResolvedValueOnce({ rows: [BASE_STATS_ROW] })
 
     const badges = await getUserBadges(USER_ID)
 
@@ -389,10 +393,11 @@ describe('getUserBadges', () => {
     expect(badges[0].unlockedAt).toBeNull()
   })
 
-  it('mappe correctement tous les champs du badge', async () => {
+  it('mappe correctement tous les champs du badge, dont la progression courante', async () => {
     mockPoolQuery.mockResolvedValueOnce({
       rows: [{ ...BASE_BADGE, unlocked_at: null }],
     })
+    mockPoolQuery.mockResolvedValueOnce({ rows: [BASE_STATS_ROW] })
 
     const badges = await getUserBadges(USER_ID)
 
@@ -403,7 +408,28 @@ describe('getUserBadges', () => {
       thresholdType: 'total_co2_saved_grams',
       thresholdValue: 100,
       modeFilter: null,
+      currentValue: BASE_STATS_ROW.total_co2_saved_grams,
     })
+  })
+
+  it('utilise le comptage par mode pour un badge avec mode_filter', async () => {
+    mockPoolQuery.mockResolvedValueOnce({
+      rows: [
+        {
+          ...BASE_BADGE,
+          threshold_type: 'total_trips',
+          threshold_value: 10,
+          mode_filter: 'bike',
+          unlocked_at: null,
+        },
+      ],
+    })
+    mockPoolQuery.mockResolvedValueOnce({ rows: [BASE_STATS_ROW] })
+    mockPoolQuery.mockResolvedValueOnce({ rows: [{ mode: 'bike', count: 7 }] })
+
+    const badges = await getUserBadges(USER_ID)
+
+    expect(badges[0].currentValue).toBe(7)
   })
 
   it('retourne une liste vide si aucun badge en base', async () => {

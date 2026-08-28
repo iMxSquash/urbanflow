@@ -67,21 +67,28 @@ interface BadgeRow {
   mode_filter: TransportMode | null
 }
 
-async function checkAndUnlockBadges(userId: string, client: pg.PoolClient): Promise<string[]> {
-  // Badges pas encore débloqués par cet utilisateur
-  const { rows: pending } = await client.query<BadgeRow>(
-    `SELECT b.id, b.name, b.threshold_type, b.threshold_value, b.mode_filter
-     FROM badges b
-     WHERE NOT EXISTS (
-       SELECT 1 FROM user_badges ub WHERE ub.badge_id = b.id AND ub.user_id = $1
-     )`,
-    [userId]
-  )
+// Types de seuil implémentés — les autres (ex. streak_days) sont exclus explicitement
+const SUPPORTED_THRESHOLD_TYPES = new Set<ThresholdType>([
+  'total_trips',
+  'total_co2_saved_grams',
+  'total_points',
+])
 
-  if (pending.length === 0) return []
+interface ProgressStats {
+  totalTrips: number
+  totalCo2SavedGrams: number
+  totalPoints: number
+  modeCounts: Partial<Record<TransportMode, number>>
+}
 
-  // Stats globales utilisateur
-  const { rows: statsRows } = await client.query<{
+// Utilisé aussi bien depuis la transaction de `recordTrip` (client) que depuis
+// `getUserBadges` (pool) — d'où l'union de type plutôt qu'un `pg.PoolClient` fixe
+async function getProgressStats(
+  userId: string,
+  db: pg.Pool | pg.PoolClient,
+  needsModeCounts: boolean
+): Promise<ProgressStats> {
+  const { rows: statsRows } = await db.query<{
     total_trips: number
     total_co2_saved_grams: number
     total_points: number
@@ -95,11 +102,9 @@ async function checkAndUnlockBadges(userId: string, client: pg.PoolClient): Prom
   )
   const stats = statsRows[0]
 
-  // Comptage par mode (uniquement si des badges mode-spécifiques sont en attente)
   const modeCounts: Partial<Record<TransportMode, number>> = {}
-  const needsModeCounts = pending.some((b) => b.mode_filter !== null)
   if (needsModeCounts) {
-    const { rows: modeRows } = await client.query<{ mode: TransportMode; count: number }>(
+    const { rows: modeRows } = await db.query<{ mode: TransportMode; count: number }>(
       `SELECT unnest(modes_used) AS mode, COUNT(*)::int AS count
        FROM trips WHERE user_id = $1 GROUP BY mode`,
       [userId]
@@ -107,45 +112,57 @@ async function checkAndUnlockBadges(userId: string, client: pg.PoolClient): Prom
     for (const row of modeRows) modeCounts[row.mode] = row.count
   }
 
-  // Types de seuil implémentés — les autres (ex. streak_days) sont exclus explicitement
-  const SUPPORTED_THRESHOLD_TYPES = new Set<ThresholdType>([
-    'total_trips',
-    'total_co2_saved_grams',
-    'total_points',
-  ])
+  return {
+    totalTrips: stats.total_trips,
+    totalCo2SavedGrams: stats.total_co2_saved_grams,
+    totalPoints: stats.total_points,
+    modeCounts,
+  }
+}
+
+// Valeur actuelle de l'utilisateur pour le critère d'un badge — 0 pour un
+// threshold_type non supporté (ex. streak_days), déjà écarté en amont pour le
+// déblocage mais nécessaire ici pour l'affichage de la progression
+function badgeActualValue(
+  badge: { threshold_type: ThresholdType; mode_filter: TransportMode | null },
+  stats: ProgressStats
+): number {
+  if (badge.mode_filter !== null) return stats.modeCounts[badge.mode_filter] ?? 0
+  switch (badge.threshold_type) {
+    case 'total_trips':
+      return stats.totalTrips
+    case 'total_co2_saved_grams':
+      return stats.totalCo2SavedGrams
+    case 'total_points':
+      return stats.totalPoints
+    default:
+      return 0
+  }
+}
+
+async function checkAndUnlockBadges(userId: string, client: pg.PoolClient): Promise<string[]> {
+  // Badges pas encore débloqués par cet utilisateur
+  const { rows: pending } = await client.query<BadgeRow>(
+    `SELECT b.id, b.name, b.threshold_type, b.threshold_value, b.mode_filter
+     FROM badges b
+     WHERE NOT EXISTS (
+       SELECT 1 FROM user_badges ub WHERE ub.badge_id = b.id AND ub.user_id = $1
+     )`,
+    [userId]
+  )
+
+  if (pending.length === 0) return []
+
+  const needsModeCounts = pending.some((b) => b.mode_filter !== null)
+  const stats = await getProgressStats(userId, client, needsModeCounts)
 
   const evaluable = pending.filter(
     (b) => b.mode_filter !== null || SUPPORTED_THRESHOLD_TYPES.has(b.threshold_type)
   )
 
-  // Évaluation de chaque badge éligible
-  const toUnlock: string[] = []
-
-  for (const badge of evaluable) {
-    let actual: number
-
-    if (badge.mode_filter !== null) {
-      actual = modeCounts[badge.mode_filter] ?? 0
-    } else {
-      switch (badge.threshold_type) {
-        case 'total_trips':
-          actual = stats.total_trips
-          break
-        case 'total_co2_saved_grams':
-          actual = stats.total_co2_saved_grams
-          break
-        case 'total_points':
-          actual = stats.total_points
-          break
-        default:
-          continue
-      }
-    }
-
-    if (actual >= badge.threshold_value) {
-      toUnlock.push(badge.id)
-    }
-  }
+  const toUnlock = evaluable
+    .filter((badge) => badgeActualValue(badge, stats) >= badge.threshold_value)
+    .map((badge) => badge.id)
 
   if (toUnlock.length === 0) return []
 
@@ -333,6 +350,11 @@ export async function getUserBadges(userId: string): Promise<BadgeWithStatus[]> 
     [userId]
   )
 
+  if (rows.length === 0) return []
+
+  const needsModeCounts = rows.some((b) => b.mode_filter !== null)
+  const stats = await getProgressStats(userId, pool, needsModeCounts)
+
   return rows.map((row) => ({
     id: row.id,
     name: row.name,
@@ -342,5 +364,6 @@ export async function getUserBadges(userId: string): Promise<BadgeWithStatus[]> 
     modeFilter: row.mode_filter,
     unlocked: row.unlocked_at !== null,
     unlockedAt: row.unlocked_at,
+    currentValue: badgeActualValue(row, stats),
   }))
 }

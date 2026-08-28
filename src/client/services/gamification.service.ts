@@ -18,6 +18,7 @@ export interface BadgeWithStatus {
   modeFilter: string | null
   unlocked: boolean
   unlockedAt: string | null
+  currentValue: number
 }
 
 export async function recordTrip(
