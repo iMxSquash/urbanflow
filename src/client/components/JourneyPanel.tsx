@@ -1,152 +1,13 @@
-import type { Journey, JourneySegment, TransportMode, WeatherCondition } from '@shared/types/index'
+import type { Journey, WeatherCondition } from '@shared/types/index'
 import {
   MODE_ICON_PATH_BASE,
   MODE_LABELS,
   modeColorVar,
   modeColorVarAlpha,
 } from '../constants/mode-icons'
-import {
-  avgSpeedKmh,
-  caloriesBurned,
-  co2SavedVsCarG,
-  estimatedNextDepartures,
-} from '../utils/journey-segment-info'
+import { formatCo2, formatDuration, formatTime } from '../utils/format-journey'
 import { WeatherBadge } from './WeatherBadge'
-
-// ── Constantes ─────────────────────────────────────────────────────────────────
-
-const TC_MODES = new Set<TransportMode>(['bus', 'tramway', 'navibus', 'train'])
-
-// ── Helpers d'affichage ──────────────────────────────────────────────────────
-
-function formatDuration(min: number): string {
-  if (min < 60) return `${min} min`
-  const h = Math.floor(min / 60)
-  const m = min % 60
-  return m > 0 ? `${h}h${m.toString().padStart(2, '0')}` : `${h}h`
-}
-
-function formatCo2(grams: number): string {
-  return grams >= 1000 ? `${(grams / 1000).toFixed(1)} kg` : `${grams} g`
-}
-
-function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-}
-
-// ── SegmentDetail ──────────────────────────────────────────────────────────────
-
-function SegmentDetail({ segment }: { segment: JourneySegment }) {
-  const isTc = TC_MODES.has(segment.mode)
-  const speed = avgSpeedKmh(segment.distanceKm, segment.durationMin)
-  const calories = caloriesBurned(segment.mode, segment.durationMin)
-  const nextDeps = segment.scheduledDeparture
-    ? estimatedNextDepartures(segment.mode, segment.scheduledDeparture)
-    : []
-  const co2SavedG = co2SavedVsCarG(segment.distanceKm, segment.co2g)
-
-  return (
-    <div
-      className="ml-11 mb-2 rounded-xl border border-border bg-surface-sunken p-3 space-y-3"
-      style={{ animation: 'var(--animate-slide-up)' }}
-    >
-      {/* Prochains passages TC */}
-      {isTc && segment.scheduledDeparture && (
-        <div>
-          <p className="text-caption font-semibold text-text-subtle uppercase tracking-wide mb-1.5">
-            Prochains passages
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface border border-eco-200 text-caption font-semibold text-text">
-              {formatTime(segment.scheduledDeparture)}
-              <span className="text-eco-600 font-medium">prévu</span>
-            </span>
-            {nextDeps.map((dep, i) => (
-              <span
-                key={i}
-                className="inline-flex items-center px-2 py-1 rounded-md bg-surface border border-border text-caption text-text-subtle"
-              >
-                ~{formatTime(dep)}
-              </span>
-            ))}
-            <span className="self-center text-[10px] text-text-subtle italic">estimés</span>
-          </div>
-        </div>
-      )}
-
-      {/* Stats du segment */}
-      <div className="grid grid-cols-3 gap-2">
-        <div className="bg-surface rounded-lg p-2 text-center border border-border">
-          <p className="text-[10px] text-text-subtle leading-none mb-0.5">Durée</p>
-          <p className="text-body-sm font-bold text-text tabular-nums">
-            {formatDuration(segment.durationMin)}
-          </p>
-        </div>
-
-        <div className="bg-surface rounded-lg p-2 text-center border border-border">
-          <p className="text-[10px] text-text-subtle leading-none mb-0.5">Distance</p>
-          <p className="text-body-sm font-bold text-text tabular-nums">{segment.distanceKm} km</p>
-        </div>
-
-        {segment.co2g > 0 ? (
-          <div className="bg-surface rounded-lg p-2 text-center border border-border">
-            <p className="text-[10px] text-text-subtle leading-none mb-0.5">CO₂</p>
-            <p className="text-body-sm font-bold text-text-muted tabular-nums">
-              {formatCo2(segment.co2g)}
-            </p>
-          </div>
-        ) : speed > 0 ? (
-          <div className="bg-surface rounded-lg p-2 text-center border border-border">
-            <p className="text-[10px] text-text-subtle leading-none mb-0.5">Vitesse</p>
-            <p className="text-body-sm font-bold text-text tabular-nums">{speed} km/h</p>
-          </div>
-        ) : null}
-      </div>
-
-      {/* Ligne basse : calories + économie CO2 */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        {calories !== undefined && calories > 0 && (
-          <span className="inline-flex items-center gap-1 text-caption text-text-subtle">
-            <svg
-              aria-hidden="true"
-              width="11"
-              height="11"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-            </svg>
-            ~{calories} kcal
-          </span>
-        )}
-        {co2SavedG > 0 && (
-          <span className="inline-flex items-center gap-1 text-caption text-eco-700 font-medium">
-            <svg
-              aria-hidden="true"
-              width="11"
-              height="11"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M17 8C8 10 5.9 16.17 3.82 22c2 0 7.68-1 13-6 2-2 3-5 3-8s-1-5-1-5l-1.82 5z" />
-            </svg>
-            -{formatCo2(co2SavedG)} CO₂ vs voiture
-          </span>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ── JourneyPanel ──────────────────────────────────────────────────────────────
+import { SegmentDetail } from './SegmentDetail'
 
 export type JourneyTrackingPhase = 'idle' | 'active'
 
@@ -280,118 +141,112 @@ export function JourneyPanel({
                 </div>
               )}
 
-              {/* Segment cliquable */}
-              <button
-                type="button"
-                onClick={() => toggleSegment(idx)}
-                aria-expanded={isActive}
-                aria-label={`${isActive ? 'Masquer' : 'Voir'} les détails : ${segment.lineName ?? MODE_LABELS[segment.mode]}`}
-                className={[
-                  'flex gap-3 relative w-full text-left rounded-lg transition-colors duration-150 cursor-pointer',
-                  isActive ? 'bg-surface-sunken' : 'hover:bg-surface-sunken/70',
-                ].join(' ')}
-                style={
-                  isActive
-                    ? {
-                        borderLeft: `3px solid ${modeColorVar(segment.mode)}`,
-                        paddingLeft: '0.375rem',
-                      }
-                    : {}
-                }
-              >
-                {/* Ligne verticale entre segments */}
+              {/* Segment cliquable + panneau de détail, ancrage commun pour la ligne verticale */}
+              <div className="relative">
                 {idx < journey.segments.length - 1 && (
                   <div
                     aria-hidden="true"
-                    className="absolute top-9 bottom-0 w-0.5 opacity-25 transition-opacity duration-150"
+                    className="absolute top-11 bottom-0 w-0.5 opacity-25"
                     style={{
-                      left: isActive ? '1.125rem' : '0.875rem',
+                      left: '0.875rem',
                       background: modeColorVar(segment.mode),
                     }}
                   />
                 )}
 
-                {/* Icône mode */}
-                <div
-                  aria-hidden="true"
-                  className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center z-10 mt-0.5 transition-transform duration-150"
-                  style={{
-                    background: modeColorVarAlpha(segment.mode, isActive ? 19 : 13),
-                    border: `2px solid ${modeColorVar(segment.mode)}`,
-                    color: modeColorVar(segment.mode),
-                    transform: isActive ? 'scale(1.1)' : 'scale(1)',
-                  }}
+                <button
+                  type="button"
+                  onClick={() => toggleSegment(idx)}
+                  aria-expanded={isActive}
+                  aria-controls={`segment-detail-${idx}`}
+                  aria-label={`${isActive ? 'Masquer' : 'Voir'} les détails : ${segment.lineName ?? MODE_LABELS[segment.mode]}`}
+                  className={[
+                    'relative flex gap-3 w-full text-left rounded-lg transition-colors duration-fast ease-ui cursor-pointer',
+                    isActive ? 'bg-surface-sunken' : 'hover:bg-surface-sunken/70',
+                  ].join(' ')}
                 >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.9"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    {MODE_ICON_PATH_BASE[segment.mode]}
-                  </svg>
-                </div>
-
-                {/* Contenu */}
-                <div className="pb-3 pt-0.5 min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-body-sm font-medium text-text leading-snug truncate">
-                      {segment.lineName ?? MODE_LABELS[segment.mode]}
-                    </p>
-                    {segment.scheduledDeparture && (
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-caption font-medium bg-surface-sunken text-text-muted shrink-0">
-                        <svg
-                          aria-hidden="true"
-                          width="10"
-                          height="10"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <circle cx="12" cy="12" r="10" />
-                          <polyline points="12 6 12 12 16 14" />
-                        </svg>
-                        {formatTime(segment.scheduledDeparture)}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-caption text-text-subtle mt-0.5">
-                    {formatDuration(segment.durationMin)}
-                    {segment.waitTimeMin !== undefined && ' en véhicule'}
-                    {segment.distanceKm > 0 && ` · ${segment.distanceKm} km`}
-                    {segment.co2g > 0 && ` · ${segment.co2g} g CO₂`}
-                  </p>
-                </div>
-
-                {/* Chevron */}
-                <div className="shrink-0 flex items-center pr-1 pt-1">
-                  <svg
+                  {/* Icône mode */}
+                  <div
                     aria-hidden="true"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="text-text-subtle transition-transform duration-200"
-                    style={{ transform: isActive ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                    className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center z-10 mt-0.5 transition-all duration-fast ease-ui"
+                    style={{
+                      background: modeColorVarAlpha(segment.mode, isActive ? 19 : 13),
+                      border: `2px solid ${modeColorVar(segment.mode)}`,
+                      color: modeColorVar(segment.mode),
+                      transform: isActive ? 'scale(1.1)' : 'scale(1)',
+                    }}
                   >
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </div>
-              </button>
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.9"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      {MODE_ICON_PATH_BASE[segment.mode]}
+                    </svg>
+                  </div>
 
-              {/* Panneau de détail expandable */}
-              {isActive && <SegmentDetail segment={segment} />}
+                  {/* Contenu */}
+                  <div className="pb-3 pt-0.5 min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-body-sm font-medium text-text leading-snug truncate">
+                        {segment.lineName ?? MODE_LABELS[segment.mode]}
+                      </p>
+                      {segment.scheduledDeparture && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-caption font-medium bg-surface-sunken text-text-muted shrink-0">
+                          <svg
+                            aria-hidden="true"
+                            width="10"
+                            height="10"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="12 6 12 12 16 14" />
+                          </svg>
+                          {formatTime(segment.scheduledDeparture)}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-caption text-text-subtle mt-0.5">
+                      {formatDuration(segment.durationMin)}
+                      {segment.waitTimeMin !== undefined && ' en véhicule'}
+                      {segment.distanceKm > 0 && ` · ${segment.distanceKm} km`}
+                      {segment.co2g > 0 && ` · ${segment.co2g} g CO₂`}
+                    </p>
+                  </div>
+
+                  {/* Chevron */}
+                  <div className="shrink-0 flex items-center pr-1 pt-1">
+                    <svg
+                      aria-hidden="true"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-text-subtle transition-transform duration-normal ease-ui"
+                      style={{ transform: isActive ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                    >
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </div>
+                </button>
+
+                {/* Panneau de détail expandable */}
+                {isActive && <SegmentDetail segment={segment} id={`segment-detail-${idx}`} />}
+              </div>
             </li>
           )
         })}
