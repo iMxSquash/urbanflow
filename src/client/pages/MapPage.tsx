@@ -223,6 +223,15 @@ export default function MapPage() {
     setSheetState('tracking')
   }
 
+  // L'utilisateur refuse le suivi GPS — le trajet est enregistré à 0 point,
+  // mais le sheet doit revenir à un état replié propre plutôt que de rester
+  // bloqué sur le panneau détail avec "Partir maintenant" toujours affiché
+  // (même resetSearch que handleSummaryClose, pour un trajet déjà terminé).
+  function handleSkipTracking() {
+    void tracking.skip()
+    resetSearch()
+  }
+
   // Inverse départ et arrivée. L'ancien départ (GPS ou adresse) devient une
   // arrivée fixe ; l'ancienne arrivée devient le nouveau départ, qui doit
   // rester prioritaire sur le GPS (geoOverridden) sans quoi userPosition
@@ -565,10 +574,7 @@ export default function MapPage() {
       {/* Modale consentement suivi continu */}
       {tracking.trackingPhase === 'consent' &&
         createPortal(
-          <TrackingConsentModal
-            onAccept={handleStartTracking}
-            onSkip={() => void tracking.skip()}
-          />,
+          <TrackingConsentModal onAccept={handleStartTracking} onSkip={handleSkipTracking} />,
           document.body
         )}
 
