@@ -211,6 +211,7 @@ function UnlockedBadgeCard({ badge, isNew }: { badge: BadgeWithStatus; isNew: bo
 
 function LockedBadgeRow({ badge }: { badge: BadgeWithStatus }) {
   const meta = BADGE_META[badge.name] ?? DEFAULT_META
+  const progress = Math.min(badge.currentValue, badge.thresholdValue)
   return (
     <li className="flex items-center gap-3 p-3 rounded-xl bg-surface border border-border">
       <span className="size-10 rounded-full bg-surface-sunken flex items-center justify-center shrink-0">
@@ -219,6 +220,9 @@ function LockedBadgeRow({ badge }: { badge: BadgeWithStatus }) {
       <span className="flex-1 flex flex-col gap-0.5">
         <span className="text-body-sm font-semibold">{meta.label}</span>
         <span className="text-caption text-text-muted">{badge.description}</span>
+      </span>
+      <span className="text-caption font-bold text-text-subtle tabular-nums shrink-0">
+        {progress}/{badge.thresholdValue}
       </span>
     </li>
   )

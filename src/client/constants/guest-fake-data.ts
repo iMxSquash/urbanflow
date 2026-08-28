@@ -23,6 +23,7 @@ export const GUEST_FAKE_BADGES: BadgeWithStatus[] = [
     modeFilter: null,
     unlocked: true,
     unlockedAt: '2026-05-03',
+    currentValue: 1,
   },
   {
     id: 'guest-badge-2',
@@ -33,6 +34,7 @@ export const GUEST_FAKE_BADGES: BadgeWithStatus[] = [
     modeFilter: null,
     unlocked: true,
     unlockedAt: '2026-05-20',
+    currentValue: 5,
   },
   {
     id: 'guest-badge-3',
@@ -43,6 +45,7 @@ export const GUEST_FAKE_BADGES: BadgeWithStatus[] = [
     modeFilter: 'bike',
     unlocked: true,
     unlockedAt: '2026-06-14',
+    currentValue: 10,
   },
   {
     id: 'guest-badge-4',
@@ -53,6 +56,7 @@ export const GUEST_FAKE_BADGES: BadgeWithStatus[] = [
     modeFilter: null,
     unlocked: true,
     unlockedAt: '2026-06-02',
+    currentValue: 100,
   },
   {
     id: 'guest-badge-5',
@@ -63,6 +67,7 @@ export const GUEST_FAKE_BADGES: BadgeWithStatus[] = [
     modeFilter: null,
     unlocked: true,
     unlockedAt: '2026-07-25',
+    currentValue: 1000,
   },
   {
     id: 'guest-badge-6',
@@ -73,6 +78,7 @@ export const GUEST_FAKE_BADGES: BadgeWithStatus[] = [
     modeFilter: null,
     unlocked: false,
     unlockedAt: null,
+    currentValue: 14,
   },
   {
     id: 'guest-badge-7',
@@ -83,6 +89,7 @@ export const GUEST_FAKE_BADGES: BadgeWithStatus[] = [
     modeFilter: null,
     unlocked: false,
     unlockedAt: null,
+    currentValue: 3400,
   },
 ]
 
