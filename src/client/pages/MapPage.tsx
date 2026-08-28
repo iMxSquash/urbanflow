@@ -537,19 +537,23 @@ export default function MapPage() {
             ecoMapActive={ecoMapActive}
             onToggleEco={() => setEcoMapActive((v) => !v)}
           />
-
-          {/* Toast confirmation départ sans suivi */}
-          {tracking.tripResult && (
-            <TripToast
-              co2SavedGrams={tracking.tripResult.co2SavedGrams}
-              pointsEarned={tracking.tripResult.pointsEarned}
-              totalPoints={tracking.tripResult.totalPoints}
-              newlyUnlockedBadges={tracking.tripResult.newlyUnlockedBadges}
-              onClose={tracking.dismissTripToast}
-            />
-          )}
         </main>
       </div>
+
+      {/* Toast confirmation départ sans suivi — porté hors de <main> (z-index:auto)
+          pour ne pas être recouvert par le bottom sheet (z-sheet), comme les
+          autres modales de ce flow. */}
+      {tracking.tripResult &&
+        createPortal(
+          <TripToast
+            co2SavedGrams={tracking.tripResult.co2SavedGrams}
+            pointsEarned={tracking.tripResult.pointsEarned}
+            totalPoints={tracking.tripResult.totalPoints}
+            newlyUnlockedBadges={tracking.tripResult.newlyUnlockedBadges}
+            onClose={tracking.dismissTripToast}
+          />,
+          document.body
+        )}
 
       {/* Modale consentement géolocalisation initiale */}
       {geolocationConsent === null &&
