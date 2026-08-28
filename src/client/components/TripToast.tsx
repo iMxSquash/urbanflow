@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { GRAMS_PER_POINT } from '@shared/constants/gamification'
 import { BadgeUnlockIcon } from './BadgeUnlockIcon'
 
 interface TripToastProps {
@@ -25,6 +26,11 @@ export function TripToast({
     return () => clearTimeout(timer)
   }, [onClose])
 
+  // Points qu'un suivi GPS actif aurait rapportés — rend le manque à gagner
+  // concret plutôt qu'un message générique (cf. gamification.service.ts côté
+  // serveur, même formule que computePoints)
+  const potentialPoints = Math.floor(co2SavedGrams / GRAMS_PER_POINT)
+
   return (
     <div
       role="status"
@@ -32,7 +38,9 @@ export function TripToast({
       aria-label={
         pointsEarned > 0
           ? `Trajet enregistré. +${pointsEarned} points. ${formatCo2(co2SavedGrams)} de CO₂ économisés.`
-          : `Trajet enregistré sans suivi GPS. ${formatCo2(co2SavedGrams)} de CO₂ économisés. Activez le suivi GPS pour gagner des points.`
+          : potentialPoints > 0
+            ? `Trajet enregistré sans suivi GPS. ${formatCo2(co2SavedGrams)} de CO₂ économisés. ${potentialPoints} points manqués — activez le suivi GPS pour les gagner.`
+            : `Trajet enregistré sans suivi GPS. ${formatCo2(co2SavedGrams)} de CO₂ économisés. Activez le suivi GPS pour gagner des points.`
       }
       className="toast animate-slide-up"
     >
@@ -86,7 +94,9 @@ export function TripToast({
               {formatCo2(co2SavedGrams)} CO₂ économisés vs voiture
             </p>
             <p className="text-caption text-text-subtle mt-0.5">
-              Activez le suivi GPS pour gagner des points
+              {potentialPoints > 0
+                ? `${potentialPoints} point${potentialPoints > 1 ? 's' : ''} manqué${potentialPoints > 1 ? 's' : ''} — activez le suivi GPS pour les gagner`
+                : 'Activez le suivi GPS pour gagner des points'}
             </p>
           </>
         )}

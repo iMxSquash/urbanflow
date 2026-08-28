@@ -2,6 +2,7 @@ import type pg from 'pg'
 import { pool } from '../../db/pool.js'
 import { withTransaction } from '../../db/with-transaction.js'
 import { CO2_FACTORS } from '../../../shared/constants/co2-factors.js'
+import { GRAMS_PER_POINT } from '../../../shared/constants/gamification.js'
 import type { TransportMode } from '../../../shared/types/index.js'
 import type { RecordTripInput } from './gamification.schema.js'
 import type {
@@ -14,8 +15,7 @@ import type {
   WeeklyBar,
 } from './gamification.types.js'
 
-// 1 point par 10 g de CO2 économisés
-export const GRAMS_PER_POINT = 10
+export { GRAMS_PER_POINT }
 
 // Ordre de priorité décroissant — TC > actif > marche
 // Ajouter un nouveau mode ici suffit, aucune requête SQL à modifier

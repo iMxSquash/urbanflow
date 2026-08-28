@@ -223,6 +223,15 @@ export default function MapPage() {
     setSheetState('tracking')
   }
 
+  // L'utilisateur refuse le suivi GPS — le trajet est enregistré à 0 point,
+  // mais le sheet doit revenir à un état replié propre plutôt que de rester
+  // bloqué sur le panneau détail avec "Partir maintenant" toujours affiché
+  // (même resetSearch que handleSummaryClose, pour un trajet déjà terminé).
+  function handleSkipTracking() {
+    void tracking.skip()
+    resetSearch()
+  }
+
   // Inverse départ et arrivée. L'ancien départ (GPS ou adresse) devient une
   // arrivée fixe ; l'ancienne arrivée devient le nouveau départ, qui doit
   // rester prioritaire sur le GPS (geoOverridden) sans quoi userPosition
@@ -537,19 +546,23 @@ export default function MapPage() {
             ecoMapActive={ecoMapActive}
             onToggleEco={() => setEcoMapActive((v) => !v)}
           />
-
-          {/* Toast confirmation départ sans suivi */}
-          {tracking.tripResult && (
-            <TripToast
-              co2SavedGrams={tracking.tripResult.co2SavedGrams}
-              pointsEarned={tracking.tripResult.pointsEarned}
-              totalPoints={tracking.tripResult.totalPoints}
-              newlyUnlockedBadges={tracking.tripResult.newlyUnlockedBadges}
-              onClose={tracking.dismissTripToast}
-            />
-          )}
         </main>
       </div>
+
+      {/* Toast confirmation départ sans suivi — porté hors de <main> (z-index:auto)
+          pour ne pas être recouvert par le bottom sheet (z-sheet), comme les
+          autres modales de ce flow. */}
+      {tracking.tripResult &&
+        createPortal(
+          <TripToast
+            co2SavedGrams={tracking.tripResult.co2SavedGrams}
+            pointsEarned={tracking.tripResult.pointsEarned}
+            totalPoints={tracking.tripResult.totalPoints}
+            newlyUnlockedBadges={tracking.tripResult.newlyUnlockedBadges}
+            onClose={tracking.dismissTripToast}
+          />,
+          document.body
+        )}
 
       {/* Modale consentement géolocalisation initiale */}
       {geolocationConsent === null &&
@@ -561,10 +574,7 @@ export default function MapPage() {
       {/* Modale consentement suivi continu */}
       {tracking.trackingPhase === 'consent' &&
         createPortal(
-          <TrackingConsentModal
-            onAccept={handleStartTracking}
-            onSkip={() => void tracking.skip()}
-          />,
+          <TrackingConsentModal onAccept={handleStartTracking} onSkip={handleSkipTracking} />,
           document.body
         )}
 
