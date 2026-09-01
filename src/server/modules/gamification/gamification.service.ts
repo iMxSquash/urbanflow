@@ -212,7 +212,7 @@ export async function recordTrip(
     const userRow = userResult.rows[0]
     if (!userRow) throw new Error(`User ${userId} not found — account may have been deleted`)
 
-    const newlyUnlockedBadges = gpsVerified ? await checkAndUnlockBadges(userId, client) : []
+    const newlyUnlockedBadges = await checkAndUnlockBadges(userId, client)
 
     return {
       tripId: tripRow.id,
