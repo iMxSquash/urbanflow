@@ -249,8 +249,13 @@ export default function MapPage() {
   // Inverse départ et arrivée. L'ancien départ (GPS ou adresse) devient une
   // arrivée fixe ; l'ancienne arrivée devient le nouveau départ, qui doit
   // rester prioritaire sur le GPS (dispatchOrigin 'set') sans quoi
-  // userPosition reviendrait aussitôt à la position courante.
+  // userPosition reviendrait aussitôt à la position courante. Nécessite
+  // départ ET arrivée déjà connus — sans arrivée, `toCoords`/`toLabel` sont
+  // null et l'inversion enverrait un départ vide (originReducer l'ignore
+  // désormais, mais autant ne pas déclencher un swap qui n'a rien à inverser).
   function handleSwapDirection() {
+    if (!userPosition || !effectiveFromLabel || !toCoords || !toLabel) return
+
     const prevFromCoords = userPosition
     const prevFromLabel = effectiveFromLabel
     const prevToCoords = toCoords
