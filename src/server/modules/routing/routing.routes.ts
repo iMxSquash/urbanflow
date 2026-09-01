@@ -40,7 +40,7 @@ const weatherRateLimit = rateLimit({
  *       durée × CO2 × confort). Les providers activés dépendent des modes demandés :
  *       bus/tramway/navibus/train → TransitousProvider (api.transitous.org) ;
  *       bike/walk/scooter → OsrmProvider (router.project-osrm.org) ;
- *       DEMO_MODE=true → DemoProvider (JSON statiques, toujours disponible).
+ *       providers démo activés (panneau Paramètres) → DemoProvider (JSON statiques, toujours disponible).
  *       Filtres appliqués avant le classement : modes non souhaités éliminés,
  *       segments de marche dépassant maxWalkMinutes supprimés (PMR : seuil réduit à 5 min).
  *       Accessible sans authentification — la recherche d'itinéraire ne nécessite pas de compte

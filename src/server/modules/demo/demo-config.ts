@@ -13,17 +13,19 @@ export function isDemoModeEnvEnabled(): boolean {
   return process.env.DEMO_MODE === 'true'
 }
 
-/** Météo simulée : actif si weather demo OU providers demo est activé */
+/** Météo simulée : actif si weather demo OU providers demo est activé.
+ * `DEMO_MODE` n'influence pas ce défaut — il ne gate que l'affichage du panneau,
+ * voir `isDemoModeEnvEnabled()`. */
 export function isWeatherDemoMode(): boolean {
   if (_providersDemo) return true
-  if (_weatherDemo !== null) return _weatherDemo
-  return process.env.DEMO_MODE === 'true'
+  return _weatherDemo ?? false
 }
 
-/** Providers simulés (DemoProvider, Bicloo, TAN fixtures) */
+/** Providers simulés (DemoProvider, Bicloo, TAN fixtures).
+ * `DEMO_MODE` n'influence pas ce défaut — il ne gate que l'affichage du panneau,
+ * voir `isDemoModeEnvEnabled()`. */
 export function isDemoMode(): boolean {
-  if (_providersDemo !== null) return _providersDemo
-  return process.env.DEMO_MODE === 'true'
+  return _providersDemo ?? false
 }
 
 export function setWeatherDemoMode(enabled: boolean): void {
