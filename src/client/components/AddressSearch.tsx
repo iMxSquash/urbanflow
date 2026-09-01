@@ -101,8 +101,13 @@ export function AddressSearch({
           className={`input pl-9 bg-surface shadow-card-md ${onUseMyLocation ? 'pr-10' : ''}`}
         />
         {loading ? (
-          <span className="absolute right-3 pointer-events-none" aria-label="Recherche en cours">
+          <span
+            className="absolute right-3 pointer-events-none"
+            role="status"
+            aria-live="polite"
+          >
             <Spinner />
+            <span className="sr-only">Recherche en cours</span>
           </span>
         ) : (
           onUseMyLocation && (
