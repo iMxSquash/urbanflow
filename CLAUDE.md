@@ -128,12 +128,12 @@ export interface TransportProvider {
 Trois implémentations actives :
 - `TransitousProvider` — modes TC : bus, tramway, navibus, train (api.transitous.org, API MOTIS/OTP)
 - `OsrmProvider` — modes actifs : bike, walk, scooter (router.project-osrm.org, profil cycling/foot)
-- `DemoProvider` — tous les modes (fichiers JSON statiques, `DEMO_MODE=true`)
+- `DemoProvider` — tous les modes (fichiers JSON statiques, providers démo activés à chaud — voir §Mode démo)
 
 Sélection via `selectProviders()` (`transport/provider-registry.ts` — seul module à instancier les classes concrètes des providers), appelée depuis `routing.service.ts` qui ne manipule que l'interface `TransportProvider`, en fonction des modes demandés par l'utilisateur :
 - au moins un mode TC (bus/tramway/navibus/train) → `TransitousProvider` activé
 - au moins un mode actif (bike/walk/scooter) → `OsrmProvider` activé
-- `DEMO_MODE=true` → `DemoProvider` uniquement, quelle que soit la sélection
+- providers démo activés à chaud (`isDemoMode()`, `demo-config.ts`) → `DemoProvider` uniquement, quelle que soit la sélection — indépendant de `DEMO_MODE` (voir §Mode démo)
 
 Le serveur public OSRM ne dispose que du profil `driving` — les durées sont calculées depuis la distance réelle OSRM et des vitesses constantes par mode : bike 15 km/h, walk 5 km/h, scooter 20 km/h.
 
@@ -141,15 +141,33 @@ Le serveur public OSRM ne dispose que du profil `driving` — les durées sont c
 
 ## Mode démo
 
-Variable d'env `DEMO_MODE=true` fait basculer TOUS les appels API externes vers des fichiers JSON dans `demo-data/`. Cela inclut Transitous, OpenWeather, GBFS Bicloo. Le mode démo doit toujours fonctionner, même sans connexion réseau côté backend. C'est le filet de sécurité pour la soutenance.
+Le mode démo (bascule TOUS les appels API externes — Transitous, OpenWeather, GBFS
+Bicloo — vers des fichiers JSON dans `demo-data/`) est un **state runtime**
+(`_weatherDemo`/`_providersDemo` dans `demo-config.ts`, module-level côté serveur,
+partagé par tous les process), activé/désactivé exclusivement via le panneau de
+contrôle décrit ci-dessous. Il doit toujours pouvoir fonctionner, même sans
+connexion réseau côté backend — c'est le filet de sécurité pour la soutenance —
+mais n'est jamais actif par défaut.
 
-**Panneau de contrôle à chaud** (`ParametresPage.tsx`, `GET`/`PATCH /api/demo/mode`, `demo.service.ts`/`demo-config.ts`) — écart assumé avec la maquette (`MAQUETTE.md` §5.6 ne décrit qu'un bandeau ambré passif) : au-delà de la variable d'env `DEMO_MODE` figée au démarrage, un utilisateur authentifié peut à chaud, sans redémarrage serveur :
+**Panneau de contrôle à chaud** (`ParametresPage.tsx`, `GET`/`PATCH /api/demo/mode`,
+`demo.service.ts`/`demo-config.ts`) — écart assumé avec la maquette (`MAQUETTE.md`
+§5.6 ne décrit qu'un bandeau ambré passif) : un utilisateur authentifié peut à
+chaud, sans redémarrage serveur :
 - activer/désactiver la météo simulée seule (`enabled` — invalide le cache météo/TAN) ;
 - activer/désactiver la simulation complète des trajets + Bicloo + TAN (`providersDemo`, implique `enabled`) ;
 - forcer la météo simulée à `sunny`/`rainy` (`weather`) ;
 - lancer un scénario prédéfini (trajet Nantes réel préconfiguré) qui applique directement une recherche sur `MapPage`.
 
-`DEMO_MODE` a un unique rôle côté client : décider si ce panneau s'affiche du tout (`GET /api/demo/mode` renvoie `available`, un miroir en lecture seule de la variable d'env, jamais modifié par les toggles runtime ci-dessus). En production (`DEMO_MODE=false`), `ParametresPage.tsx` ne rend pas la section — le state runtime (`_weatherDemo`/`_providersDemo`, `demo-config.ts`) reste module-level côté serveur, partagé par tous les process, donc masquer le panneau hors déploiement de soutenance évite qu'un utilisateur normal ne bascule ce state global. Pas de garde admin sur `PATCH /api/demo/mode` au-delà de l'`authGuard` — acceptable pour un prototype académique tant que le panneau reste caché en dehors du build de soutenance, à durcir si le projet devait sortir de ce cadre.
+`DEMO_MODE` a un **unique rôle**, côté client uniquement : décider si ce panneau
+s'affiche du tout dans `ParametresPage.tsx` (`GET /api/demo/mode` renvoie
+`available`, un miroir en lecture seule de la variable d'env, jamais modifié par
+les toggles runtime ci-dessus, et qui ne préactive rien). En production
+(`DEMO_MODE=false`), `ParametresPage.tsx` ne rend pas la section — masquer le
+panneau hors déploiement de soutenance évite qu'un utilisateur normal ne bascule
+ce state global via l'API, mais ne l'active jamais lui-même. Pas de garde admin
+sur `PATCH /api/demo/mode` au-delà de l'`authGuard` — acceptable pour un
+prototype académique tant que le panneau reste caché en dehors du build de
+soutenance, à durcir si le projet devait sortir de ce cadre.
 
 ## APIs externes
 

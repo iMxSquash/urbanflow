@@ -32,6 +32,7 @@ vi.mock('../transport/providers/demo.provider.js', () => ({
 }))
 
 import { planJourney } from './routing.service.js'
+import { setProvidersDemo } from '../demo/demo-config.js'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -64,14 +65,14 @@ function makeJourney(id: string, score: number, segments: JourneySegment[]): Jou
 
 beforeEach(() => {
   vi.clearAllMocks()
-  delete process.env.DEMO_MODE
+  setProvidersDemo(false)
   mocks.transitousGetJourneys.mockResolvedValue([])
   mocks.osrmGetJourneys.mockResolvedValue([])
   mocks.demoGetJourneys.mockResolvedValue([])
 })
 
 afterEach(() => {
-  delete process.env.DEMO_MODE
+  setProvidersDemo(false)
 })
 
 // ─── Sélection des providers ──────────────────────────────────────────────────
@@ -150,9 +151,9 @@ describe('planJourney — sélection des providers', () => {
 
 // ─── Mode démo ────────────────────────────────────────────────────────────────
 
-describe('planJourney — DEMO_MODE', () => {
-  it('DEMO_MODE=true → seul DemoProvider est appelé', async () => {
-    process.env.DEMO_MODE = 'true'
+describe('planJourney — providers démo (runtime, indépendant de DEMO_MODE)', () => {
+  it('providers démo activés → seul DemoProvider est appelé', async () => {
+    setProvidersDemo(true)
     const opts: JourneyOptions = { preference: 'balanced', modes: ['bus', 'bike'] }
     await planJourney(FROM, TO, opts)
     expect(mocks.demoGetJourneys).toHaveBeenCalledOnce()
@@ -160,12 +161,21 @@ describe('planJourney — DEMO_MODE', () => {
     expect(mocks.osrmGetJourneys).not.toHaveBeenCalled()
   })
 
-  it('DEMO_MODE=false → les providers réels sont appelés', async () => {
-    process.env.DEMO_MODE = 'false'
+  it('providers démo désactivés → les providers réels sont appelés', async () => {
+    setProvidersDemo(false)
     const opts: JourneyOptions = { preference: 'balanced', modes: ['bus'] }
     await planJourney(FROM, TO, opts)
     expect(mocks.demoGetJourneys).not.toHaveBeenCalled()
     expect(mocks.transitousGetJourneys).toHaveBeenCalledOnce()
+  })
+
+  it('DEMO_MODE=true seul (sans toggle runtime) → les providers réels sont appelés', async () => {
+    process.env.DEMO_MODE = 'true'
+    const opts: JourneyOptions = { preference: 'balanced', modes: ['bus'] }
+    await planJourney(FROM, TO, opts)
+    expect(mocks.demoGetJourneys).not.toHaveBeenCalled()
+    expect(mocks.transitousGetJourneys).toHaveBeenCalledOnce()
+    delete process.env.DEMO_MODE
   })
 })
 

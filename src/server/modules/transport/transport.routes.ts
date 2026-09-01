@@ -17,7 +17,8 @@ import * as tanController from './tan.controller.js'
  *     description: >
  *       Retourne les stations de vélos en libre-service Bicloo (Nantes Métropole)
  *       avec le nombre de vélos disponibles et de places libres.
- *       Si DEMO_MODE=true, lit les données depuis demo-data/stations-bicloo.json.
+ *       Si les providers démo sont activés (panneau Paramètres), lit les données
+ *       depuis demo-data/stations-bicloo.json.
  *       Sinon, agrège station_information et station_status depuis l'API GBFS
  *       de transport.data.gouv.fr.
  *     tags: [Transport]
