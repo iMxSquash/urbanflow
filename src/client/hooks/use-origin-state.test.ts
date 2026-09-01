@@ -27,6 +27,18 @@ describe('originReducer', () => {
     expect(resolveOriginLabel(initial, NANTES_COMMERCE)).toBe('Ma position')
   })
 
+  it('ignores a "set" action with null coords instead of locking out GPS', () => {
+    // Régression : `handleSwapDirection` peut dispatcher 'set' avec des
+    // coordonnées nulles (inversion avant qu'une arrivée soit choisie) — ça
+    // ne doit pas figer l'origine à null en marquant geoOverridden malgré
+    // tout, sans quoi le départ resterait bloqué même une fois le GPS dispo.
+    const state = originReducer(initial, { type: 'set', coords: null, label: null })
+
+    expect(state).toEqual(initial)
+    expect(resolveOrigin(state, NANTES_COMMERCE)).toEqual(NANTES_COMMERCE)
+    expect(resolveOriginLabel(state, NANTES_COMMERCE)).toBe('Ma position')
+  })
+
   it('resets back to following live GPS position', () => {
     const overridden = originReducer(initial, {
       type: 'set',
