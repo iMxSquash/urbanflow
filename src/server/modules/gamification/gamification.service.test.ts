@@ -239,22 +239,35 @@ describe('recordTrip', () => {
     expect(result.newlyUnlockedBadges).toEqual([])
   })
 
-  it('gpsVerified=false : 0 points, aucun badge, trajet quand même enregistré', async () => {
+  it('gpsVerified=false : 0 points mais les badges sont quand même vérifiés', async () => {
     setupClientSequence(
       { rows: [] }, // BEGIN
       { rows: [{ id: TRIP_ID }] }, // INSERT trips
       { rows: [{ total_points: 0 }] }, // UPDATE users (+0)
-      { rows: [] } // COMMIT — pas de check badges
+      {
+        rows: [
+          {
+            id: BADGE_ID,
+            name: 'premier-trajet',
+            threshold_type: 'total_trips',
+            threshold_value: 1,
+            mode_filter: null,
+          },
+        ],
+      },
+      { rows: [{ total_trips: 1, total_co2_saved_grams: EXPECTED_CO2, total_points: 0 }] },
+      { rows: [{ badge_id: BADGE_ID }] }, // INSERT user_badges RETURNING
+      { rows: [] } // COMMIT
     )
 
     const result = await recordTrip(USER_ID, { ...BASE_INPUT, gpsVerified: false })
 
     expect(result.pointsEarned).toBe(0)
-    expect(result.newlyUnlockedBadges).toEqual([])
+    expect(result.newlyUnlockedBadges).toEqual(['premier-trajet'])
     expect(result.co2SavedGrams).toBe(EXPECTED_CO2)
     expect(result.tripId).toBe(TRIP_ID)
     const sqls = mockClient.query.mock.calls.map((call) => String(call[0]))
-    expect(sqls.some((s) => s.includes('FROM badges'))).toBe(false)
+    expect(sqls.some((s) => s.includes('FROM badges'))).toBe(true)
   })
 
   it("ne débloque pas un badge si le seuil n'est pas atteint", async () => {

@@ -355,12 +355,14 @@ Source à citer : Base Empreinte de l'ADEME.
 Implémenté dans `server/modules/gamification/gamification.service.ts`.
 
 - 1 point attribué par tranche de 10 g de CO2 économisé (`GRAMS_PER_POINT`)
-- `gpsVerified: false` (valeur par défaut si le champ est omis) → **0 point attribué et
-  aucune vérification de badge**, même si le trajet est enregistré. Dissuade les
-  déclarations de trajet fictives côté client, qui ne peut pas prouver le suivi GPS
-  autrement qu'en le déclarant
+- `gpsVerified: false` (valeur par défaut si le champ est omis) → **0 point attribué**,
+  même si le trajet est enregistré. Dissuade les déclarations de trajet fictives côté
+  client, qui ne peut pas prouver le suivi GPS autrement qu'en le déclarant
 - Badges débloqués par seuil (`total_trips`, `total_co2_saved_grams`, `total_points`,
-  ou par mode via `mode_filter`) — évalués uniquement si `gpsVerified: true`
+  ou par mode via `mode_filter`) — évalués à **chaque** trajet enregistré, `gpsVerified`
+  ou non, puisque `total_trips`/`total_co2_saved_grams` comptent le trajet dans les deux
+  cas. Un badge seuillé sur `total_points` reste cohérent sans garde supplémentaire : un
+  trajet non vérifié n'ajoute aucun point, donc ne peut pas faire franchir ce seuil
 
 ## Scoring itinéraire — Logique métier
 
