@@ -58,6 +58,11 @@ interface MapSheetProps {
   toLabel: string | null
   hasFrom: boolean
   onFromSelect: (c: Coordinates, label: string) => void
+  /** "Ma position" — redevient prioritaire sur toute adresse de départ saisie
+   * manuellement et relance la géolocalisation (ouvre la modale de
+   * consentement au besoin, gérée côté `MapPage`). */
+  onUseMyLocation: () => void
+  geoLoading: boolean
   onToSelect: (c: Coordinates, label: string) => void
   onSwap: () => void
   onCancelSearch: () => void
@@ -243,6 +248,8 @@ function SearchField({
   onFocus,
   onBlur,
   onEscape,
+  onUseMyLocation,
+  geoLoading,
 }: {
   id: string
   listId: string
@@ -253,6 +260,8 @@ function SearchField({
   onFocus: () => void
   onBlur: () => void
   onEscape: () => void
+  onUseMyLocation?: () => void
+  geoLoading?: boolean
 }) {
   return (
     <div className="relative flex items-center">
@@ -282,12 +291,37 @@ function SearchField({
         onBlur={onBlur}
         placeholder={placeholder}
         autoComplete="off"
-        className="input pl-9 bg-surface shadow-card-md"
+        className={`input pl-9 bg-surface shadow-card-md ${onUseMyLocation ? 'pr-10' : ''}`}
       />
-      {auto.loading && (
+      {auto.loading ? (
         <span className="absolute right-3 pointer-events-none" aria-label="Recherche en cours">
           <Spinner />
         </span>
+      ) : (
+        onUseMyLocation && (
+          <button
+            type="button"
+            onClick={onUseMyLocation}
+            disabled={geoLoading}
+            aria-label="Utiliser ma position actuelle"
+            className="absolute right-1.5 w-8 h-8 flex items-center justify-center rounded-full text-text-subtle hover:text-text hover:bg-surface-sunken transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {geoLoading ? (
+              <Spinner />
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M12 22s7-6.5 7-12A7 7 0 0 0 5 10c0 5.5 7 12 7 12z"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <circle cx="12" cy="10" r="2.6" stroke="currentColor" strokeWidth="1.8" />
+              </svg>
+            )}
+          </button>
+        )
       )}
     </div>
   )
@@ -298,6 +332,8 @@ function SearchView({
   fromCoords,
   toLabel,
   onFromSelect,
+  onUseMyLocation,
+  geoLoading,
   onToSelect,
   onSwap,
   onBack,
@@ -306,6 +342,8 @@ function SearchView({
   fromCoords: Coordinates | null
   toLabel: string | null
   onFromSelect: (c: Coordinates, label: string) => void
+  onUseMyLocation: () => void
+  geoLoading: boolean
   onToSelect: (c: Coordinates, label: string) => void
   onSwap: () => void
   onBack: () => void
@@ -342,6 +380,15 @@ function SearchView({
     fromAuto.setQuietQuery(toLabel ?? '')
     toAuto.setQuietQuery(fromLabel ?? '')
     onSwap()
+  }
+
+  // "Ma position" — le libellé résolu pour une origine GPS est toujours
+  // littéralement "Ma position" (cf. `resolveOriginLabel`, pas de geocoding
+  // inverse), donc le champ peut être réécrit tout de suite sans attendre la
+  // position réelle, même principe que `handleSwap` ci-dessus.
+  function handleUseMyLocationClick() {
+    fromAuto.setQuietQuery('Ma position')
+    onUseMyLocation()
   }
 
   return (
@@ -382,6 +429,8 @@ function SearchView({
             onFocus={() => focusField('from', fromAuto)}
             onBlur={() => blurField('from')}
             onEscape={() => setActiveField(null)}
+            onUseMyLocation={handleUseMyLocationClick}
+            geoLoading={geoLoading}
           />
           <SearchField
             id={toId}
@@ -852,6 +901,8 @@ function DesktopPanel({
   fromLabel,
   toLabel,
   onFromSelect,
+  onUseMyLocation,
+  geoLoading,
   onToSelect,
   onSwap,
   options,
@@ -873,6 +924,8 @@ function DesktopPanel({
   fromLabel: string | null
   toLabel: string | null
   onFromSelect: (c: Coordinates, label: string) => void
+  onUseMyLocation: () => void
+  geoLoading: boolean
   onToSelect: (c: Coordinates, label: string) => void
   onSwap: () => void
   options: SearchOptions
@@ -939,6 +992,8 @@ function DesktopPanel({
                   label="Adresse de départ"
                   onSelect={onFromSelect}
                   placeholder={fromLabel ?? 'Départ — ex : Ma position, Commerce...'}
+                  onUseMyLocation={onUseMyLocation}
+                  geoLoading={geoLoading}
                 />
                 <AddressSearch
                   label="Adresse d'arrivée"
@@ -1247,6 +1302,8 @@ export function MapSheet(props: MapSheetProps) {
     toLabel,
     hasFrom,
     onFromSelect,
+    onUseMyLocation,
+    geoLoading,
     onToSelect,
     onSwap,
     onCancelSearch,
@@ -1616,6 +1673,8 @@ export function MapSheet(props: MapSheetProps) {
             fromLabel={fromLabel}
             toLabel={toLabel}
             onFromSelect={onFromSelect}
+            onUseMyLocation={onUseMyLocation}
+            geoLoading={geoLoading}
             onToSelect={onToSelect}
             onSwap={onSwap}
             options={options}
@@ -1680,6 +1739,8 @@ export function MapSheet(props: MapSheetProps) {
                       fromCoords={fromCoords}
                       toLabel={toLabel}
                       onFromSelect={onFromSelect}
+                      onUseMyLocation={onUseMyLocation}
+                      geoLoading={geoLoading}
                       onToSelect={(c, label) => {
                         onToSelect(c, label)
                         if (hasFrom) onStateChange('mid')
