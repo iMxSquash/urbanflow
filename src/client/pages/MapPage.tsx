@@ -20,6 +20,7 @@ import { useOnlineStatus } from '../hooks/use-online-status'
 import { saveLastJourney } from '../utils/last-journey-cache'
 import { recordGeolocationConsent } from '../services/auth.service'
 import { useGeolocation } from '../hooks/use-geolocation'
+import { resolveOrigin, resolveOriginLabel, useOriginState } from '../hooks/use-origin-state'
 import { useGuestSafeEffect } from '../hooks/use-guest-safe-effect'
 import { useIsDarkMode } from '../hooks/use-is-dark-mode'
 import { useJourney } from '../hooks/use-journey'
@@ -61,15 +62,9 @@ export default function MapPage() {
   const { isOnline, recheck: recheckOnlineStatus } = useOnlineStatus()
   const isDarkMode = useIsDarkMode()
   const { position: geoPosition, error: geoError, loading: geoLoading, locate } = useGeolocation()
-  const [addressPosition, setAddressPosition] = useState<Coordinates | null>(null)
-  const [fromLabel, setFromLabel] = useState<string | null>(null)
+  const [origin, dispatchOrigin] = useOriginState()
   const [toCoords, setToCoords] = useState<Coordinates | null>(null)
   const [toLabel, setToLabel] = useState<string | null>(null)
-  // Une inversion départ/arrivée déplace la position GPS courante côté
-  // arrivée : le départ devient une adresse fixe (l'ancienne arrivée), qui ne
-  // doit plus être écrasée par le GPS tant qu'aucune nouvelle recherche n'a
-  // été lancée depuis la carte (cf. handleSwapDirection).
-  const [geoOverridden, setGeoOverridden] = useState(false)
   const [sheetState, setSheetState] = useState<SheetState>('collapsed')
   // Rétrécissement manuel mobile (bouton poignée) — n'affecte pas `sheetState`,
   // mais la nav doit réapparaître comme en `collapsed` (MIGRATION-TODO.md
@@ -110,6 +105,11 @@ export default function MapPage() {
   const location = useLocation()
   const locatedOnMount = useRef(false)
   const scenarioApplied = useRef(false)
+  // Rouvre la modale de consentement à la demande ("Ma position") quand le
+  // consentement n'est pas déjà `granted` — indépendant de l'ouverture
+  // automatique ci-dessous (`geolocationConsent === null`), qui ne couvre
+  // que le tout premier passage.
+  const [showLocateConsent, setShowLocateConsent] = useState(false)
 
   useGuestSafeEffect(fetchProfile, [fetchProfile])
 
@@ -140,16 +140,15 @@ export default function MapPage() {
     const state = (location.state as { demoScenario?: DemoScenarioState } | null)?.demoScenario
     if (!state || scenarioApplied.current) return
     scenarioApplied.current = true
-    setAddressPosition(state.from)
-    setFromLabel(state.fromLabel)
+    dispatchOrigin({ type: 'set', coords: state.from, label: state.fromLabel })
     setToCoords(state.to)
     setToLabel(state.toLabel)
     setEcoMapActive(true)
     setSheetState('mid')
-  }, [location.state])
+  }, [location.state, dispatchOrigin])
 
   // Position affichée : pendant le suivi on suit la position GPS temps réel
-  const userPosition = geoOverridden ? addressPosition : (geoPosition ?? addressPosition)
+  const userPosition = resolveOrigin(origin, geoPosition)
   const displayPosition =
     tracking.trackingPhase === 'active' ? (tracking.trackingPosition ?? userPosition) : userPosition
 
@@ -182,7 +181,7 @@ export default function MapPage() {
   useEffect(() => {
     if (journeys.length === 0 || !toLabel) return
     const best = journeys[0]
-    const resolvedFromLabel = geoPosition ? 'Ma position' : (fromLabel ?? 'Votre position')
+    const resolvedFromLabel = resolveOriginLabel(origin, geoPosition) ?? 'Votre position'
     const lastSegmentIdx = best.segments.length - 1
     void saveLastJourney({
       fromLabel: resolvedFromLabel,
@@ -208,12 +207,27 @@ export default function MapPage() {
 
   function handleGrant() {
     locatedOnMount.current = true
+    setShowLocateConsent(false)
     grantGeolocation()
     // POST /api/auth/consent est authGuard'd — ne trace le consentement côté
     // serveur que pour un compte réel ; le consentement local (Zustand) suffit
     // à l'expérience invité et évite un 401 -> clearAuth() qui l'éjecterait.
     if (!isGuest) void recordGeolocationConsent()
     locate()
+  }
+
+  // Réponse à "Ma position" (barre de recherche) : redevenir prioritaire sur
+  // toute adresse saisie manuellement (dispatchOrigin 'reset', même sémantique
+  // que resetSearch côté départ) puis relocaliser — via la modale de
+  // consentement si elle n'a pas déjà été accordée, jamais en l'activant à
+  // son insu.
+  function handleUseMyLocation() {
+    dispatchOrigin({ type: 'reset' })
+    if (geolocationConsent === 'granted') {
+      locate()
+    } else {
+      setShowLocateConsent(true)
+    }
   }
 
   // L'utilisateur accepte le suivi GPS continu — la machine à états du suivi
@@ -234,17 +248,15 @@ export default function MapPage() {
 
   // Inverse départ et arrivée. L'ancien départ (GPS ou adresse) devient une
   // arrivée fixe ; l'ancienne arrivée devient le nouveau départ, qui doit
-  // rester prioritaire sur le GPS (geoOverridden) sans quoi userPosition
-  // reviendrait aussitôt à la position courante.
+  // rester prioritaire sur le GPS (dispatchOrigin 'set') sans quoi
+  // userPosition reviendrait aussitôt à la position courante.
   function handleSwapDirection() {
     const prevFromCoords = userPosition
     const prevFromLabel = effectiveFromLabel
     const prevToCoords = toCoords
     const prevToLabel = toLabel
 
-    setGeoOverridden(true)
-    setAddressPosition(prevToCoords)
-    setFromLabel(prevToLabel)
+    dispatchOrigin({ type: 'set', coords: prevToCoords, label: prevToLabel })
     setToCoords(prevFromCoords)
     setToLabel(prevFromLabel)
   }
@@ -256,11 +268,9 @@ export default function MapPage() {
     setActiveSegmentIdx(null)
     deselectJourney()
     clearJourney()
-    setAddressPosition(null)
-    setFromLabel(null)
+    dispatchOrigin({ type: 'reset' })
     setToCoords(null)
     setToLabel(null)
-    setGeoOverridden(false)
     setSheetState('collapsed')
   }
 
@@ -286,11 +296,9 @@ export default function MapPage() {
     if (tracking.trackingPhase === 'active') {
       tracking.abort()
       clearJourney()
-      setAddressPosition(null)
-      setFromLabel(null)
+      dispatchOrigin({ type: 'reset' })
       setToCoords(null)
       setToLabel(null)
-      setGeoOverridden(false)
       setSheetState('collapsed')
     } else {
       setActiveSegmentIdx(null)
@@ -310,7 +318,7 @@ export default function MapPage() {
     datetimeType: 'departure',
   }
 
-  const effectiveFromLabel = geoOverridden ? fromLabel : geoPosition ? 'Ma position' : fromLabel
+  const effectiveFromLabel = resolveOriginLabel(origin, geoPosition)
   const showGeoError = !!geoError && !geoLoading && geolocationConsent !== 'denied'
   // Nav mobile visible en `collapsed`/`mid` (MAQUETTE.md §5.2 états 1 et 3,
   // "3 · Mi-hauteur" inclut la nav dans la maquette), en `search`/`results`
@@ -344,9 +352,10 @@ export default function MapPage() {
         toLabel={toLabel}
         hasFrom={!!userPosition}
         onFromSelect={(c, label) => {
-          setAddressPosition(c)
-          setFromLabel(label)
+          dispatchOrigin({ type: 'set', coords: c, label })
         }}
+        onUseMyLocation={handleUseMyLocation}
+        geoLoading={geoLoading}
         onToSelect={(c, label) => {
           setToCoords(c)
           setToLabel(label)
@@ -564,10 +573,19 @@ export default function MapPage() {
           document.body
         )}
 
-      {/* Modale consentement géolocalisation initiale */}
-      {geolocationConsent === null &&
+      {/* Modale consentement géolocalisation — automatique au premier passage
+       * (`geolocationConsent === null`), ou rouverte à la demande depuis le
+       * bouton "Ma position" (`showLocateConsent`) si l'utilisateur n'a pas
+       * déjà accordé l'accès. */}
+      {(geolocationConsent === null || showLocateConsent) &&
         createPortal(
-          <GeolocationConsent onGrant={handleGrant} onDeny={denyGeolocation} />,
+          <GeolocationConsent
+            onGrant={handleGrant}
+            onDeny={() => {
+              setShowLocateConsent(false)
+              denyGeolocation()
+            }}
+          />,
           document.body
         )}
 

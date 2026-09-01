@@ -12,6 +12,10 @@ interface AddressSearchProps {
    * MAQUETTE.md §5.2 état 2 (distance départ → chaque suggestion d'arrivée).
    * Omis pour le champ départ (aucune référence pertinente). */
   originCoords?: Coordinates | null
+  /** "Ma position" — affiché uniquement sur le champ départ (omis côté
+   * arrivée par l'appelant). */
+  onUseMyLocation?: () => void
+  geoLoading?: boolean
 }
 
 /** Champ d'adresse autonome avec popover flottant — utilisé sur le panneau
@@ -24,6 +28,8 @@ export function AddressSearch({
   placeholder = 'Rechercher une adresse de départ...',
   label = 'Rechercher une adresse de départ',
   originCoords,
+  onUseMyLocation,
+  geoLoading,
 }: AddressSearchProps) {
   const [open, setOpen] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -33,6 +39,7 @@ export function AddressSearch({
   const {
     query,
     setQuery,
+    setQuietQuery,
     results,
     loading,
     activeIndex,
@@ -42,6 +49,15 @@ export function AddressSearch({
     selectResult,
     selectRecent,
   } = useAddressAutocomplete(onSelect, originCoords)
+
+  // "Ma position" — le libellé résolu pour une origine GPS est toujours
+  // littéralement "Ma position" (cf. `resolveOriginLabel`, pas de geocoding
+  // inverse), donc le champ peut être réécrit tout de suite sans attendre la
+  // position réelle.
+  function handleUseMyLocationClick() {
+    setQuietQuery('Ma position')
+    onUseMyLocation?.()
+  }
 
   return (
     <div className="relative">
@@ -82,12 +98,37 @@ export function AddressSearch({
           onBlur={() => setTimeout(() => setOpen(false), 150)}
           placeholder={placeholder}
           autoComplete="off"
-          className="input pl-9 bg-surface shadow-card-md"
+          className={`input pl-9 bg-surface shadow-card-md ${onUseMyLocation ? 'pr-10' : ''}`}
         />
-        {loading && (
+        {loading ? (
           <span className="absolute right-3 pointer-events-none" aria-label="Recherche en cours">
             <Spinner />
           </span>
+        ) : (
+          onUseMyLocation && (
+            <button
+              type="button"
+              onClick={handleUseMyLocationClick}
+              disabled={geoLoading}
+              aria-label="Utiliser ma position actuelle"
+              className="absolute right-1.5 w-8 h-8 flex items-center justify-center rounded-full text-text-subtle hover:text-text hover:bg-surface-sunken transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {geoLoading ? (
+                <Spinner />
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M12 22s7-6.5 7-12A7 7 0 0 0 5 10c0 5.5 7 12 7 12z"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <circle cx="12" cy="10" r="2.6" stroke="currentColor" strokeWidth="1.8" />
+                </svg>
+              )}
+            </button>
+          )
         )}
       </div>
 
