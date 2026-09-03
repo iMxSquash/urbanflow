@@ -5,6 +5,7 @@ import type { Feature, Point } from 'geojson'
 import { Marker, Popup, useMapEvents } from 'react-leaflet'
 import type { BiclooStation } from '@shared/types/index'
 import { useBiclooStations } from '../hooks/use-bicloo-stations'
+import { markerAriaLabelRef } from '../utils/marker-aria-label'
 
 // Un <div> Leaflet (`divIcon`) est du HTML réel, pas un attribut de présentation
 // SVG : `style="background:var(...)"` inline y résout `var()` normalement, donc
@@ -52,25 +53,6 @@ function makeClusterIcon(pointCount: number): L.DivIcon {
     iconAnchor: [20, 20],
     popupAnchor: [0, -24],
   })
-}
-
-// Assigne aria-label sur le vrai noeud DOM du marqueur (icon container,
-// celui qui porte tabindex="0" role="button"), puisque react-leaflet ne
-// route jamais `aria-label` vers le DOM lui-même (MarkerProps ne le déclare
-// pas, et L.Marker._initIcon ne connaît que `title`/`alt`/`keyboard`). Un
-// callback ref plutôt qu'un `useEffect` + lecture de `ref.current` : la
-// hook interne de react-leaflet (`useImperativeHandle(forwardedRef, () =>
-// instance)`, sans tableau de dépendances) réinvoque ce callback à CHAQUE
-// rendu du Marker, avant même que la clé ne change — donc même si un
-// marqueur individuel garde la même key d'un rendu à l'autre (station.id
-// stable) pendant qu'un compteur affiché change, le label reste à jour ; et
-// si react-leaflet démonte/remonte un Marker (clé de cluster qui change au
-// pan/zoom), le callback est réappelé sur le nouvel élément sans jamais le
-// manquer.
-function markerAriaLabelRef(label: string) {
-  return (marker: L.Marker | null) => {
-    marker?.getElement()?.setAttribute('aria-label', label)
-  }
 }
 
 function StationPopup({ station }: { station: BiclooStation }) {
