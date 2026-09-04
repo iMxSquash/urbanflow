@@ -27,11 +27,11 @@ export function scoringWeights(preference: UserPreference): ScoringWeights {
 
 // ─── Seuil marche effectif ────────────────────────────────────────────────────
 
-// PMR réduit le seuil de marche à 5 min (filtre dur routing.service.ts ET
+// PMR réduit le seuil de marche à 10 min (filtre dur routing.service.ts ET
 // pénalité confort ci-dessous partagent cette même formule).
 export function effectiveMaxWalkMinutes(options: JourneyOptions): number {
   const maxWalkMinutes = options.maxWalkMinutes ?? 30
-  return options.pmrAccessibility ? Math.min(maxWalkMinutes, 5) : maxWalkMinutes
+  return options.pmrAccessibility ? Math.min(maxWalkMinutes, 10) : maxWalkMinutes
 }
 
 // ─── Score confort ────────────────────────────────────────────────────────────
@@ -44,7 +44,7 @@ export function computeComfortScore(
   const preferredModes = options.modes ?? []
   const pmr = options.pmrAccessibility ?? false
 
-  // PMR : seuil de marche réduit à 5 min, et le vélo est fortement pénalisé
+  // PMR : seuil de marche réduit à 10 min, et le vélo est fortement pénalisé
   const maxWalk = effectiveMaxWalkMinutes(options)
 
   // Base : ratio de segments utilisant un mode préféré (50 si aucune préférence)
@@ -78,15 +78,18 @@ export function computeComfortScore(
     base = Math.max(0, base - 30)
   }
 
-  // Météo : pluie/neige/orage → pénalise le vélo, prime les TC couverts
+  // Météo : pluie/neige/orage → pénalise le vélo et la marche seule (aucun abri
+  // dans les deux cas), prime les TC couverts
   if (weather) {
     const isWet = ['rain', 'snow', 'thunderstorm'].includes(weather.condition)
     const isWindy = weather.windSpeed > 40
     const hasBike = segments.some((s) => s.mode === 'bike')
+    // 100% marche, aucun autre mode — même exposition qu'un trajet vélo, sans abri
+    const isPureWalk = segments.length > 0 && segments.every((s) => s.mode === 'walk')
     // At least one covered TC segment required — walk-only does not qualify for shelter bonus
     const isPureTC = segments.some((s) => TC_MODES.includes(s.mode)) && !hasBike
 
-    if ((isWet || isWindy) && hasBike) base = Math.max(0, base - 30)
+    if ((isWet || isWindy) && (hasBike || isPureWalk)) base = Math.max(0, base - 30)
     if (isWet && isPureTC) base = Math.min(100, base + 10)
   }
 

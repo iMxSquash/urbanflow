@@ -8,6 +8,10 @@ interface JourneyState {
   selectedJourney: Journey | null
   loading: boolean
   error: string | null
+  // Distingue un résultat vide légitime (suggestions de réglages pertinentes)
+  // d'une requête qui a échoué (rate limit, réseau...) — les deux se
+  // traduisent par `journeys: []` mais n'appellent pas la même UI.
+  errorKind: 'empty-results' | 'request-failed' | null
 }
 
 export function useJourney() {
@@ -16,6 +20,7 @@ export function useJourney() {
     selectedJourney: null,
     loading: false,
     error: null,
+    errorKind: null,
   })
 
   const calculate = useCallback(
@@ -26,7 +31,7 @@ export function useJourney() {
       datetime?: Date,
       datetimeType?: 'departure' | 'arrival'
     ) => {
-      setState({ journeys: [], selectedJourney: null, loading: true, error: null })
+      setState({ journeys: [], selectedJourney: null, loading: true, error: null, errorKind: null })
       try {
         const journeys = await planJourney(from, to, profile, datetime, datetimeType)
         if (journeys.length === 0) {
@@ -35,9 +40,16 @@ export function useJourney() {
             selectedJourney: null,
             loading: false,
             error: 'Aucun itinéraire trouvé',
+            errorKind: 'empty-results',
           })
         } else {
-          setState({ journeys, selectedJourney: null, loading: false, error: null })
+          setState({
+            journeys,
+            selectedJourney: null,
+            loading: false,
+            error: null,
+            errorKind: null,
+          })
         }
       } catch (err) {
         setState({
@@ -45,6 +57,7 @@ export function useJourney() {
           selectedJourney: null,
           loading: false,
           error: (err as Error).message,
+          errorKind: 'request-failed',
         })
       }
     },
@@ -61,7 +74,7 @@ export function useJourney() {
   }, [])
 
   const clear = useCallback(() => {
-    setState({ journeys: [], selectedJourney: null, loading: false, error: null })
+    setState({ journeys: [], selectedJourney: null, loading: false, error: null, errorKind: null })
   }, [])
 
   return { ...state, calculate, select, deselect, clear }

@@ -386,10 +386,11 @@ Pondérations par préférence utilisateur :
 
 **Filtres durs appliqués dans `routing.service.ts` avant le scoring :**
 - Filtre modes : élimine les itinéraires dont un segment n'est pas dans les modes demandés (marche toujours tolérée)
-- Filtre `maxWalkMinutes` : élimine les itinéraires dont un segment marche dépasse le seuil — PMR réduit ce seuil à `min(maxWalkMinutes, 5)`
+- Filtre PMR (`pmrAccessibility: true`) : élimine tout itinéraire contenant un segment vélo ou trottinette — appliqué de façon centrale sur les itinéraires fusionnés de tous les providers, y compris le repli démo (`getDemoProvider`) qui ignore `options` et renverrait sinon ces modes tels quels. `OsrmProvider` rejette déjà ces modes en amont pour les providers réels, mais ce filtre est la seule garantie valable quel que soit le provider
+- Filtre `maxWalkMinutes` : élimine les itinéraires dont un segment marche dépasse le seuil — PMR réduit ce seuil à `min(maxWalkMinutes, 10)`
 
 **PMR (`pmrAccessibility: true`) dans le score confort :**
-- Seuil marche réduit à 5 min pour la pénalité (−60 pts au lieu de −40)
+- Seuil marche réduit à 10 min pour la pénalité (−60 pts au lieu de −40)
 - Pénalité supplémentaire −50 pts si un segment vélo est présent
 
 **Dénivelé (`avoidElevation: true`) dans le score confort :**
@@ -399,9 +400,9 @@ Pondérations par préférence utilisateur :
   affecté par le relief dans ce produit, donc c'est le seul pénalisé
 
 **Météo dans le score confort** (uniquement si la météo a pu être récupérée) :
-- Pluie/neige/orage, ou vent > 40 km/h : pénalité −30 pts si un segment vélo est présent
+- Pluie/neige/orage, ou vent > 40 km/h : pénalité −30 pts si un segment vélo est présent, ou si le trajet est 100 % marche (aucun abri dans les deux cas)
 - Pluie/neige/orage sur un trajet sans vélo comportant au moins un segment TC (marche autorisée en complément) : bonus +10 pts (abri) — un trajet marche+tramway est éligible, pas besoin que 100 % des segments soient du TC
-- Ces deux règles météo s'excluent mutuellement (la présence ou l'absence de vélo détermine laquelle s'applique, jamais les deux)
+- Ces trois cas sont mutuellement exclusifs (vélo présent / 100 % marche / au moins un TC sans vélo) — un trajet ne peut jamais cumuler la pénalité et le bonus
 - En revanche la pénalité météo vélo (−30) et la pénalité dénivelé (−30, ci-dessus) sont deux vérifications indépendantes : un trajet vélo avec `avoidElevation: true` sous la pluie cumule les deux (−60), ce n'est pas plafonné à −30
 
 Toutes les pénalités/bonus ci-dessus sont plafonnés à `[0, 100]` sur le score confort final.
