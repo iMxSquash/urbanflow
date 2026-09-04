@@ -133,8 +133,8 @@ describe('computeComfortScore', () => {
     expect(computeComfortScore(segments, options)).toBe(base - 40)
   })
 
-  it('PMR : marche dépassant 5 min → pénalité −60 (plus sévère)', () => {
-    const segments = [seg('walk', 1, 8), seg('bus', 3, 15)]
+  it('PMR : marche dépassant 10 min → pénalité −60 (plus sévère)', () => {
+    const segments = [seg('walk', 1, 12), seg('bus', 3, 15)]
     const options: JourneyOptions = {
       preference: 'balanced',
       modes: ['walk', 'bus'],
@@ -145,7 +145,7 @@ describe('computeComfortScore', () => {
     expect(computeComfortScore(segments, options)).toBe(base - 60)
   })
 
-  it('PMR : marche ≤ 5 min → aucune pénalité PMR', () => {
+  it('PMR : marche ≤ 10 min → aucune pénalité PMR', () => {
     const segments = [seg('walk', 0.3, 4), seg('bus', 3, 15)]
     const options: JourneyOptions = {
       preference: 'balanced',
@@ -350,14 +350,14 @@ describe('computeComfortScore', () => {
   })
 
   it('PMR + marche longue + vélo → plancher à 0', () => {
-    const segments = [seg('walk', 1, 10), seg('bike', 3, 12)]
+    const segments = [seg('walk', 1, 14), seg('bike', 3, 12)]
     const options: JourneyOptions = {
       preference: 'balanced',
       modes: ['walk', 'bike'],
       maxWalkMinutes: 20,
       pmrAccessibility: true,
     }
-    // base=100, walk>5min → −60 → 40, bike → −50 → −10, plancher à 0
+    // base=100, walk>10min → −60 → 40, bike → −50 → −10, plancher à 0
     expect(computeComfortScore(segments, options)).toBe(0)
   })
 })

@@ -386,10 +386,11 @@ Pondérations par préférence utilisateur :
 
 **Filtres durs appliqués dans `routing.service.ts` avant le scoring :**
 - Filtre modes : élimine les itinéraires dont un segment n'est pas dans les modes demandés (marche toujours tolérée)
-- Filtre `maxWalkMinutes` : élimine les itinéraires dont un segment marche dépasse le seuil — PMR réduit ce seuil à `min(maxWalkMinutes, 5)`
+- Filtre PMR (`pmrAccessibility: true`) : élimine tout itinéraire contenant un segment vélo ou trottinette — appliqué de façon centrale sur les itinéraires fusionnés de tous les providers, y compris le repli démo (`getDemoProvider`) qui ignore `options` et renverrait sinon ces modes tels quels. `OsrmProvider` rejette déjà ces modes en amont pour les providers réels, mais ce filtre est la seule garantie valable quel que soit le provider
+- Filtre `maxWalkMinutes` : élimine les itinéraires dont un segment marche dépasse le seuil — PMR réduit ce seuil à `min(maxWalkMinutes, 10)`
 
 **PMR (`pmrAccessibility: true`) dans le score confort :**
-- Seuil marche réduit à 5 min pour la pénalité (−60 pts au lieu de −40)
+- Seuil marche réduit à 10 min pour la pénalité (−60 pts au lieu de −40)
 - Pénalité supplémentaire −50 pts si un segment vélo est présent
 
 **Dénivelé (`avoidElevation: true`) dans le score confort :**

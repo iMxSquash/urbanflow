@@ -67,17 +67,32 @@ export async function planJourney(
     )
   }
 
+  // Filtre dur PMR : élimine les itinéraires vélo/trottinette, non adaptés aux
+  // besoins PMR. OsrmProvider rejette déjà ces modes en amont pour les providers
+  // réels, mais le repli démo (getDemoProvider ci-dessus) ignore `options` et
+  // renvoie tous les itinéraires du fixture — ce filtre garantit la même règle
+  // pour tous les providers, y compris le démo.
+  const withoutPmrExcludedModes = options.pmrAccessibility
+    ? filtered.filter((j) => j.segments.every((s) => s.mode !== 'bike' && s.mode !== 'scooter'))
+    : filtered
+
+  if (options.pmrAccessibility && withoutPmrExcludedModes.length < filtered.length) {
+    console.log(
+      `[routing] Filtre PMR (vélo/trottinette exclus) : ${filtered.length} → ${withoutPmrExcludedModes.length} itinéraire(s)`
+    )
+  }
+
   // Filtre dur maxWalkMinutes : éliminer tout itinéraire dont un segment marche
-  // dépasse le seuil de l'utilisateur (PMR réduit ce seuil à 5 min).
+  // dépasse le seuil de l'utilisateur (PMR réduit ce seuil à 10 min).
   const maxWalk = effectiveMaxWalkMinutes(options)
 
-  const withWalkFilter = filtered.filter((j) =>
+  const withWalkFilter = withoutPmrExcludedModes.filter((j) =>
     j.segments.filter((s) => s.mode === 'walk').every((s) => s.durationMin <= maxWalk)
   )
 
-  if (withWalkFilter.length < filtered.length) {
+  if (withWalkFilter.length < withoutPmrExcludedModes.length) {
     console.log(
-      `[routing] Filtre maxWalkMinutes=${maxWalk}min : ${filtered.length} → ${withWalkFilter.length} itinéraire(s)`
+      `[routing] Filtre maxWalkMinutes=${maxWalk}min : ${withoutPmrExcludedModes.length} → ${withWalkFilter.length} itinéraire(s)`
     )
   }
 

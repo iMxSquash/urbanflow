@@ -27,11 +27,11 @@ export function scoringWeights(preference: UserPreference): ScoringWeights {
 
 // ─── Seuil marche effectif ────────────────────────────────────────────────────
 
-// PMR réduit le seuil de marche à 5 min (filtre dur routing.service.ts ET
+// PMR réduit le seuil de marche à 10 min (filtre dur routing.service.ts ET
 // pénalité confort ci-dessous partagent cette même formule).
 export function effectiveMaxWalkMinutes(options: JourneyOptions): number {
   const maxWalkMinutes = options.maxWalkMinutes ?? 30
-  return options.pmrAccessibility ? Math.min(maxWalkMinutes, 5) : maxWalkMinutes
+  return options.pmrAccessibility ? Math.min(maxWalkMinutes, 10) : maxWalkMinutes
 }
 
 // ─── Score confort ────────────────────────────────────────────────────────────
@@ -44,7 +44,7 @@ export function computeComfortScore(
   const preferredModes = options.modes ?? []
   const pmr = options.pmrAccessibility ?? false
 
-  // PMR : seuil de marche réduit à 5 min, et le vélo est fortement pénalisé
+  // PMR : seuil de marche réduit à 10 min, et le vélo est fortement pénalisé
   const maxWalk = effectiveMaxWalkMinutes(options)
 
   // Base : ratio de segments utilisant un mode préféré (50 si aucune préférence)

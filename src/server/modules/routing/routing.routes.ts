@@ -42,7 +42,7 @@ const weatherRateLimit = rateLimit({
  *       bike/walk/scooter → OsrmProvider (router.project-osrm.org) ;
  *       providers démo activés (panneau Paramètres) → DemoProvider (JSON statiques, toujours disponible).
  *       Filtres appliqués avant le classement : modes non souhaités éliminés,
- *       segments de marche dépassant maxWalkMinutes supprimés (PMR : seuil réduit à 5 min).
+ *       segments de marche dépassant maxWalkMinutes supprimés (PMR : seuil réduit à 10 min).
  *       Accessible sans authentification — la recherche d'itinéraire ne nécessite pas de compte
  *       (navigation invité).
  *     tags: [Routing]
@@ -90,7 +90,7 @@ const weatherRateLimit = rateLimit({
  *                 type: boolean
  *                 default: false
  *                 description: >
- *                   Si true : maxWalkMinutes effectif réduit à min(maxWalkMinutes, 5),
+ *                   Si true : maxWalkMinutes effectif réduit à min(maxWalkMinutes, 10),
  *                   vélo et scooter bloqués, pénalités de confort renforcées.
  *     responses:
  *       200:

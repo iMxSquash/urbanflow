@@ -246,9 +246,9 @@ describe('planJourney — filtre dur maxWalkMinutes', () => {
     expect(result).toHaveLength(1)
   })
 
-  it('PMR : maxWalkMinutes est réduit à 5 min', async () => {
-    const journeyOk = makeJourney('j1', 80, [seg('walk', 4), seg('bus', 15)])
-    const journeyKo = makeJourney('j2', 70, [seg('walk', 8), seg('bus', 15)])
+  it('PMR : maxWalkMinutes est réduit à 10 min', async () => {
+    const journeyOk = makeJourney('j1', 80, [seg('walk', 6), seg('bus', 15)])
+    const journeyKo = makeJourney('j2', 70, [seg('walk', 12), seg('bus', 15)])
     mocks.transitousGetJourneys.mockResolvedValue([journeyOk, journeyKo])
     const opts: JourneyOptions = {
       preference: 'balanced',
@@ -261,8 +261,8 @@ describe('planJourney — filtre dur maxWalkMinutes', () => {
     expect(result[0].id).toBe('j1')
   })
 
-  it('PMR : maxWalkMinutes explicitement inférieur à 5 est respecté tel quel', async () => {
-    // Si l'utilisateur a déjà mis maxWalkMinutes=3, PMR applique min(3,5)=3
+  it('PMR : maxWalkMinutes explicitement inférieur à 10 est respecté tel quel', async () => {
+    // Si l'utilisateur a déjà mis maxWalkMinutes=3, PMR applique min(3,10)=3
     const journeyOk = makeJourney('j1', 80, [seg('walk', 3), seg('bus', 15)])
     const journeyKo = makeJourney('j2', 70, [seg('walk', 4), seg('bus', 15)])
     mocks.transitousGetJourneys.mockResolvedValue([journeyOk, journeyKo])
@@ -281,6 +281,52 @@ describe('planJourney — filtre dur maxWalkMinutes', () => {
     const journey = makeJourney('j1', 80, [seg('bus', 30)])
     mocks.transitousGetJourneys.mockResolvedValue([journey])
     const opts: JourneyOptions = { preference: 'balanced', modes: ['bus'], maxWalkMinutes: 5 }
+    const result = await planJourney(FROM, TO, opts)
+    expect(result).toHaveLength(1)
+  })
+})
+
+// ─── Filtre dur PMR (vélo/trottinette) ────────────────────────────────────────
+
+describe('planJourney — filtre dur PMR (vélo/trottinette exclus)', () => {
+  it('PMR : un itinéraire avec segment vélo est exclu même venu du repli démo', async () => {
+    // Le repli démo (DemoProvider) ignore `options` et renvoie tous les
+    // itinéraires du fixture, y compris le vélo — c'est routing.service.ts qui
+    // doit appliquer la règle PMR de façon uniforme, quel que soit le provider.
+    const bikeJourney = makeJourney('bike-j', 90, [seg('bike', 10)])
+    const busJourney = makeJourney('bus-j', 70, [seg('bus', 15)])
+    mocks.transitousGetJourneys.mockRejectedValue(new Error('Transitous indisponible'))
+    mocks.demoGetJourneys.mockResolvedValue([bikeJourney, busJourney])
+    const opts: JourneyOptions = { preference: 'balanced', pmrAccessibility: true }
+    const result = await planJourney(FROM, TO, opts)
+    expect(result.map((j) => j.id)).toEqual(['bus-j'])
+  })
+
+  it('PMR : un itinéraire avec segment trottinette est exclu', async () => {
+    const scooterJourney = makeJourney('scooter-j', 90, [seg('scooter', 8)])
+    const walkJourney = makeJourney('walk-j', 60, [seg('walk', 4)])
+    mocks.osrmGetJourneys.mockResolvedValue([scooterJourney, walkJourney])
+    const opts: JourneyOptions = {
+      preference: 'balanced',
+      modes: ['scooter', 'walk'],
+      pmrAccessibility: true,
+    }
+    const result = await planJourney(FROM, TO, opts)
+    expect(result.map((j) => j.id)).toEqual(['walk-j'])
+  })
+
+  it('PMR : un itinéraire vélo+bus (segment vélo présent) est exclu, pas seulement filtré partiellement', async () => {
+    const mixedJourney = makeJourney('mixed-j', 90, [seg('bike', 5), seg('bus', 10)])
+    mocks.transitousGetJourneys.mockResolvedValue([mixedJourney])
+    const opts: JourneyOptions = { preference: 'balanced', pmrAccessibility: true }
+    const result = await planJourney(FROM, TO, opts)
+    expect(result).toHaveLength(0)
+  })
+
+  it('sans PMR → les itinéraires vélo/trottinette sont conservés', async () => {
+    const bikeJourney = makeJourney('bike-j', 90, [seg('bike', 10)])
+    mocks.osrmGetJourneys.mockResolvedValue([bikeJourney])
+    const opts: JourneyOptions = { preference: 'balanced', modes: ['bike'] }
     const result = await planJourney(FROM, TO, opts)
     expect(result).toHaveLength(1)
   })
