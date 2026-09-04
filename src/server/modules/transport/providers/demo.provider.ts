@@ -8,10 +8,7 @@ import type {
   TransportMode,
 } from '@shared/types/index.js'
 import { TC_TRANSPORT_MODES } from '@shared/constants/transport-modes.js'
-import {
-  DEMO_SCENARIOS,
-  SCENARIO_MATCH_TOLERANCE_KM,
-} from '@shared/constants/demo-scenarios.js'
+import { DEMO_SCENARIOS, SCENARIO_MATCH_TOLERANCE_KM } from '@shared/constants/demo-scenarios.js'
 import type { TransportProvider } from '../transport-provider.interface.js'
 import { haversineKm } from '../../../utils/geo.js'
 import { getShapeForLeg } from '../gtfs-shapes.service.js'

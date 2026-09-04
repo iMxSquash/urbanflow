@@ -51,7 +51,7 @@ describe('markerAriaLabelRef', () => {
   })
 
   it(
-    "régression : quand getElement() renvoie null au moment du callback ref " +
+    'régression : quand getElement() renvoie null au moment du callback ref ' +
       "(layout effect useImperativeHandle avant l'effet passif useLayerLifecycle " +
       "qui déclenche _initIcon()), le label est posé dès que Leaflet fire 'add' " +
       'au lieu de ne jamais être posé — reproduit le remount de marqueur causé ' +

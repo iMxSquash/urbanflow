@@ -43,7 +43,13 @@ export function useJourney() {
             errorKind: 'empty-results',
           })
         } else {
-          setState({ journeys, selectedJourney: null, loading: false, error: null, errorKind: null })
+          setState({
+            journeys,
+            selectedJourney: null,
+            loading: false,
+            error: null,
+            errorKind: null,
+          })
         }
       } catch (err) {
         setState({
