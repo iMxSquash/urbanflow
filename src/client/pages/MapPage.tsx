@@ -75,6 +75,7 @@ export default function MapPage() {
     selectedJourney,
     loading: journeyLoading,
     error: journeyError,
+    errorKind: journeyErrorKind,
     calculate,
     select: selectJourney,
     deselect: deselectJourney,
@@ -380,6 +381,7 @@ export default function MapPage() {
         journeys={journeys}
         journeyLoading={journeyLoading}
         journeyError={journeyError}
+        journeyErrorKind={journeyErrorKind}
         selectedJourney={selectedJourney}
         onSelectJourney={handleSelectJourney}
         onClosePanel={handleClosePanel}

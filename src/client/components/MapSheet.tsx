@@ -18,6 +18,7 @@ import { AddressSuggestionsList } from './AddressSuggestionsList'
 import { Co2FactorsNote } from './Co2FactorsNote'
 import { DatetimePicker } from './DatetimePicker'
 import { EmptyResultsPanel } from './EmptyResultsPanel'
+import { RequestFailedPanel } from './RequestFailedPanel'
 import { IconButton } from './IconButton'
 import { JourneyPanel, type JourneyTrackingPhase } from './JourneyPanel'
 import { JourneyResults } from './JourneyResults'
@@ -78,6 +79,7 @@ interface MapSheetProps {
   journeys: Journey[]
   journeyLoading: boolean
   journeyError: string | null
+  journeyErrorKind: 'empty-results' | 'request-failed' | null
 
   selectedJourney: Journey | null
   onSelectJourney: (j: Journey) => void
@@ -674,6 +676,7 @@ function MidView({
   journeys,
   journeyLoading,
   journeyError,
+  journeyErrorKind,
   onOpenSettings,
   onViewResults,
 }: {
@@ -686,6 +689,7 @@ function MidView({
   journeys: Journey[]
   journeyLoading: boolean
   journeyError: string | null
+  journeyErrorKind: 'empty-results' | 'request-failed' | null
   onOpenSettings: () => void
   onViewResults: () => void
 }) {
@@ -734,15 +738,19 @@ function MidView({
         </svg>
       </button>
       {!journeyLoading && journeyError && count === 0 ? (
-        <EmptyResultsPanel
-          time={options.datetime.toLocaleTimeString('fr-FR', {
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
-          options={options}
-          onOptionsChange={onOptionsChange}
-          onOpenSettings={onOpenSettings}
-        />
+        journeyErrorKind === 'request-failed' ? (
+          <RequestFailedPanel message={journeyError} />
+        ) : (
+          <EmptyResultsPanel
+            time={options.datetime.toLocaleTimeString('fr-FR', {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+            options={options}
+            onOptionsChange={onOptionsChange}
+            onOpenSettings={onOpenSettings}
+          />
+        )
       ) : (
         <button
           type="button"
@@ -911,6 +919,7 @@ function DesktopPanel({
   journeys,
   journeyLoading,
   journeyError,
+  journeyErrorKind,
   selectedJourney,
   onSelectJourney,
   onClosePanel,
@@ -934,6 +943,7 @@ function DesktopPanel({
   journeys: Journey[]
   journeyLoading: boolean
   journeyError: string | null
+  journeyErrorKind: 'empty-results' | 'request-failed' | null
   selectedJourney: Journey | null
   onSelectJourney: (j: Journey) => void
   onClosePanel: () => void
@@ -1081,14 +1091,18 @@ function DesktopPanel({
             Calcul en cours…
           </p>
         ) : journeyError && journeys.length === 0 ? (
-          <EmptyResultsPanel
-            time={options.datetime.toLocaleTimeString('fr-FR', {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-            options={options}
-            onOptionsChange={onOptionsChange}
-          />
+          journeyErrorKind === 'request-failed' ? (
+            <RequestFailedPanel message={journeyError} />
+          ) : (
+            <EmptyResultsPanel
+              time={options.datetime.toLocaleTimeString('fr-FR', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+              options={options}
+              onOptionsChange={onOptionsChange}
+            />
+          )
         ) : journeys.length > 0 ? (
           <JourneyResults journeys={journeys} onSelect={handleSelectJourney} />
         ) : null}
@@ -1315,6 +1329,7 @@ export function MapSheet(props: MapSheetProps) {
     journeys,
     journeyLoading,
     journeyError,
+    journeyErrorKind,
     selectedJourney,
     onSelectJourney,
     onClosePanel,
@@ -1683,6 +1698,7 @@ export function MapSheet(props: MapSheetProps) {
             journeys={journeys}
             journeyLoading={journeyLoading}
             journeyError={journeyError}
+            journeyErrorKind={journeyErrorKind}
             selectedJourney={selectedJourney}
             onSelectJourney={(j) => {
               onSelectJourney(j)
@@ -1762,6 +1778,7 @@ export function MapSheet(props: MapSheetProps) {
                       journeys={journeys}
                       journeyLoading={journeyLoading}
                       journeyError={journeyError}
+                      journeyErrorKind={journeyErrorKind}
                       onOpenSettings={() => onStateChange('settings')}
                       onViewResults={() => onStateChange('results')}
                     />
