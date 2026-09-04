@@ -78,15 +78,18 @@ export function computeComfortScore(
     base = Math.max(0, base - 30)
   }
 
-  // Météo : pluie/neige/orage → pénalise le vélo, prime les TC couverts
+  // Météo : pluie/neige/orage → pénalise le vélo et la marche seule (aucun abri
+  // dans les deux cas), prime les TC couverts
   if (weather) {
     const isWet = ['rain', 'snow', 'thunderstorm'].includes(weather.condition)
     const isWindy = weather.windSpeed > 40
     const hasBike = segments.some((s) => s.mode === 'bike')
+    // 100% marche, aucun autre mode — même exposition qu'un trajet vélo, sans abri
+    const isPureWalk = segments.length > 0 && segments.every((s) => s.mode === 'walk')
     // At least one covered TC segment required — walk-only does not qualify for shelter bonus
     const isPureTC = segments.some((s) => TC_MODES.includes(s.mode)) && !hasBike
 
-    if ((isWet || isWindy) && hasBike) base = Math.max(0, base - 30)
+    if ((isWet || isWindy) && (hasBike || isPureWalk)) base = Math.max(0, base - 30)
     if (isWet && isPureTC) base = Math.min(100, base + 10)
   }
 

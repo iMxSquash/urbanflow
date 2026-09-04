@@ -275,10 +275,42 @@ describe('computeComfortScore', () => {
       expect(computeComfortScore(segments, BASE_OPTIONS, weather('clear'))).toBe(50)
     })
 
-    it('pluie + marche seule → aucun bonus (pas de TC couvert)', () => {
+    it('pluie + marche seule → aucun bonus (pas de TC couvert, pénalité marche seule à la place)', () => {
       // Walk-only ne doit pas bénéficier du bonus abri TC
       const segments = [seg('walk', 1, 12)]
-      expect(computeComfortScore(segments, BASE_OPTIONS, weather('rain'))).toBe(50)
+      expect(computeComfortScore(segments, BASE_OPTIONS, weather('rain'))).toBe(20)
+    })
+  })
+
+  describe('météo — pénalité marche seule (aucun abri)', () => {
+    it('pluie + marche seule → −30 sur la base', () => {
+      const segments = [seg('walk', 1, 12)]
+      expect(computeComfortScore(segments, BASE_OPTIONS, weather('rain'))).toBe(20)
+    })
+
+    it('neige + marche seule → −30', () => {
+      const segments = [seg('walk', 1, 12)]
+      expect(computeComfortScore(segments, BASE_OPTIONS, weather('snow'))).toBe(20)
+    })
+
+    it('orage + marche seule → −30', () => {
+      const segments = [seg('walk', 1, 12)]
+      expect(computeComfortScore(segments, BASE_OPTIONS, weather('thunderstorm'))).toBe(20)
+    })
+
+    it('vent > 40 km/h + marche seule → −30 (même sans pluie)', () => {
+      const segments = [seg('walk', 1, 12)]
+      expect(computeComfortScore(segments, BASE_OPTIONS, weather('clear', 50))).toBe(20)
+    })
+
+    it('ciel dégagé + vent ≤ 40 km/h + marche seule → aucune pénalité météo', () => {
+      const segments = [seg('walk', 1, 12)]
+      expect(computeComfortScore(segments, BASE_OPTIONS, weather('clear', 30))).toBe(50)
+    })
+
+    it('pluie + marche + TC (pas 100% marche) → pas de pénalité marche seule, bonus TC applicable', () => {
+      const segments = [seg('walk', 0.5, 5), seg('tramway', 4, 20)]
+      expect(computeComfortScore(segments, BASE_OPTIONS, weather('rain'))).toBe(60)
     })
   })
 

@@ -399,9 +399,9 @@ Pondérations par préférence utilisateur :
   affecté par le relief dans ce produit, donc c'est le seul pénalisé
 
 **Météo dans le score confort** (uniquement si la météo a pu être récupérée) :
-- Pluie/neige/orage, ou vent > 40 km/h : pénalité −30 pts si un segment vélo est présent
+- Pluie/neige/orage, ou vent > 40 km/h : pénalité −30 pts si un segment vélo est présent, ou si le trajet est 100 % marche (aucun abri dans les deux cas)
 - Pluie/neige/orage sur un trajet sans vélo comportant au moins un segment TC (marche autorisée en complément) : bonus +10 pts (abri) — un trajet marche+tramway est éligible, pas besoin que 100 % des segments soient du TC
-- Ces deux règles météo s'excluent mutuellement (la présence ou l'absence de vélo détermine laquelle s'applique, jamais les deux)
+- Ces trois cas sont mutuellement exclusifs (vélo présent / 100 % marche / au moins un TC sans vélo) — un trajet ne peut jamais cumuler la pénalité et le bonus
 - En revanche la pénalité météo vélo (−30) et la pénalité dénivelé (−30, ci-dessus) sont deux vérifications indépendantes : un trajet vélo avec `avoidElevation: true` sous la pluie cumule les deux (−60), ce n'est pas plafonné à −30
 
 Toutes les pénalités/bonus ci-dessus sont plafonnés à `[0, 100]` sur le score confort final.
