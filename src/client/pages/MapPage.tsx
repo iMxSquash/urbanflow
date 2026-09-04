@@ -104,7 +104,12 @@ export default function MapPage() {
 
   const location = useLocation()
   const locatedOnMount = useRef(false)
-  const scenarioApplied = useRef(false)
+  // Clé de la navigation dont le scénario démo a déjà été appliqué — pas un
+  // simple booléen "déjà appliqué une fois" : un booléen resterait bloqué à
+  // `true` après le premier scénario et ignorerait silencieusement le suivant
+  // tant que MapPage reste montée (retour sur Paramètres puis nouveau
+  // scénario, sans rechargement complet de la page).
+  const appliedScenarioLocationKey = useRef<string | null>(null)
   // Rouvre la modale de consentement à la demande ("Ma position") quand le
   // consentement n'est pas déjà `granted` — indépendant de l'ouverture
   // automatique ci-dessous (`geolocationConsent === null`), qui ne couvre
@@ -138,14 +143,14 @@ export default function MapPage() {
   // Scénario démo
   useEffect(() => {
     const state = (location.state as { demoScenario?: DemoScenarioState } | null)?.demoScenario
-    if (!state || scenarioApplied.current) return
-    scenarioApplied.current = true
+    if (!state || appliedScenarioLocationKey.current === location.key) return
+    appliedScenarioLocationKey.current = location.key
     dispatchOrigin({ type: 'set', coords: state.from, label: state.fromLabel })
     setToCoords(state.to)
     setToLabel(state.toLabel)
     setEcoMapActive(true)
     setSheetState('mid')
-  }, [location.state, dispatchOrigin])
+  }, [location.state, location.key, dispatchOrigin])
 
   // Position affichée : pendant le suivi on suit la position GPS temps réel
   const userPosition = resolveOrigin(origin, geoPosition)

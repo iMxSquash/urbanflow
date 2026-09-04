@@ -17,35 +17,7 @@ import { exportUserData } from '../services/auth.service'
 import LogoutButton from '../components/LogoutButton'
 import { PageHeader } from '../components/PageHeader'
 import { PageWithSidebar } from '../components/PageWithSidebar'
-import type { Coordinates } from '@shared/types/index'
-
-interface DemoScenario {
-  fromLabel: string
-  toLabel: string
-  from: Coordinates
-  to: Coordinates
-  weather: 'sunny' | 'rainy'
-  description: string
-}
-
-const DEMO_SCENARIOS: DemoScenario[] = [
-  {
-    fromLabel: 'Commerce',
-    toLabel: 'Île de Nantes',
-    from: { lat: 47.2134, lng: -1.5541 },
-    to: { lat: 47.2005, lng: -1.554 },
-    weather: 'sunny',
-    description: 'Soleil · matin',
-  },
-  {
-    fromLabel: 'Gare de Nantes',
-    toLabel: 'Faculté des Sciences',
-    from: { lat: 47.2181, lng: -1.5418 },
-    to: { lat: 47.2628, lng: -1.5487 },
-    weather: 'rainy',
-    description: 'Pluie · heure de pointe',
-  },
-]
+import { DEMO_SCENARIOS } from '@shared/constants/demo-scenarios'
 
 const THEME_OPTIONS: Array<{ value: ThemePreference; label: string }> = [
   { value: 'light', label: 'Clair' },
@@ -314,21 +286,19 @@ export default function ParametresPage() {
                           <div className="flex flex-col gap-2">
                             {DEMO_SCENARIOS.map((scenario) => (
                               <button
-                                key={scenario.toLabel}
+                                key={scenario.id}
                                 type="button"
                                 disabled={demoLoading}
                                 onClick={() => {
-                                  void setWeather(scenario.weather).then(() => {
-                                    navigate('/', {
-                                      state: {
-                                        demoScenario: {
-                                          from: scenario.from,
-                                          to: scenario.to,
-                                          fromLabel: scenario.fromLabel,
-                                          toLabel: scenario.toLabel,
-                                        },
+                                  navigate('/', {
+                                    state: {
+                                      demoScenario: {
+                                        from: scenario.from,
+                                        to: scenario.to,
+                                        fromLabel: scenario.fromLabel,
+                                        toLabel: scenario.toLabel,
                                       },
-                                    })
+                                    },
                                   })
                                 }}
                                 className="flex items-center justify-between gap-3 px-3.5 py-3 rounded-md bg-surface border border-border text-left disabled:opacity-50"
