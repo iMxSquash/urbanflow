@@ -14,98 +14,18 @@
             "lat": 47.2178,
             "lng": -1.5423
           },
-          "toName": "Gare Maritime",
+          "toName": "Gare Nord - Jardin des Plantes",
           "distanceKm": 0.05,
           "durationMin": 1,
           "co2g": 0,
           "shape": [
             {
-              "lat": 47.218108,
-              "lng": -1.541736
+              "lat": 47.2181,
+              "lng": -1.5418
             },
             {
-              "lat": 47.218118,
-              "lng": -1.541587
-            },
-            {
-              "lat": 47.218311,
-              "lng": -1.540561
-            },
-            {
-              "lat": 47.218346,
-              "lng": -1.540426
-            },
-            {
-              "lat": 47.218365,
-              "lng": -1.540469
-            },
-            {
-              "lat": 47.218408,
-              "lng": -1.54049
-            },
-            {
-              "lat": 47.219367,
-              "lng": -1.540958
-            },
-            {
-              "lat": 47.219446,
-              "lng": -1.540944
-            },
-            {
-              "lat": 47.219508,
-              "lng": -1.540689
-            },
-            {
-              "lat": 47.219593,
-              "lng": -1.540383
-            },
-            {
-              "lat": 47.219728,
-              "lng": -1.539948
-            },
-            {
-              "lat": 47.219826,
-              "lng": -1.539646
-            },
-            {
-              "lat": 47.219971,
-              "lng": -1.539181
-            },
-            {
-              "lat": 47.219902,
-              "lng": -1.539159
-            },
-            {
-              "lat": 47.21876,
-              "lng": -1.538694
-            },
-            {
-              "lat": 47.218638,
-              "lng": -1.538639
-            },
-            {
-              "lat": 47.218542,
-              "lng": -1.539122
-            },
-            {
-              "lat": 47.21842,
-              "lng": -1.539755
-            },
-            {
-              "lat": 47.218324,
-              "lng": -1.540126
-            },
-            {
-              "lat": 47.218293,
-              "lng": -1.540276
-            },
-            {
-              "lat": 47.218022,
-              "lng": -1.541692
-            },
-            {
-              "lat": 47.217886,
-              "lng": -1.542339
+              "lat": 47.2178,
+              "lng": -1.5423
             }
           ]
         },
@@ -119,14 +39,56 @@
             "lat": 47.2594,
             "lng": -1.5466
           },
-          "fromName": "Gare Maritime",
-          "toName": "Beaujoire",
+          "fromName": "Gare Nord - Jardin des Plantes",
+          "toName": "Babinière",
           "distanceKm": 5.5,
-          "durationMin": 20,
+          "durationMin": 17,
           "co2g": 22,
           "lineRef": "1",
           "lineName": "1 — Beaujoire / Babinière",
-          "waitTimeMin": 4
+          "waitTimeMin": 1,
+          "shape": [
+            {
+              "lat": 47.2178,
+              "lng": -1.5423
+            },
+            {
+              "lat": 47.218784,
+              "lng": -1.537123
+            },
+            {
+              "lat": 47.21957,
+              "lng": -1.53302
+            },
+            {
+              "lat": 47.22126,
+              "lng": -1.524274
+            },
+            {
+              "lat": 47.224716,
+              "lng": -1.519776
+            },
+            {
+              "lat": 47.22695,
+              "lng": -1.518558
+            },
+            {
+              "lat": 47.23247,
+              "lng": -1.516006
+            },
+            {
+              "lat": 47.23847,
+              "lng": -1.516059
+            },
+            {
+              "lat": 47.243736,
+              "lng": -1.518088
+            },
+            {
+              "lat": 47.2594,
+              "lng": -1.5466
+            }
+          ]
         },
         {
           "mode": "walk",
@@ -138,7 +100,7 @@
             "lat": 47.2628,
             "lng": -1.5487
           },
-          "fromName": "Beaujoire",
+          "fromName": "Babinière",
           "distanceKm": 0.43,
           "durationMin": 6,
           "co2g": 0,
@@ -330,7 +292,7 @@
           ]
         }
       ],
-      "totalDurationMin": 31,
+      "totalDurationMin": 25,
       "totalDistanceKm": 5.98,
       "totalCo2g": 22,
       "co2SavingG": 1491,
@@ -352,94 +314,18 @@
             "lat": 47.2178,
             "lng": -1.5412
           },
-          "toName": "Bicloo Gare Maritime",
+          "toName": "Bicloo Gare Nord",
           "distanceKm": 0.08,
           "durationMin": 1,
           "co2g": 0,
           "shape": [
             {
-              "lat": 47.218108,
-              "lng": -1.541736
+              "lat": 47.2181,
+              "lng": -1.5418
             },
             {
-              "lat": 47.218118,
-              "lng": -1.541587
-            },
-            {
-              "lat": 47.218311,
-              "lng": -1.540561
-            },
-            {
-              "lat": 47.218346,
-              "lng": -1.540426
-            },
-            {
-              "lat": 47.218365,
-              "lng": -1.540469
-            },
-            {
-              "lat": 47.218408,
-              "lng": -1.54049
-            },
-            {
-              "lat": 47.219367,
-              "lng": -1.540958
-            },
-            {
-              "lat": 47.219446,
-              "lng": -1.540944
-            },
-            {
-              "lat": 47.219508,
-              "lng": -1.540689
-            },
-            {
-              "lat": 47.219593,
-              "lng": -1.540383
-            },
-            {
-              "lat": 47.219728,
-              "lng": -1.539948
-            },
-            {
-              "lat": 47.219826,
-              "lng": -1.539646
-            },
-            {
-              "lat": 47.219971,
-              "lng": -1.539181
-            },
-            {
-              "lat": 47.219902,
-              "lng": -1.539159
-            },
-            {
-              "lat": 47.21876,
-              "lng": -1.538694
-            },
-            {
-              "lat": 47.218638,
-              "lng": -1.538639
-            },
-            {
-              "lat": 47.218542,
-              "lng": -1.539122
-            },
-            {
-              "lat": 47.21842,
-              "lng": -1.539755
-            },
-            {
-              "lat": 47.218324,
-              "lng": -1.540126
-            },
-            {
-              "lat": 47.218293,
-              "lng": -1.540276
-            },
-            {
-              "lat": 47.218093,
-              "lng": -1.541322
+              "lat": 47.2178,
+              "lng": -1.5412
             }
           ]
         },
@@ -453,8 +339,8 @@
             "lat": 47.2618,
             "lng": -1.549
           },
-          "fromName": "Bicloo Gare Maritime",
-          "toName": "Bicloo Beaujoire",
+          "fromName": "Bicloo Gare Nord",
+          "toName": "Bicloo Babinière",
           "distanceKm": 5.6,
           "durationMin": 24,
           "co2g": 0,
@@ -1299,7 +1185,7 @@
             "lat": 47.2628,
             "lng": -1.5487
           },
-          "fromName": "Bicloo Beaujoire",
+          "fromName": "Bicloo Babinière",
           "distanceKm": 0.12,
           "durationMin": 2,
           "co2g": 0,
